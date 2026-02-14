@@ -1,0 +1,460 @@
+---
+title: "Components"
+description: "All varg JSX components and their props"
+---
+
+## Import
+
+```tsx
+import { 
+  render, Render, Clip, 
+  Image, Video, Speech, Music,
+  Title, Subtitle, Captions,
+  Overlay, Split, Slider, Swipe, Grid,
+  TalkingHead, Packshot
+} from "vargai/react";
+```
+
+## Quick Reference
+
+| Component | Purpose | Key Props |
+|-----------|---------|-----------|
+| `<Render>` | Root container | `width`, `height`, `fps` |
+| `<Clip>` | Time segment | `duration`, `transition` |
+| `<Image>` | AI or static image | `prompt`, `src`, `zoom` |
+| `<Video>` | AI or source video | `prompt`, `src`, `volume` |
+| `<Speech>` | Text-to-speech | `voice`, `children` |
+| `<Music>` | Background music | `prompt`, `volume`, `loop` |
+| `<Title>` | Text overlay | `position`, `color` |
+| `<Captions>` | Auto-generated subs | `src`, `style` |
+| `<Overlay>` | Positioned layer | `left`, `top`, `width`, `height` |
+| `<Split>` | Side-by-side | `direction` |
+
+---
+
+## Container Components
+
+### Render
+
+Root container for video composition. Required for all videos.
+
+```tsx
+<Render width={1080} height={1920} fps={30}>
+  {/* clips and media */}
+</Render>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number` | `1080` | Video width in pixels |
+| `height` | `number` | `1920` | Video height in pixels |
+| `fps` | `number` | `30` | Frames per second |
+
+**Common resolutions:**
+
+| Platform | Resolution | Aspect Ratio |
+|----------|------------|--------------|
+| TikTok/Reels/Shorts | 1080x1920 | 9:16 |
+| YouTube | 1920x1080 | 16:9 |
+| Instagram Feed | 1080x1080 | 1:1 |
+
+### Clip
+
+Time segment container. Clips play sequentially.
+
+```tsx
+<Clip duration={3} transition={{ name: "fade", duration: 0.5 }}>
+  <Video src="scene.mp4" />
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `duration` | `number` | Required | Duration in seconds |
+| `transition` | `object` | `undefined` | Transition to next clip |
+| `cutFrom` | `number` | `0` | Start time offset |
+| `cutTo` | `number` | `undefined` | End time offset |
+
+**Transition options:**
+
+```tsx
+transition={{ name: "fade", duration: 0.5 }}
+transition={{ name: "crossfade", duration: 0.5 }}
+transition={{ name: "wipeleft", duration: 0.5 }}
+transition={{ name: "wiperight", duration: 0.5 }}
+transition={{ name: "slideup", duration: 0.5 }}
+transition={{ name: "slidedown", duration: 0.5 }}
+transition={{ name: "cube", duration: 0.8 }}
+transition={{ name: "pixelize", duration: 0.5 }}
+```
+
+67 GL-transitions available.
+
+---
+
+## Media Components
+
+### Image
+
+AI-generated or static image.
+
+```tsx
+// AI generation
+const cat = Image({
+  prompt: "cute orange cat, Pixar style",
+  model: fal.imageModel("flux-schnell"),
+  aspectRatio: "9:16",
+});
+
+// In composition with zoom
+<Clip duration={3}>
+  <Image src={cat} zoom="in" />
+</Clip>
+
+// Static image
+<Clip duration={3}>
+  <Image src="media/photo.jpg" zoom="out" />
+</Clip>
+```
+
+**Element function props:**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `prompt` | `string` | Required | Image description |
+| `model` | `ImageModel` | `fal.imageModel("flux-schnell")` | AI model |
+| `aspectRatio` | `string` | `"1:1"` | Output ratio |
+
+**Component props:**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `src` | `string \| ImageRef` | Required | Image source or reference |
+| `zoom` | `"in" \| "out" \| "left" \| "right"` | `undefined` | Ken Burns effect |
+| `resize` | `"cover" \| "contain"` | `"cover"` | Resize mode |
+
+### Video
+
+AI-generated or source video.
+
+```tsx
+// Image-to-video
+const character = Image({ prompt: "robot character" });
+
+<Clip duration={5}>
+  <Video
+    prompt={{ text: "robot waves hello", images: [character] }}
+    model={fal.videoModel("kling-v2.5")}
+  />
+</Clip>
+
+// Text-to-video
+<Clip duration={5}>
+  <Video
+    prompt="ocean waves crashing on beach"
+    model={fal.videoModel("kling-v2.5")}
+  />
+</Clip>
+
+// Source video
+<Clip duration={5}>
+  <Video src="media/clip.mp4" volume={0.5} />
+</Clip>
+
+// Lipsync (video + audio)
+const animatedVideo = Video({ prompt: { ... } });
+const voiceover = Speech({ ... });
+
+<Video
+  prompt={{ video: animatedVideo, audio: voiceover }}
+  model={fal.videoModel("sync-v2-pro")}
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `prompt` | `string \| object` | - | Generation prompt |
+| `src` | `string` | - | Source video path |
+| `model` | `VideoModel` | `fal.videoModel("kling-v2.5")` | AI model |
+| `volume` | `number` | `1` | Audio volume (0-1) |
+| `cutFrom` | `number` | `0` | Start trim |
+| `cutTo` | `number` | - | End trim |
+
+**Prompt formats:**
+
+```tsx
+// Text only
+prompt="waves on beach"
+
+// Image-to-video
+prompt={{ text: "waves crash", images: [imageRef] }}
+
+// Lipsync
+prompt={{ video: videoRef, audio: speechRef }}
+```
+
+### Speech
+
+Text-to-speech voiceover.
+
+```tsx
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "rachel",
+  children: "Hello everyone! Welcome to my video.",
+});
+
+// Use in composition
+<Captions src={voiceover} style="tiktok" />
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `string` | Required | Text to speak |
+| `model` | `SpeechModel` | `elevenlabs.speechModel("eleven_turbo_v2")` | TTS model |
+| `voice` | `string` | `"rachel"` | Voice name or ID |
+| `volume` | `number` | `1` | Audio volume |
+
+**Available voices:** `rachel`, `adam`, `bella`, `josh`, `sam`, `antoni`, `elli`, `arnold`, `domi`
+
+### Music
+
+Background music generation.
+
+```tsx
+<Render>
+  <Music 
+    prompt="upbeat electronic pop, energetic" 
+    model={elevenlabs.musicModel()} 
+    volume={0.2}
+    loop
+  />
+  
+  <Clip duration={5}>...</Clip>
+  <Clip duration={5}>...</Clip>
+</Render>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `prompt` | `string` | - | Music description |
+| `src` | `string` | - | Source audio file |
+| `model` | `MusicModel` | `elevenlabs.musicModel()` | Generation model |
+| `volume` | `number` | `1` | Audio volume (0.1-0.3 for background) |
+| `loop` | `boolean` | `false` | Loop audio |
+| `ducking` | `number` | `undefined` | Lower volume during speech |
+
+---
+
+## Text Components
+
+### Title
+
+Text overlay on video.
+
+```tsx
+<Clip duration={5}>
+  <Video src="scene.mp4" />
+  <Title position="top" color="#ffffff">My Video Title</Title>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `string` | Required | Title text |
+| `position` | `"top" \| "center" \| "bottom"` | `"center"` | Position |
+| `color` | `string` | `"#ffffff"` | Text color |
+| `start` | `number` | `0` | Start time |
+| `end` | `number` | - | End time |
+
+### Captions
+
+Auto-generated subtitles from speech.
+
+```tsx
+const voiceover = Speech({ children: "Hello everyone!" });
+
+<Render>
+  <Clip duration={5}>
+    <Video src="talking.mp4" />
+  </Clip>
+  <Captions src={voiceover} style="tiktok" color="#ffffff" />
+</Render>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `src` | `SpeechRef` | Required | Speech reference for timing |
+| `srt` | `string` | - | Custom SRT file |
+| `style` | `string` | `"tiktok"` | Caption animation style |
+| `color` | `string` | `"#ffffff"` | Text color |
+| `activeColor` | `string` | - | Active word color |
+
+**Caption styles:**
+
+| Style | Description |
+|-------|-------------|
+| `tiktok` | Word-by-word highlight |
+| `karaoke` | Fill left-to-right |
+| `bounce` | Words bounce in |
+| `typewriter` | Typing effect |
+
+---
+
+## Layout Components
+
+### Overlay
+
+Positioned layer on top of content.
+
+```tsx
+<Clip duration={5}>
+  <Video src="background.mp4" />
+  <Overlay left={50} top={100} width={200} height={200}>
+    <Image src="logo.png" />
+  </Overlay>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `left` | `number` | `0` | X position |
+| `top` | `number` | `0` | Y position |
+| `width` | `number` | - | Width |
+| `height` | `number` | - | Height |
+| `keepAudio` | `boolean` | `true` | Keep overlay audio |
+
+### Split
+
+Side-by-side layout.
+
+```tsx
+<Clip duration={5}>
+  <Split direction="horizontal">
+    <Video src="left.mp4" />
+    <Video src="right.mp4" />
+  </Split>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `direction` | `"horizontal" \| "vertical"` | `"horizontal"` | Split direction |
+
+### SplitLayout
+
+Before/after comparison layout.
+
+```tsx
+<Clip duration={5}>
+  <SplitLayout 
+    direction="horizontal" 
+    left={beforeVideo} 
+    right={afterVideo} 
+  />
+</Clip>
+```
+
+### Grid
+
+Grid layout for multiple items.
+
+```tsx
+<Clip duration={5}>
+  <Grid columns={2}>
+    <Video src="1.mp4" />
+    <Video src="2.mp4" />
+    <Video src="3.mp4" />
+    <Video src="4.mp4" />
+  </Grid>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columns` | `number` | `2` | Number of columns |
+
+### Slider
+
+Before/after reveal slider.
+
+```tsx
+<Clip duration={5}>
+  <Slider direction="horizontal">
+    <Image src="before.jpg" />
+    <Image src="after.jpg" />
+  </Slider>
+</Clip>
+```
+
+### Swipe
+
+Tinder-style card swipe.
+
+```tsx
+<Clip duration={10}>
+  <Swipe direction="horizontal" interval={2}>
+    <Image src="card1.jpg" />
+    <Image src="card2.jpg" />
+    <Image src="card3.jpg" />
+  </Swipe>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `direction` | `"horizontal" \| "vertical"` | `"horizontal"` | Swipe direction |
+| `interval` | `number` | `2` | Seconds per card |
+
+---
+
+## Special Components
+
+### TalkingHead
+
+Complete talking character with automatic lipsync.
+
+```tsx
+const character = Image({ prompt: "friendly presenter" });
+
+<Clip duration={10}>
+  <TalkingHead
+    character={character}
+    voice="rachel"
+    model={fal.videoModel("kling-v2.5")}
+    lipsyncModel={fal.videoModel("sync-v2-pro")}
+  >
+    Hello everyone! Welcome to my channel.
+  </TalkingHead>
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `character` | `ImageRef` | Required | Character image |
+| `children` | `string` | Required | Script text |
+| `voice` | `string` | `"rachel"` | Voice name |
+| `model` | `VideoModel` | - | Animation model |
+| `lipsyncModel` | `VideoModel` | - | Lipsync model |
+
+### Packshot
+
+End card with call-to-action.
+
+```tsx
+<Clip duration={3}>
+  <Packshot
+    background="#000000"
+    logo="media/logo.png"
+    cta="Subscribe Now!"
+    blinkCta
+  />
+</Clip>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `background` | `string` | `"#000000"` | Background color |
+| `logo` | `string` | - | Logo image path |
+| `cta` | `string` | - | Call-to-action text |
+| `blinkCta` | `boolean` | `false` | Animate CTA |

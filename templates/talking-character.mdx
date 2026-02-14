@@ -1,0 +1,330 @@
+---
+title: "Talking Character Template"
+description: "Create AI talking head videos with lipsync, voiceover, and captions"
+---
+
+Create professional talking character videos with AI-generated characters, voice synthesis, lip synchronization, and auto-generated captions.
+
+## Simple Version
+
+Basic talking character without lipsync:
+
+```tsx
+import { render, Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+// Generate consistent character
+const character = Image({
+  prompt: "friendly tech influencer, casual hoodie, ring light, bedroom background",
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+// Generate voiceover
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "josh",
+  children: "Hey everyone! Welcome back to my channel. Today I want to share something that completely changed how I approach productivity.",
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="upbeat tech vlog music" model={elevenlabs.musicModel()} volume={0.1} />
+    
+    <Clip duration={8}>
+      <Video
+        prompt={{ text: "person talking enthusiastically, hand gestures", images: [character] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/talking-simple.mp4" }
+);
+```
+
+**Requirements:** `FAL_KEY` + `ELEVENLABS_API_KEY` + `HIGGSFIELD_API_KEY`
+
+---
+
+## With Lipsync
+
+Full lipsync for realistic talking:
+
+```tsx
+import { render, Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+// Character image
+const character = Image({
+  prompt: "beautiful woman, professional attire, confident smile, studio lighting",
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+
+// Voiceover
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "rachel",
+  children: "Hi there! I'm so excited to share this with you. Let me show you how easy it is to create amazing content with AI.",
+});
+
+// Animate the character
+const animatedCharacter = Video({
+  prompt: { 
+    text: "woman speaking naturally, subtle head movements, friendly expression",
+    images: [character] 
+  },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+// Sync lips to audio
+const lipsynced = Video({
+  prompt: { video: animatedCharacter, audio: voiceover },
+  model: fal.videoModel("sync-v2-pro"),
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="modern tech ambient" model={elevenlabs.musicModel()} volume={0.1} />
+    
+    <Clip duration={7}>
+      <Video src={lipsynced} />
+    </Clip>
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/talking-lipsync.mp4" }
+);
+```
+
+---
+
+## Character Options
+
+### Realistic Characters (Higgsfield Soul)
+
+```tsx
+// Professional
+const professional = Image({
+  prompt: "professional business woman, blazer, studio lighting",
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+
+// Casual
+const casual = Image({
+  prompt: "friendly young man, casual hoodie, bedroom background",
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+
+// Expert
+const expert = Image({
+  prompt: "middle-aged doctor, white coat, office background",
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+```
+
+### Stylized Characters (Flux)
+
+```tsx
+// Animated style
+const animated = Image({
+  prompt: "friendly cartoon character, 3D Pixar style, big eyes",
+  model: fal.imageModel("flux-schnell"),
+  aspectRatio: "9:16",
+});
+
+// Anime style
+const anime = Image({
+  prompt: "anime girl character, colorful hair, expressive eyes",
+  model: fal.imageModel("flux-schnell"),
+  aspectRatio: "9:16",
+});
+```
+
+---
+
+## Voice Options
+
+### Female Voices
+
+```tsx
+// Rachel - Professional, warm
+Speech({ voice: "rachel", children: "..." })
+
+// Bella - Friendly, youthful
+Speech({ voice: "bella", children: "..." })
+
+// Elli - Young, energetic
+Speech({ voice: "elli", children: "..." })
+
+// Domi - Dynamic, expressive
+Speech({ voice: "domi", children: "..." })
+```
+
+### Male Voices
+
+```tsx
+// Adam - Professional, clear
+Speech({ voice: "adam", children: "..." })
+
+// Josh - Casual, friendly
+Speech({ voice: "josh", children: "..." })
+
+// Sam - Authoritative, deep
+Speech({ voice: "sam", children: "..." })
+
+// Antoni - Warm, conversational
+Speech({ voice: "antoni", children: "..." })
+
+// Arnold - Deep, mature
+Speech({ voice: "arnold", children: "..." })
+```
+
+---
+
+## Caption Styles
+
+```tsx
+// TikTok style - Word-by-word highlight
+<Captions src={voiceover} style="tiktok" color="#ffffff" />
+
+// Karaoke - Fill left-to-right
+<Captions src={voiceover} style="karaoke" color="#ffff00" />
+
+// Bounce - Words bounce in
+<Captions src={voiceover} style="bounce" color="#ffffff" />
+
+// Typewriter - Typing effect
+<Captions src={voiceover} style="typewriter" color="#00ff00" />
+```
+
+---
+
+## Multi-Scene Talking Video
+
+Character speaking across multiple scenes:
+
+```tsx
+import { render, Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const character = Image({
+  prompt: "friendly female tech influencer, casual style",
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+const script = [
+  { text: "Hey everyone! Let me show you three amazing features.", motion: "waving hello" },
+  { text: "First, it's incredibly fast.", motion: "pointing up excitedly" },
+  { text: "Second, the quality is stunning.", motion: "nodding approvingly" },
+  { text: "And third, it's so easy to use!", motion: "thumbs up, smiling" },
+];
+
+const fullVoiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "bella",
+  children: script.map(s => s.text).join(" "),
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="upbeat tech tutorial music" model={elevenlabs.musicModel()} volume={0.1} />
+    
+    {script.map((scene, i) => (
+      <Clip key={i} duration={4} transition={{ name: "crossfade", duration: 0.3 }}>
+        <Video
+          prompt={{ text: `person ${scene.motion}`, images: [character] }}
+          model={fal.videoModel("kling-v2.5")}
+        />
+      </Clip>
+    ))}
+    
+    <Captions src={fullVoiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/multi-scene.mp4" }
+);
+```
+
+---
+
+## UGC-Style Video
+
+User-generated content style for ads:
+
+```tsx
+import { render, Render, Clip, Image, Video, Speech, Captions, Title } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const character = Image({
+  prompt: "relatable woman in her 20s, messy bun, casual t-shirt, iPhone selfie style, natural lighting, bedroom",
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+
+const voiceover = Speech({
+  voice: "bella",
+  children: "Okay I have to tell you about this app. I've been using it for two weeks and honestly? It's changed everything. Like I was so skeptical at first but now I can't imagine going back.",
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Clip duration={12}>
+      <Video
+        prompt={{ 
+          text: "woman talking casually to camera, authentic reactions, slight camera shake",
+          images: [character] 
+        }}
+        model={fal.videoModel("wan-2.5")}
+      />
+    </Clip>
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+    
+    {/* CTA at end */}
+    <Title position="bottom" color="#ffffff" start={10}>
+      Link in bio!
+    </Title>
+  </Render>,
+  { output: "output/ugc-style.mp4" }
+);
+```
+
+---
+
+## Tips for Best Results
+
+### Character Generation
+- Use `higgsfield.imageModel("soul")` for realistic humans
+- Include lighting details: "studio lighting", "ring light", "natural lighting"
+- Specify background: "minimalist bedroom", "office", "coffee shop"
+- Add style cues: "iPhone selfie", "professional headshot"
+
+### Voiceover
+- Write conversational scripts with natural pauses
+- Use punctuation for timing: periods for pauses, commas for breaths
+- Keep sentences short for better timing
+- Match voice gender to character
+
+### Animation
+- Use subtle motion prompts: "talking naturally", "slight head movement"
+- Avoid complex motions: "dancing while talking" often fails
+- 5-10 second clips work best for character animation
+- Close-up shots produce better lipsync
+
+### Lipsync
+- Best with frontal face shots
+- Clear audio produces better sync
+- Works best with 5-10 second clips
+- Use `sync-v2-pro` for highest quality
+
+### Captions
+- `tiktok` style works best for social media
+- White text with shadow is most readable
+- Position at bottom third of screen
+- Keep font size readable on mobile

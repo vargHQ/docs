@@ -1,0 +1,175 @@
+---
+title: "SDK Overview"
+description: "vargai SDK for programmatic AI video generation"
+---
+
+The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syntax. It extends the [Vercel AI SDK](https://sdk.vercel.ai) with video, music, and lipsync capabilities.
+
+## Installation
+
+<Tabs>
+  <Tab title="Bun (recommended)">
+    ```bash
+    bun install vargai ai
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install vargai ai
+    ```
+  </Tab>
+</Tabs>
+
+## Two Ways to Use varg
+
+### 1. JSX/React Mode (Recommended)
+
+Compose videos declaratively with JSX components:
+
+```tsx
+import { render, Render, Clip, Image, Video, Music } from "vargai/react";
+import { fal, elevenlabs } from "vargai/ai";
+
+const character = Image({ prompt: "cute robot character" });
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="upbeat electronic" model={elevenlabs.musicModel()} />
+    <Clip duration={5}>
+      <Video
+        prompt={{ text: "robot waves hello", images: [character] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+  </Render>,
+  { output: "robot.mp4" }
+);
+```
+
+### 2. AI SDK Mode
+
+Use familiar Vercel AI SDK patterns directly:
+
+```typescript
+import { generateImage, generateVideo, generateMusic } from "vargai/ai";
+import { fal, elevenlabs } from "vargai/ai";
+
+// Generate image
+const { image } = await generateImage({
+  model: fal.imageModel("flux-schnell"),
+  prompt: "cyberpunk cityscape at night",
+  aspectRatio: "16:9",
+});
+
+// Animate to video
+const { video } = await generateVideo({
+  model: fal.videoModel("kling-v2.5"),
+  prompt: {
+    images: [image.uint8Array],
+    text: "camera slowly pans across the city",
+  },
+  duration: 5,
+});
+
+// Generate music
+const { audio } = await generateMusic({
+  model: elevenlabs.musicModel(),
+  prompt: "cyberpunk ambient music, electronic",
+  duration: 10,
+});
+
+// Save output
+await Bun.write("city.mp4", video.uint8Array);
+```
+
+## Core Concepts
+
+### Elements vs Components
+
+In varg, media generation happens via **element functions** that return references:
+
+```tsx
+// Element function - generates AI content, returns reference
+const image = Image({ prompt: "sunset" });  // Not rendered yet
+
+// Component - uses reference in composition
+<Clip duration={3}>
+  <Video prompt={{ images: [image] }} />   // Reference used here
+</Clip>
+```
+
+### Automatic Caching
+
+Same props = instant cache hit. varg computes a content hash of all generation parameters:
+
+```tsx
+// First run: ~60 seconds (AI generation)
+const cat = Image({ prompt: "orange cat" });
+
+// Second run: instant (cached)
+const cat = Image({ prompt: "orange cat" });
+
+// Different prompt: regenerates
+const cat = Image({ prompt: "orange cat sitting" });
+```
+
+Cache is stored locally in `.cache/` by default.
+
+### Parallel Generation
+
+Independent elements generate in parallel automatically:
+
+```tsx
+// These generate simultaneously, not sequentially
+const scene1 = Image({ prompt: "forest" });
+const scene2 = Image({ prompt: "ocean" });
+const scene3 = Image({ prompt: "mountain" });
+
+// Total time = longest single generation, not sum of all
+```
+
+## Package Exports
+
+```typescript
+// React/JSX components and render function
+import { render, Render, Clip, Image, Video, ... } from "vargai/react";
+
+// AI providers and generation functions
+import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
+import { generateImage, generateVideo, generateMusic } from "vargai/ai";
+
+// File utilities
+import { File } from "vargai/ai";
+```
+
+## Environment Variables
+
+```bash
+# Required
+FAL_KEY=fal_xxx                    # Fal.ai - images, video, lipsync
+
+# Optional
+ELEVENLABS_API_KEY=xxx             # Voice and music
+HIGGSFIELD_API_KEY=hf_xxx          # Character images
+HIGGSFIELD_SECRET=secret_xxx
+OPENAI_API_KEY=sk_xxx              # Sora video
+REPLICATE_API_TOKEN=r8_xxx         # Background removal, other models
+GROQ_API_KEY=gsk_xxx               # Fast transcription
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Components" icon="puzzle-piece" href="/sdk/components">
+    All JSX components and their props
+  </Card>
+  <Card title="AI Models" icon="microchip" href="/sdk/models">
+    Supported image, video, and audio models
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/sdk/cli">
+    Command-line interface
+  </Card>
+  <Card title="Templates" icon="clone" href="/templates">
+    Copy-paste examples
+  </Card>
+</CardGroup>

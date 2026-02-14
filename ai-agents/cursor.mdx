@@ -1,0 +1,193 @@
+---
+title: "Cursor Setup"
+description: "Configure Cursor for video generation with varg"
+icon: "i-cursor"
+---
+
+Set up Cursor to help you create AI videos with varg.
+
+## Prerequisites
+
+- [Cursor](https://cursor.sh) installed
+- varg project initialized (`bun install vargai ai`)
+- API keys configured (at minimum `FAL_KEY`)
+
+## Setup
+
+<Steps>
+<Step title="Create .cursorrules">
+  Add a `.cursorrules` file to your project root:
+
+  ```markdown
+  # varg Video Generation Project
+
+  ## About
+  This project uses varg SDK for AI video generation.
+  Videos are composed using JSX syntax similar to React.
+
+  ## Key Concepts
+  - `render()` - Renders JSX to video file
+  - `<Render>` - Root container with width, height, fps
+  - `<Clip>` - Time segment with duration and transitions
+  - `<Image>` - AI-generated or static image
+  - `<Video>` - AI-generated or source video
+  - `<Speech>` - Text-to-speech voiceover
+  - `<Music>` - Background music
+  - `<Captions>` - Auto-generated subtitles
+
+  ## Import Pattern
+  ```tsx
+  import { render, Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react";
+  import { fal, elevenlabs, higgsfield } from "vargai/ai";
+  ```
+
+  ## Common Models
+  - Images: `fal.imageModel("flux-schnell")` (fast), `higgsfield.imageModel("soul")` (characters)
+  - Video: `fal.videoModel("kling-v2.5")` (quality), `fal.videoModel("wan-2.5")` (characters)
+  - Speech: `elevenlabs.speechModel("eleven_multilingual_v2")`
+  - Music: `elevenlabs.musicModel()`
+  - Lipsync: `fal.videoModel("sync-v2-pro")`
+
+  ## Running Videos
+  ```bash
+  bun run <file.tsx>
+  ```
+
+  ## Folder Structure
+  - `media/` - Input assets
+  - `output/` - Generated videos
+  - `.env` - API keys (FAL_KEY, ELEVENLABS_API_KEY)
+
+  ## Tips
+  - Use same Image reference for character consistency
+  - Keep video clips 5-10 seconds for best results
+  - Music volume 0.1-0.3 for background
+  - Use "9:16" aspect ratio for TikTok/Reels/Shorts
+  ```
+</Step>
+
+<Step title="Add Documentation Reference">
+  In Cursor settings, add docs reference:
+
+  1. Open Cursor Settings (`Cmd+,`)
+  2. Go to "Features" > "Docs"
+  3. Add: `https://varg.ai/docs`
+</Step>
+
+<Step title="Configure Environment">
+  Create `.env` with API keys:
+
+  ```bash
+  FAL_KEY=fal_xxx
+  ELEVENLABS_API_KEY=xxx
+  ```
+</Step>
+</Steps>
+
+## Example .cursorrules (Extended)
+
+For more detailed context, use this extended version:
+
+```markdown
+# varg Video Generation
+
+## Quick Start
+```tsx
+import { render, Render, Clip, Image, Video } from "vargai/react";
+import { fal } from "vargai/ai";
+
+const image = Image({ prompt: "cute cat", aspectRatio: "9:16" });
+
+await render(
+  <Render width={1080} height={1920}>
+    <Clip duration={3}>
+      <Video
+        prompt={{ text: "cat waves hello", images: [image] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+  </Render>,
+  { output: "output/video.mp4" }
+);
+```
+
+## Components Reference
+
+| Component | Purpose | Key Props |
+|-----------|---------|-----------|
+| `<Render>` | Root | width, height, fps |
+| `<Clip>` | Time segment | duration, transition |
+| `<Image>` | AI/static image | prompt, src, zoom |
+| `<Video>` | AI/source video | prompt, src, volume |
+| `<Speech>` | TTS | voice, children |
+| `<Music>` | Background audio | prompt, volume, loop |
+| `<Captions>` | Subtitles | src, style |
+| `<Title>` | Text overlay | position, color |
+| `<Split>` | Side-by-side | direction |
+
+## Aspect Ratios
+- TikTok/Reels: 1080x1920 (9:16)
+- YouTube: 1920x1080 (16:9)
+- Instagram: 1080x1080 (1:1)
+
+## Transitions
+fade, crossfade, wipeleft, wiperight, slideup, cube
+
+## Caption Styles
+tiktok (word highlight), karaoke (fill), bounce, typewriter
+
+## Best Practices
+1. Generate images first, then animate to video
+2. Use higgsfield.imageModel("soul") for consistent characters
+3. Keep motion prompts simple: "person talking", "subtle movement"
+4. First render is slow (AI generation), subsequent are instant (cached)
+5. Music volume at 0.1-0.3 for background
+```
+
+## Example Prompts for Cursor
+
+### Generate Code
+
+```
+Create a TikTok video with:
+- A cute robot character
+- 3 scenes showing different emotions (happy, sad, excited)
+- Upbeat electronic music
+- Smooth fade transitions between scenes
+```
+
+### Fix Issues
+
+```
+The lipsync isn't working well. Review my code and suggest improvements.
+```
+
+### Add Features
+
+```
+Add TikTok-style captions to this video. 
+Use white text with word-by-word highlighting.
+```
+
+## Troubleshooting
+
+### Cursor Not Finding Types
+
+Run `bun install` to ensure types are installed.
+
+### Slow Completions
+
+Add the varg docs URL to Cursor's docs feature for faster, more accurate suggestions.
+
+### Import Errors
+
+Make sure imports are from the correct subpaths:
+
+```tsx
+// Correct
+import { render } from "vargai/react";
+import { fal } from "vargai/ai";
+
+// Incorrect
+import { render, fal } from "vargai";
+```

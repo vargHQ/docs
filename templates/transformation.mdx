@@ -1,0 +1,350 @@
+---
+title: "Transformation Template"
+description: "Create before/after comparison videos for fitness, makeover, and product content"
+---
+
+Create compelling before/after transformation videos with side-by-side comparisons, perfect for fitness content, makeovers, product demos, and UGC ads.
+
+## Basic Before/After
+
+Side-by-side still images:
+
+```tsx
+import { render, Render, Clip, Image, SplitLayout, Title } from "vargai/react";
+import { fal, higgsfield } from "vargai/ai";
+
+const CHARACTER = "woman in her 30s, brown hair, green eyes";
+
+const beforeImage = Image({
+  prompt: `${CHARACTER}, tired expression, loose grey t-shirt, bathroom mirror selfie`,
+  model: higgsfield.imageModel("soul", { styleId: higgsfield.styles.REALISTIC }),
+  aspectRatio: "9:16",
+});
+
+const afterImage = Image({
+  prompt: {
+    text: `${CHARACTER}, fit and confident, athletic wear, same bathroom, energetic smile`,
+    images: [beforeImage],
+  },
+  model: fal.imageModel("nano-banana-pro/edit"),
+  aspectRatio: "9:16",
+});
+
+await render(
+  <Render width={2160} height={1920}>
+    <Clip duration={5}>
+      <SplitLayout direction="horizontal" left={beforeImage} right={afterImage} />
+      <Title position="top" color="#ffffff">My 90-Day Transformation</Title>
+    </Clip>
+  </Render>,
+  { output: "output/transformation-basic.mp4" }
+);
+```
+
+---
+
+## Animated Transformation
+
+Before and after with animation:
+
+```tsx
+import { render, Render, Clip, Image, Video, SplitLayout, Title, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const CHARACTER = "woman in her 30s, brown hair";
+
+// Before image
+const beforeImage = Image({
+  prompt: `${CHARACTER}, overweight, tired expression, loose clothing, bathroom selfie`,
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+// After image (edited from before for consistency)
+const afterImage = Image({
+  prompt: {
+    text: `${CHARACTER}, slim fit body, confident smile, athletic tank top, same setting, same person transformed`,
+    images: [beforeImage],
+  },
+  model: fal.imageModel("nano-banana-pro/edit"),
+  aspectRatio: "9:16",
+});
+
+// Animate both
+const beforeVideo = Video({
+  prompt: { text: "person sighs, looks down sadly, touches stomach", images: [beforeImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+const afterVideo = Video({
+  prompt: { text: "person smiles confidently, flexes slightly, proud posture", images: [afterImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+await render(
+  <Render width={2160} height={1920}>
+    <Music prompt="inspiring transformation music, motivational" model={elevenlabs.musicModel()} volume={0.25} />
+    
+    <Clip duration={5}>
+      <SplitLayout direction="horizontal" left={beforeVideo} right={afterVideo} />
+      <Title position="top" color="#ffffff">What 3 Months Can Do</Title>
+    </Clip>
+  </Render>,
+  { output: "output/transformation-animated.mp4" }
+);
+```
+
+---
+
+## With Voiceover
+
+Narrated transformation story:
+
+```tsx
+import { render, Render, Clip, Image, Video, SplitLayout, Speech, Captions, Music, Title } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const CHARACTER = "woman in her 30s, brown hair";
+
+const beforeImage = Image({
+  prompt: `${CHARACTER}, tired, loose clothing, bathroom mirror`,
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+const afterImage = Image({
+  prompt: {
+    text: `${CHARACTER}, fit confident, athletic wear, same bathroom`,
+    images: [beforeImage],
+  },
+  model: fal.imageModel("nano-banana-pro/edit"),
+});
+
+const beforeVideo = Video({
+  prompt: { text: "person looking sad, sighing", images: [beforeImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+const afterVideo = Video({
+  prompt: { text: "person smiling proudly, confident pose", images: [afterImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+const voiceover = Speech({
+  voice: "bella",
+  children: "I never thought I could do it. But after three months of consistency, I lost 40 pounds. If I can do it, so can you.",
+});
+
+await render(
+  <Render width={2160} height={1920}>
+    <Music prompt="emotional inspiring piano music" model={elevenlabs.musicModel()} volume={0.15} />
+    
+    <Clip duration={8}>
+      <SplitLayout direction="horizontal" left={beforeVideo} right={afterVideo} />
+      <Title position="top" color="#ffffff">My Journey</Title>
+    </Clip>
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/transformation-narrated.mp4" }
+);
+```
+
+---
+
+## Sequential Reveal
+
+Show before first, then reveal after:
+
+```tsx
+import { render, Render, Clip, Image, Video, Title, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const CHARACTER = "man in his 40s, beard";
+
+const beforeImage = Image({
+  prompt: `${CHARACTER}, overweight, plain t-shirt, looking at camera`,
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+const afterImage = Image({
+  prompt: {
+    text: `${CHARACTER}, muscular fit, tank top, confident stance`,
+    images: [beforeImage],
+  },
+  model: fal.imageModel("nano-banana-pro/edit"),
+});
+
+const beforeVideo = Video({
+  prompt: { text: "man standing still, then shrugging", images: [beforeImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+const afterVideo = Video({
+  prompt: { text: "man flexing, proud smile", images: [afterImage] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="dramatic reveal music, building tension then triumph" model={elevenlabs.musicModel()} volume={0.3} />
+    
+    {/* Before */}
+    <Clip duration={3}>
+      <Video src={beforeVideo} />
+      <Title position="top" color="#ffffff">January 2025</Title>
+    </Clip>
+    
+    {/* Transition */}
+    <Clip duration={1} transition={{ name: "pixelize", duration: 0.8 }}>
+      <Image prompt="abstract particles, transformation energy" />
+    </Clip>
+    
+    {/* After */}
+    <Clip duration={3}>
+      <Video src={afterVideo} />
+      <Title position="top" color="#ffffff">April 2025</Title>
+    </Clip>
+  </Render>,
+  { output: "output/transformation-reveal.mp4" }
+);
+```
+
+---
+
+## Product Transformation
+
+Before/after with product:
+
+```tsx
+import { render, Render, Clip, Image, Video, SplitLayout, Title, Music, Packshot } from "vargai/react";
+import { fal, elevenlabs } from "vargai/ai";
+
+const beforeImage = Image({
+  prompt: "messy disorganized desk, papers everywhere, cluttered workspace",
+  aspectRatio: "16:9",
+});
+
+const afterImage = Image({
+  prompt: "same desk but perfectly organized, minimalist setup, clean workspace",
+  aspectRatio: "16:9",
+});
+
+await render(
+  <Render width={1920} height={1080}>
+    <Music prompt="satisfying organization music, clean modern" model={elevenlabs.musicModel()} volume={0.2} />
+    
+    {/* Side by side */}
+    <Clip duration={4}>
+      <SplitLayout direction="horizontal" left={beforeImage} right={afterImage} />
+      <Title position="bottom" color="#ffffff">Before & After Our Desk Organizer</Title>
+    </Clip>
+    
+    {/* Product shot */}
+    <Clip duration={3}>
+      <Packshot
+        background="#ffffff"
+        logo="media/product-logo.png"
+        cta="Shop Now - Link in Bio"
+        blinkCta
+      />
+    </Clip>
+  </Render>,
+  { output: "output/product-transformation.mp4" }
+);
+```
+
+---
+
+## Slider Reveal
+
+Interactive-style slider effect:
+
+```tsx
+import { render, Render, Clip, Image, Slider, Title, Music } from "vargai/react";
+import { elevenlabs } from "vargai/ai";
+
+const beforeImage = Image({
+  prompt: "old run-down kitchen, outdated appliances, worn cabinets",
+  aspectRatio: "16:9",
+});
+
+const afterImage = Image({
+  prompt: "same kitchen completely renovated, modern appliances, white cabinets, marble countertops",
+  aspectRatio: "16:9",
+});
+
+await render(
+  <Render width={1920} height={1080}>
+    <Music prompt="home renovation reveal music, satisfying" model={elevenlabs.musicModel()} volume={0.25} />
+    
+    <Clip duration={5}>
+      <Slider direction="horizontal">
+        {beforeImage}
+        {afterImage}
+      </Slider>
+      <Title position="top" color="#ffffff">Kitchen Renovation</Title>
+    </Clip>
+  </Render>,
+  { output: "output/slider-reveal.mp4" }
+);
+```
+
+---
+
+## Use Cases
+
+### Fitness/Weight Loss
+- Character: Same person, different body composition
+- Use `nano-banana-pro/edit` to transform while keeping identity
+- Add motivational voiceover
+- Include stats: "Lost 40 lbs in 90 days"
+
+### Skincare/Beauty
+- Focus on face closeups
+- Before: Skin concerns, tired look
+- After: Clear skin, glowing, makeup
+- Side-by-side or slider reveal works well
+
+### Home Renovation
+- Room before and after
+- Use slider for interactive feel
+- Add satisfying reveal music
+- Show progress stages
+
+### Product Results
+- Show problem state → solution state
+- Include product in after shot
+- End with CTA and product shot
+
+---
+
+## Tips
+
+### Character Consistency
+1. Generate "before" image first with `higgsfield.imageModel("soul")`
+2. Use `nano-banana-pro/edit` with before image as reference
+3. Keep same background, lighting, angle
+4. Describe the same person with different attributes
+
+### Prompt Strategy
+```tsx
+// Before prompt
+"woman, tired expression, loose clothing"
+
+// After prompt (reference before image)
+{
+  text: "same woman, confident smile, athletic wear",
+  images: [beforeImage]
+}
+```
+
+### Motion Prompts
+- **Before**: "sighs", "looks down", "touches problem area"
+- **After**: "smiles proudly", "confident pose", "flexes", "twirls"
+
+### Music Selection
+- Emotional journey: "inspiring transformation music"
+- Quick reveal: "dramatic reveal, building tension"
+- Satisfying: "satisfying before after music"

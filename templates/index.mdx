@@ -1,0 +1,234 @@
+---
+title: "Templates"
+description: "Copy-paste templates for common video types"
+---
+
+Ready-to-use templates for common video formats. Copy, customize, and run.
+
+## Quick Links
+
+<CardGroup cols={2}>
+  <Card title="Image Slideshow" icon="images" href="/templates/slideshow">
+    Multiple images with transitions and music
+  </Card>
+  <Card title="Talking Character" icon="comment" href="/templates/talking-character">
+    AI avatar with lipsync and captions
+  </Card>
+  <Card title="Before/After" icon="arrows-left-right" href="/templates/transformation">
+    Side-by-side transformation video
+  </Card>
+</CardGroup>
+
+---
+
+## Minimal Template
+
+The simplest possible video - single animated image:
+
+```tsx
+import { render, Render, Clip, Image, Video } from "vargai/react";
+import { fal } from "vargai/ai";
+
+const image = Image({ prompt: "cute cat character", aspectRatio: "9:16" });
+
+await render(
+  <Render width={1080} height={1920}>
+    <Clip duration={3}>
+      <Video
+        prompt={{ text: "cat waves hello", images: [image] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+  </Render>,
+  { output: "output/minimal.mp4" }
+);
+```
+
+---
+
+## Slideshow with Music
+
+Multiple scenes with transitions and background music:
+
+```tsx
+import { render, Render, Clip, Image, Music } from "vargai/react";
+import { elevenlabs } from "vargai/ai";
+
+const SCENES = [
+  "tropical beach at sunset, palm trees",
+  "mountain peaks covered in snow",
+  "cherry blossom trees in Japan",
+  "northern lights over Iceland",
+];
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music 
+      prompt="chill ambient travel music, peaceful" 
+      model={elevenlabs.musicModel()} 
+      volume={0.3} 
+    />
+    
+    {SCENES.map((prompt, i) => (
+      <Clip 
+        key={i} 
+        duration={3} 
+        transition={{ name: "fade", duration: 0.5 }}
+      >
+        <Image prompt={prompt} zoom="in" />
+      </Clip>
+    ))}
+  </Render>,
+  { output: "output/slideshow.mp4" }
+);
+```
+
+---
+
+## Product Showcase
+
+Rotating product views with text overlays:
+
+```tsx
+import { render, Render, Clip, Image, Video, Title, Music } from "vargai/react";
+import { fal, elevenlabs } from "vargai/ai";
+
+const product = Image({
+  prompt: "sleek wireless headphones, white background, studio lighting",
+  aspectRatio: "1:1",
+});
+
+await render(
+  <Render width={1080} height={1080}>
+    <Music prompt="modern tech commercial, upbeat" model={elevenlabs.musicModel()} volume={0.2} />
+    
+    <Clip duration={3}>
+      <Video
+        prompt={{ text: "product slowly rotates 360 degrees", images: [product] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+      <Title position="bottom" color="#ffffff">Premium Sound Quality</Title>
+    </Clip>
+    
+    <Clip duration={2}>
+      <Image src={product} zoom="in" />
+      <Title position="center" color="#ffffff">$299</Title>
+    </Clip>
+  </Render>,
+  { output: "output/product.mp4" }
+);
+```
+
+---
+
+## Talking Character (Simple)
+
+Character with voiceover and captions:
+
+```tsx
+import { render, Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
+import { fal, elevenlabs, higgsfield } from "vargai/ai";
+
+const character = Image({
+  prompt: "friendly tech reviewer, casual style, ring light, bedroom background",
+  model: higgsfield.imageModel("soul"),
+  aspectRatio: "9:16",
+});
+
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "josh",
+  children: "Hey everyone! Today I'm going to show you something really cool that changed how I work.",
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="upbeat tech vlog intro" model={elevenlabs.musicModel()} volume={0.1} />
+    
+    <Clip duration={6}>
+      <Video
+        prompt={{ text: "person talking naturally, gesturing", images: [character] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/talking.mp4" }
+);
+```
+
+---
+
+## Social Media Formats
+
+### TikTok/Reels (9:16)
+
+```tsx
+<Render width={1080} height={1920}>
+```
+
+### YouTube (16:9)
+
+```tsx
+<Render width={1920} height={1080}>
+```
+
+### Instagram Feed (1:1)
+
+```tsx
+<Render width={1080} height={1080}>
+```
+
+### YouTube Shorts (9:16 short)
+
+```tsx
+<Render width={1080} height={1920}>
+  {/* Keep total duration under 60 seconds */}
+</Render>
+```
+
+---
+
+## Transition Gallery
+
+Preview different transitions:
+
+```tsx
+const TRANSITIONS = ["fade", "crossfade", "wipeleft", "wiperight", "slideup", "cube"];
+
+await render(
+  <Render width={1080} height={1920}>
+    {TRANSITIONS.map((name, i) => (
+      <Clip 
+        key={i}
+        duration={2} 
+        transition={{ name, duration: 0.8 }}
+      >
+        <Image prompt={`abstract gradient ${i}`} />
+        <Title position="center">{name}</Title>
+      </Clip>
+    ))}
+  </Render>,
+  { output: "output/transitions.mp4" }
+);
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Slideshow Template" icon="images" href="/templates/slideshow">
+    Full slideshow with customization options
+  </Card>
+  <Card title="Talking Character" icon="comment" href="/templates/talking-character">
+    Complete talking head with lipsync
+  </Card>
+  <Card title="Transformation" icon="arrows-left-right" href="/templates/transformation">
+    Before/after comparison video
+  </Card>
+  <Card title="Components" icon="puzzle-piece" href="/sdk/components">
+    All available components
+  </Card>
+</CardGroup>

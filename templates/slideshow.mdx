@@ -1,0 +1,278 @@
+---
+title: "Slideshow Template"
+description: "Create image slideshows with transitions, zoom effects, and music"
+---
+
+Create beautiful image slideshows with AI-generated images, transitions, and background music.
+
+## Basic Slideshow
+
+```tsx
+import { render, Render, Clip, Image } from "vargai/react";
+
+const SCENES = [
+  "tropical beach at sunset",
+  "mountain peaks at dawn",
+  "city skyline at night",
+];
+
+await render(
+  <Render width={1080} height={1920}>
+    {SCENES.map((prompt, i) => (
+      <Clip key={i} duration={3} transition={{ name: "fade", duration: 0.5 }}>
+        <Image prompt={prompt} zoom="in" />
+      </Clip>
+    ))}
+  </Render>,
+  { output: "output/slideshow.mp4" }
+);
+```
+
+**Requirements:** `FAL_KEY` only
+
+---
+
+## With Background Music
+
+```tsx
+import { render, Render, Clip, Image, Music } from "vargai/react";
+import { elevenlabs } from "vargai/ai";
+
+const SCENES = [
+  "tropical beach at sunset, palm trees swaying",
+  "crystal clear ocean water, fish swimming",
+  "mountain peaks covered in snow, dramatic sky",
+  "northern lights over Iceland, green aurora",
+];
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music 
+      prompt="chill ambient travel music, peaceful vibes" 
+      model={elevenlabs.musicModel()} 
+      volume={0.3}
+      loop
+    />
+    
+    {SCENES.map((prompt, i) => (
+      <Clip key={i} duration={3} transition={{ name: "crossfade", duration: 0.5 }}>
+        <Image prompt={prompt} zoom="in" />
+      </Clip>
+    ))}
+  </Render>,
+  { output: "output/slideshow-music.mp4" }
+);
+```
+
+**Requirements:** `FAL_KEY` + `ELEVENLABS_API_KEY`
+
+---
+
+## With Narration
+
+```tsx
+import { render, Render, Clip, Image, Music, Speech, Captions } from "vargai/react";
+import { elevenlabs } from "vargai/ai";
+
+const SCENES = [
+  {
+    image: "tropical beach at sunset",
+    narration: "Imagine waking up to this every morning.",
+  },
+  {
+    image: "luxury overwater villa",
+    narration: "Your own private paradise.",
+  },
+  {
+    image: "couple watching sunset on beach",
+    narration: "Create memories that last forever.",
+  },
+];
+
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "rachel",
+  children: SCENES.map(s => s.narration).join(" "),
+});
+
+await render(
+  <Render width={1080} height={1920}>
+    <Music prompt="inspiring travel music, emotional" model={elevenlabs.musicModel()} volume={0.15} />
+    
+    {SCENES.map((scene, i) => (
+      <Clip key={i} duration={4} transition={{ name: "fade", duration: 0.5 }}>
+        <Image prompt={scene.image} zoom="in" />
+      </Clip>
+    ))}
+    
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>,
+  { output: "output/slideshow-narrated.mp4" }
+);
+```
+
+---
+
+## Customization
+
+### Zoom Effects
+
+```tsx
+// Zoom in (Ken Burns)
+<Image prompt="landscape" zoom="in" />
+
+// Zoom out
+<Image prompt="landscape" zoom="out" />
+
+// Pan left
+<Image prompt="landscape" zoom="left" />
+
+// Pan right
+<Image prompt="landscape" zoom="right" />
+```
+
+### Transitions
+
+```tsx
+// Fade
+<Clip transition={{ name: "fade", duration: 0.5 }}>
+
+// Crossfade (blend)
+<Clip transition={{ name: "crossfade", duration: 0.5 }}>
+
+// Wipe
+<Clip transition={{ name: "wipeleft", duration: 0.5 }}>
+<Clip transition={{ name: "wiperight", duration: 0.5 }}>
+
+// Slide
+<Clip transition={{ name: "slideup", duration: 0.5 }}>
+<Clip transition={{ name: "slidedown", duration: 0.5 }}>
+
+// 3D
+<Clip transition={{ name: "cube", duration: 0.8 }}>
+```
+
+### Aspect Ratios
+
+```tsx
+// TikTok/Reels (vertical)
+<Render width={1080} height={1920}>
+<Image aspectRatio="9:16" />
+
+// YouTube (horizontal)
+<Render width={1920} height={1080}>
+<Image aspectRatio="16:9" />
+
+// Instagram (square)
+<Render width={1080} height={1080}>
+<Image aspectRatio="1:1" />
+```
+
+### Music Styles
+
+```tsx
+// Travel content
+<Music prompt="chill ambient travel music, peaceful" />
+
+// Motivational
+<Music prompt="inspiring orchestral music, uplifting" />
+
+// Tech/Product
+<Music prompt="modern electronic, corporate tech" />
+
+// Emotional
+<Music prompt="piano and strings, emotional, cinematic" />
+
+// Energetic
+<Music prompt="upbeat pop music, energetic" />
+```
+
+---
+
+## Using Existing Images
+
+Instead of AI-generated images, use your own:
+
+```tsx
+import { render, Render, Clip, Image } from "vargai/react";
+
+const photos = [
+  "media/vacation-1.jpg",
+  "media/vacation-2.jpg",
+  "media/vacation-3.jpg",
+];
+
+await render(
+  <Render width={1080} height={1920}>
+    {photos.map((src, i) => (
+      <Clip key={i} duration={3} transition={{ name: "fade", duration: 0.5 }}>
+        <Image src={src} zoom="in" resize="cover" />
+      </Clip>
+    ))}
+  </Render>,
+  { output: "output/photo-slideshow.mp4" }
+);
+```
+
+---
+
+## Full Featured Example
+
+Complete slideshow with all features:
+
+```tsx
+import { render, Render, Clip, Image, Music, Title, Packshot } from "vargai/react";
+import { elevenlabs } from "vargai/ai";
+
+const SCENES = [
+  { prompt: "tropical beach sunset", title: "Bali" },
+  { prompt: "ancient temple in jungle", title: "Angkor Wat" },
+  { prompt: "snow-capped mountain", title: "Swiss Alps" },
+  { prompt: "northern lights", title: "Iceland" },
+];
+
+await render(
+  <Render width={1080} height={1920}>
+    {/* Background music */}
+    <Music 
+      prompt="inspiring travel montage music, emotional crescendo" 
+      model={elevenlabs.musicModel()} 
+      volume={0.25}
+    />
+    
+    {/* Opening title */}
+    <Clip duration={2}>
+      <Image prompt="world map, travel pins, vintage style" />
+      <Title position="center" color="#ffffff">Our 2025 Adventures</Title>
+    </Clip>
+    
+    {/* Photo slides */}
+    {SCENES.map((scene, i) => (
+      <Clip key={i} duration={3} transition={{ name: "crossfade", duration: 0.5 }}>
+        <Image prompt={scene.prompt} zoom="in" />
+        <Title position="bottom" color="#ffffff">{scene.title}</Title>
+      </Clip>
+    ))}
+    
+    {/* End card */}
+    <Clip duration={3}>
+      <Packshot 
+        background="#000000"
+        cta="Follow for more travel content!"
+        blinkCta
+      />
+    </Clip>
+  </Render>,
+  { output: "output/travel-slideshow.mp4" }
+);
+```
+
+---
+
+## Tips
+
+1. **Duration**: 2-4 seconds per slide works best
+2. **Transitions**: 0.3-0.5s for quick pace, 0.8-1.0s for cinematic
+3. **Zoom**: Alternate between `in` and `out` for variety
+4. **Music**: Keep volume at 0.2-0.3 if adding voiceover later
+5. **Prompts**: Be specific about lighting, mood, and style for consistency

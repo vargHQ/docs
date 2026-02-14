@@ -1,97 +1,100 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "varg"
+description: "JSX for AI videos. Write React-like code, get rendered videos."
 ---
 
-## Setting up
+## What is varg?
 
-Get your documentation site up and running in minutes.
+varg is an AI video generation SDK that lets you create videos using JSX syntax. Write declarative code like React components, and varg handles AI generation, caching, and video rendering.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+```tsx
+import { render, Render, Clip, Image, Video } from "vargai/react";
+import { fal } from "vargai/ai";
 
-## Make it yours
+const cat = Image({ prompt: "cute orange cat, Pixar style", aspectRatio: "9:16" });
 
-Design a docs site that looks great and empowers your users.
+await render(
+  <Render width={1080} height={1920}>
+    <Clip duration={3}>
+      <Video
+        prompt={{ text: "cat waves hello, bounces happily", images: [cat] }}
+        model={fal.videoModel("kling-v2.5")}
+      />
+    </Clip>
+  </Render>,
+  { output: "hello.mp4" }
+);
+```
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+Run it:
+
+```bash
+bun run hello.tsx
+```
+
+## Quick Start
+
+<Steps>
+  <Step title="Install">
+    ```bash
+    bun install vargai ai
+    ```
+  </Step>
+  <Step title="Set API Key">
+    ```bash
+    export FAL_KEY=fal_xxx
+    ```
+    Get your key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys)
+  </Step>
+  <Step title="Create Video">
+    ```bash
+    bunx vargai hello
+    bun run hello.tsx
+    ```
+  </Step>
+</Steps>
+
+## Why varg?
+
+<CardGroup cols={2}>
+  <Card title="Declarative JSX" icon="code">
+    Write videos like React components. Compose scenes, add transitions, layer audio.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="AI-Native" icon="wand-magic-sparkles">
+    Built-in support for image generation, video synthesis, voice, music, and lipsync.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Automatic Caching" icon="bolt">
+    Same props = instant cache hit. Re-render videos without re-generating AI assets.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Multiple Providers" icon="plug">
+    Fal, ElevenLabs, Higgsfield, OpenAI, Replicate. One unified API.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Use Cases
 
-Everything you need to create world-class documentation.
+- **Social Media Content**: TikTok, Reels, Shorts at scale
+- **Talking Characters**: AI avatars with lipsync and captions
+- **Product Videos**: E-commerce showcases, before/after transformations
+- **Slideshows**: Image sequences with transitions and music
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Next Steps
 
-## Need inspiration?
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Full setup with all optional features
+  </Card>
+  <Card title="Components" icon="puzzle-piece" href="/sdk/components">
+    All available JSX components
+  </Card>
+  <Card title="AI Models" icon="microchip" href="/sdk/models">
+    Supported image, video, and audio models
+  </Card>
+  <Card title="Templates" icon="clone" href="/templates">
+    Copy-paste examples for common video types
+  </Card>
+</CardGroup>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## For AI Agents
+
+If you're an AI assistant helping someone create videos with varg, see the [AI Agents](/ai-agents) page for complete context, component tables, and common patterns.

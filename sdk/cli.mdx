@@ -1,0 +1,259 @@
+---
+title: "CLI Reference"
+description: "varg command-line interface for quick operations"
+---
+
+The varg CLI provides quick commands for common operations without writing code.
+
+## Installation
+
+The CLI is included with the `vargai` package:
+
+```bash
+bun install vargai ai
+```
+
+Or use directly with `bunx`:
+
+```bash
+bunx vargai <command>
+```
+
+## Commands
+
+### Initialize Project
+
+Create a new varg project:
+
+```bash
+bunx vargai init
+```
+
+Creates:
+- `package.json` with vargai dependency
+- `.env.example` with API key placeholders
+- `hello.tsx` starter video
+
+### Create Hello World
+
+Generate just the hello world starter:
+
+```bash
+bunx vargai hello
+```
+
+Creates `hello.tsx` with a minimal working example.
+
+### Render Video
+
+Render a TSX file to video:
+
+```bash
+bunx vargai render <file.tsx>
+```
+
+Options:
+- `--output, -o` - Output file path (default: `output/video.mp4`)
+- `--cache` - Cache directory (default: `.cache/ai`)
+- `--verbose, -v` - Show detailed progress
+
+Example:
+
+```bash
+bunx vargai render my-video.tsx -o output/my-video.mp4 -v
+```
+
+### Run Actions
+
+Execute individual generation actions:
+
+```bash
+varg run <action> [options]
+```
+
+#### Generate Image
+
+```bash
+varg run image --prompt "sunset over mountains"
+varg run image --prompt "cute cat" --model flux-pro --aspect-ratio 16:9
+```
+
+Options:
+- `--prompt, -p` - Image description (required)
+- `--model, -m` - Model name (default: `flux-schnell`)
+- `--aspect-ratio, -a` - Output ratio (default: `1:1`)
+- `--output, -o` - Output path
+- `--quiet, -q` - Minimal output
+- `--json` - JSON output
+
+#### Generate Video
+
+```bash
+varg run video --prompt "ocean waves" --duration 5
+varg run video --prompt "cat waving" --image media/cat.jpg --duration 5
+```
+
+Options:
+- `--prompt, -p` - Video description (required)
+- `--image, -i` - Input image for image-to-video
+- `--duration, -d` - Duration in seconds (default: `5`)
+- `--model, -m` - Model name (default: `kling-v2.5`)
+- `--output, -o` - Output path
+- `--quiet, -q` - Minimal output
+
+#### Generate Voice
+
+```bash
+varg run voice --text "Hello world" --voice rachel
+```
+
+Options:
+- `--text, -t` - Text to speak (required)
+- `--voice, -v` - Voice name (default: `rachel`)
+- `--model, -m` - TTS model
+- `--output, -o` - Output path
+
+#### Generate Music
+
+```bash
+varg run music --prompt "upbeat electronic" --duration 30
+```
+
+Options:
+- `--prompt, -p` - Music description (required)
+- `--duration, -d` - Duration in seconds
+- `--output, -o` - Output path
+
+#### Transcribe Audio
+
+```bash
+varg run transcribe audio.mp3
+```
+
+Options:
+- `--provider` - Transcription provider (`fal`, `groq`)
+- `--output, -o` - Output SRT path
+
+#### Add Captions
+
+```bash
+varg run captions video.mp4 --style tiktok
+```
+
+Options:
+- `--style, -s` - Caption style (`tiktok`, `karaoke`, `bounce`)
+- `--color, -c` - Text color
+- `--output, -o` - Output path
+
+### List Actions
+
+Show all available actions:
+
+```bash
+varg list
+```
+
+### Action Help
+
+Get help for a specific action:
+
+```bash
+varg run <action> --help
+```
+
+### Visual Studio
+
+Open the visual editor:
+
+```bash
+varg studio
+```
+
+Opens `http://localhost:8282` with:
+- Monaco code editor with TypeScript support
+- Node graph visualization
+- Step-by-step execution with previews
+- Cache viewer
+
+---
+
+## Examples
+
+### Quick Image Generation
+
+```bash
+# Generate and save
+varg run image -p "cyberpunk cityscape at night" -o output/city.png
+
+# With specific model and ratio
+varg run image -p "portrait headshot, studio lighting" -m flux-pro -a 9:16
+```
+
+### Image-to-Video Pipeline
+
+```bash
+# 1. Generate character image
+varg run image -p "friendly robot character" -o media/robot.png
+
+# 2. Animate to video
+varg run video -p "robot waves hello" -i media/robot.png -d 5 -o output/robot.mp4
+```
+
+### Voice + Video
+
+```bash
+# Generate voiceover
+varg run voice -t "Welcome to my channel!" -v josh -o media/intro.mp3
+
+# Add captions to existing video
+varg run captions video.mp4 --style tiktok -o output/captioned.mp4
+```
+
+### Batch Processing
+
+```bash
+# Generate multiple images
+for prompt in "sunset" "mountains" "ocean"; do
+  varg run image -p "$prompt landscape" -o "output/$prompt.png" -q
+done
+```
+
+---
+
+## Environment Variables
+
+The CLI reads from `.env` file or environment:
+
+```bash
+FAL_KEY=fal_xxx                    # Required for images/video
+ELEVENLABS_API_KEY=xxx             # Required for voice/music
+HIGGSFIELD_API_KEY=hf_xxx          # Optional for character images
+```
+
+---
+
+## Output Formats
+
+### Default Output
+
+```
+[image] Generating with flux-schnell...
+[image] Generated: output/image.png
+```
+
+### Quiet Mode (`--quiet`)
+
+```
+output/image.png
+```
+
+### JSON Mode (`--json`)
+
+```json
+{
+  "url": "output/image.png",
+  "model": "flux-schnell",
+  "prompt": "sunset over mountains",
+  "duration_ms": 2340
+}
+```

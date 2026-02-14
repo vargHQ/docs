@@ -1,0 +1,167 @@
+---
+title: "Claude Code Setup"
+description: "Configure Claude Code for video generation with varg"
+icon: "terminal"
+---
+
+Set up Claude Code to help you create AI videos with varg.
+
+## Prerequisites
+
+- [Claude Code CLI](https://claude.ai/docs) installed
+- varg project initialized (`bun install vargai ai`)
+- API keys configured (at minimum `FAL_KEY`)
+
+## Setup
+
+<Steps>
+<Step title="Install Claude Code">
+  ```bash
+  npm install -g @anthropic-ai/claude-code
+  ```
+</Step>
+
+<Step title="Add varg Skill">
+  In your project directory:
+
+  ```bash
+  npx skills add https://varg.ai/docs
+  ```
+
+  This gives Claude Code:
+  - Component reference
+  - Model information
+  - Code templates
+  - Best practices
+</Step>
+
+<Step title="Configure Project">
+  Create or update `CLAUDE.md` in your project root:
+
+  ```markdown
+  # varg Video Project
+
+  ## Commands
+  - `bun run <file.tsx>` - Render video
+  - `bunx vargai render <file.tsx>` - Alternative render
+
+  ## Folders
+  - `media/` - Input assets
+  - `output/` - Generated videos
+
+  ## API Keys
+  Required in .env:
+  - FAL_KEY (images, video)
+  - ELEVENLABS_API_KEY (voice, music)
+  ```
+</Step>
+
+<Step title="Start Creating">
+  ```bash
+  claude
+  ```
+
+  Try:
+  - "Create a 10-second TikTok video about cats"
+  - "Make a talking character video with this script: ..."
+  - "Generate a slideshow from these prompts: ..."
+</Step>
+</Steps>
+
+## Example Prompts
+
+### Simple Video
+
+```
+Create a simple 5-second video of a cute robot waving hello.
+Use vertical format for TikTok.
+```
+
+### Talking Character
+
+```
+Create a talking character video with this script:
+"Hey everyone! Today I'm going to share my top productivity tips."
+
+Use a friendly female character with casual style.
+Add TikTok-style captions and upbeat background music.
+```
+
+### Product Video
+
+```
+Create a product showcase video for wireless headphones.
+Show the product rotating with text overlays highlighting features:
+- Premium Sound
+- 40hr Battery
+- Active Noise Cancellation
+
+End with a "Shop Now" call-to-action.
+```
+
+### Before/After
+
+```
+Create a transformation video showing a fitness journey.
+Side-by-side comparison with "before" and "after" states.
+Add motivational music and captions.
+```
+
+## Tips for Best Results
+
+### Be Specific About Format
+
+```
+# Good
+"Create a vertical 9:16 video for TikTok, 15 seconds max"
+
+# Less specific
+"Make a social media video"
+```
+
+### Include Style Details
+
+```
+# Good
+"Pixar-style animated character, bright colors, friendly expression"
+
+# Less specific
+"Cute character"
+```
+
+### Specify Audio
+
+```
+# Good
+"Add upbeat electronic background music at low volume, 
+with word-by-word TikTok-style captions"
+
+# Less specific
+"Add music and captions"
+```
+
+## Troubleshooting
+
+### "FAL_KEY not found"
+
+Ensure your `.env` file has the API key:
+
+```bash
+echo "FAL_KEY=fal_xxx" >> .env
+```
+
+### "Video rendering failed"
+
+- Check prompt doesn't violate content policy
+- Try simpler motion descriptions
+- Reduce video duration
+
+### "Slow generation"
+
+First run generates AI assets (1-2 min). Subsequent runs with same props are instant (cached).
+
+## Next Steps
+
+- Read the [AI Agent Context](/ai-agents) page for complete reference
+- Browse [Templates](/templates) for copy-paste examples
+- Check [Components](/sdk/components) for all available options

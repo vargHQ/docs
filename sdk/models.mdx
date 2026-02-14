@@ -1,0 +1,348 @@
+---
+title: "AI Models"
+description: "All supported image, video, speech, and music models"
+---
+
+## Import
+
+```tsx
+import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
+```
+
+## Quick Reference
+
+| Category | Recommended Model | Provider | Use Case |
+|----------|-------------------|----------|----------|
+| Image (fast) | `flux-schnell` | Fal | Quick iterations |
+| Image (quality) | `flux-pro` | Fal | Final output |
+| Image (characters) | `soul` | Higgsfield | Consistent characters |
+| Video | `kling-v2.5` | Fal | Best quality |
+| Video (characters) | `wan-2.5` | Fal | Character animation |
+| Lipsync | `sync-v2-pro` | Fal | Lip synchronization |
+| Speech | `eleven_multilingual_v2` | ElevenLabs | Multiple languages |
+| Music | `music_v1` | ElevenLabs | Background music |
+
+---
+
+## Image Models
+
+### Fal
+
+```tsx
+import { fal } from "vargai/ai";
+
+// Fast generation
+fal.imageModel("flux-schnell")
+
+// High quality
+fal.imageModel("flux-pro")
+
+// Development
+fal.imageModel("flux-dev")
+
+// Versatile
+fal.imageModel("nano-banana-pro")
+
+// Image editing (requires input image)
+fal.imageModel("nano-banana-pro/edit")
+
+// Alternative
+fal.imageModel("recraft-v3")
+```
+
+| Model | Speed | Quality | Best For |
+|-------|-------|---------|----------|
+| `flux-schnell` | Fast | Good | Iterations, previews |
+| `flux-pro` | Slow | Excellent | Final output |
+| `flux-dev` | Medium | Good | Development |
+| `nano-banana-pro` | Medium | Good | General purpose |
+| `nano-banana-pro/edit` | Medium | Good | Image-to-image editing |
+| `recraft-v3` | Medium | Good | Alternative style |
+
+**Usage:**
+
+```tsx
+const image = Image({
+  prompt: "sunset over mountains, dramatic lighting",
+  model: fal.imageModel("flux-schnell"),
+  aspectRatio: "16:9",
+});
+```
+
+### Higgsfield (Character Consistency)
+
+```tsx
+import { higgsfield } from "vargai/ai";
+
+// Default style
+higgsfield.imageModel("soul")
+
+// With specific style
+higgsfield.imageModel("soul", { 
+  styleId: higgsfield.styles.REALISTIC,
+  quality: "1080p"
+})
+```
+
+**Available styles:**
+
+| Style | Description |
+|-------|-------------|
+| `REALISTIC` | Photorealistic |
+| `ANIME` | Anime style |
+| `EDITORIAL_90S` | 90s editorial |
+| `Y2K` | Year 2000 aesthetic |
+| `GRUNGE` | Grunge style |
+
+**Usage:**
+
+```tsx
+const character = Image({
+  prompt: "professional woman, friendly smile, business attire",
+  model: higgsfield.imageModel("soul", { 
+    styleId: higgsfield.styles.REALISTIC 
+  }),
+  aspectRatio: "9:16",
+});
+```
+
+<Note>
+Higgsfield Soul excels at generating consistent human characters. Use it when you need the same person across multiple scenes.
+</Note>
+
+### Replicate
+
+```tsx
+import { replicate } from "vargai/ai";
+
+// Background removal
+replicate.imageModel("851-labs/background-remover")
+
+// Any replicate model
+replicate.imageModel("owner/model-name")
+```
+
+---
+
+## Video Models
+
+### Fal
+
+```tsx
+import { fal } from "vargai/ai";
+
+// High quality (recommended)
+fal.videoModel("kling-v2.5")
+
+// Previous version
+fal.videoModel("kling-v2.1")
+
+// Good for characters
+fal.videoModel("wan-2.5")
+
+// Alternative
+fal.videoModel("minimax")
+
+// Lipsync models
+fal.videoModel("sync-v2")
+fal.videoModel("sync-v2-pro")
+```
+
+| Model | Duration | Quality | Best For |
+|-------|----------|---------|----------|
+| `kling-v2.5` | 5-10s | Excellent | General video |
+| `kling-v2.1` | 5-10s | Good | Alternative |
+| `wan-2.5` | 5s | Good | Character animation |
+| `minimax` | 5s | Good | Quick generation |
+| `sync-v2-pro` | - | Excellent | Lip synchronization |
+
+**Text-to-video:**
+
+```tsx
+<Video
+  prompt="ocean waves crashing on rocky shore"
+  model={fal.videoModel("kling-v2.5")}
+/>
+```
+
+**Image-to-video:**
+
+```tsx
+const character = Image({ prompt: "robot character" });
+
+<Video
+  prompt={{ 
+    text: "robot waves hello, subtle movement",
+    images: [character] 
+  }}
+  model={fal.videoModel("kling-v2.5")}
+/>
+```
+
+**Lipsync (video + audio):**
+
+```tsx
+const animated = Video({
+  prompt: { text: "person talking", images: [character] },
+  model: fal.videoModel("kling-v2.5"),
+});
+
+const speech = Speech({
+  children: "Hello everyone!",
+  voice: "rachel",
+});
+
+<Video
+  prompt={{ video: animated, audio: speech }}
+  model={fal.videoModel("sync-v2-pro")}
+/>
+```
+
+### OpenAI (Sora)
+
+```tsx
+import { openai } from "vargai/ai";
+
+// Sora video generation
+openai.videoModel("sora-2")
+openai.videoModel("sora-2-pro")
+```
+
+<Note>
+Requires `OPENAI_API_KEY` environment variable. Sora is in limited access.
+</Note>
+
+---
+
+## Speech Models
+
+### ElevenLabs
+
+```tsx
+import { elevenlabs } from "vargai/ai";
+
+// Fast TTS (default)
+elevenlabs.speechModel("eleven_turbo_v2")
+
+// Multilingual (recommended)
+elevenlabs.speechModel("eleven_multilingual_v2")
+```
+
+| Model | Speed | Languages | Best For |
+|-------|-------|-----------|----------|
+| `eleven_turbo_v2` | Fast | English | Quick generation |
+| `eleven_multilingual_v2` | Medium | 29+ | Multiple languages |
+
+**Available voices:**
+
+| Voice | Gender | Style |
+|-------|--------|-------|
+| `rachel` | Female | Professional |
+| `bella` | Female | Warm |
+| `adam` | Male | Professional |
+| `josh` | Male | Casual |
+| `sam` | Male | Authoritative |
+| `antoni` | Male | Friendly |
+| `elli` | Female | Young |
+| `arnold` | Male | Deep |
+| `domi` | Female | Energetic |
+
+**Usage:**
+
+```tsx
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  voice: "rachel",
+  children: "Welcome to our channel! Today we're exploring AI video.",
+});
+```
+
+---
+
+## Music Models
+
+### ElevenLabs
+
+```tsx
+import { elevenlabs } from "vargai/ai";
+
+// Music generation
+elevenlabs.musicModel()
+```
+
+**Usage:**
+
+```tsx
+<Music 
+  prompt="upbeat electronic pop, energetic, modern" 
+  model={elevenlabs.musicModel()} 
+  volume={0.2}
+/>
+```
+
+**Prompt tips:**
+
+- Be specific about genre: "lo-fi hip hop", "cinematic orchestral", "upbeat pop"
+- Include mood: "energetic", "calm", "dramatic", "mysterious"
+- Mention instruments: "piano", "guitar", "synth", "strings"
+- Specify tempo if important: "slow", "uptempo", "120 BPM"
+
+---
+
+## Transcription Models
+
+### Fal
+
+```tsx
+import { fal } from "vargai/ai";
+
+fal.transcriptionModel("whisper")
+```
+
+**Usage (via CLI):**
+
+```bash
+varg run transcribe audio.mp3 --provider fal
+```
+
+---
+
+## Model Selection Guide
+
+### For Images
+
+| Need | Recommended Model |
+|------|-------------------|
+| Fast iteration | `fal.imageModel("flux-schnell")` |
+| Final quality | `fal.imageModel("flux-pro")` |
+| Consistent characters | `higgsfield.imageModel("soul")` |
+| Image editing | `fal.imageModel("nano-banana-pro/edit")` |
+
+### For Videos
+
+| Need | Recommended Model |
+|------|-------------------|
+| General video | `fal.videoModel("kling-v2.5")` |
+| Character animation | `fal.videoModel("wan-2.5")` |
+| Lip synchronization | `fal.videoModel("sync-v2-pro")` |
+| Premium quality | `openai.videoModel("sora-2")` |
+
+### For Audio
+
+| Need | Recommended Model |
+|------|-------------------|
+| English voiceover | `elevenlabs.speechModel("eleven_turbo_v2")` |
+| Multilingual | `elevenlabs.speechModel("eleven_multilingual_v2")` |
+| Background music | `elevenlabs.musicModel()` |
+
+---
+
+## API Keys
+
+| Provider | Variable | Get Key |
+|----------|----------|---------|
+| Fal | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
+| ElevenLabs | `ELEVENLABS_API_KEY` | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
+| Higgsfield | `HIGGSFIELD_API_KEY`, `HIGGSFIELD_SECRET` | Contact Higgsfield |
+| OpenAI | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| Replicate | `REPLICATE_API_TOKEN` | [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens) |
