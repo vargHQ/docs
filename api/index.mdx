@@ -1,9 +1,9 @@
 ---
 title: "Gateway API"
-description: "REST API for AI video generation at api.varg.ai"
+description: "Unified REST API for AI generation at api.varg.ai"
 ---
 
-The varg Gateway provides a unified REST API for AI generation across multiple providers (Fal, ElevenLabs, Higgsfield, Replicate). One API key, server-side caching, and stable output URLs.
+The varg Gateway provides a single REST API for AI generation across multiple providers (Fal, ElevenLabs, Higgsfield, Replicate). One API key, server-side caching, and stable output URLs at `s3.varg.ai`.
 
 ## Base URL
 
@@ -13,7 +13,7 @@ https://api.varg.ai/v1
 
 ## Authentication
 
-All requests require a varg API key in the Authorization header:
+All requests require a varg API key:
 
 ```bash
 Authorization: Bearer varg_xxx
@@ -23,7 +23,7 @@ Get your API key at [varg.ai/dashboard](https://varg.ai/dashboard).
 
 ### Bring Your Own Key (BYOK)
 
-Optionally use your own provider keys to bypass varg billing:
+Use your own provider keys to bypass varg billing entirely:
 
 ```bash
 X-Provider-Key-Fal: fal_xxx
@@ -34,326 +34,118 @@ X-Provider-Key-Replicate: r8_xxx
 
 ## Quick Start
 
-### Generate Video
+Generate a video and poll for the result:
 
 ```bash
+# Create job
 curl -X POST https://api.varg.ai/v1/video \
   -H "Authorization: Bearer varg_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "kling-v2.5",
-    "prompt": "cat jumping over a fence"
-  }'
-```
+  -d '{"model": "kling-v2.5", "prompt": "cat jumping over a fence"}'
 
-Response:
+# Response
+# {"job_id": "job_a1b2c3d4", "status": "queued", "model": "fal:kling-v2.5", "created_at": "2026-02-13T10:00:00Z"}
 
-```json
-{
-  "job_id": "job_a1b2c3d4",
-  "status": "queued",
-  "model": "fal:kling-v2.5",
-  "created_at": "2026-02-13T10:00:00Z"
-}
-```
-
-### Poll for Completion
-
-```bash
+# Poll until complete
 curl https://api.varg.ai/v1/jobs/job_a1b2c3d4 \
   -H "Authorization: Bearer varg_xxx"
+
+# Response when done
+# {"job_id": "job_a1b2c3d4", "status": "completed", "output": {"url": "https://s3.varg.ai/o/job_a1b2c3d4.mp4", "media_type": "video/mp4"}, ...}
 ```
 
-Response when complete:
+## TypeScript SDK
+
+The `@vargai/gateway` package wraps the REST API with full TypeScript types.
+
+```bash
+bun add @vargai/gateway
+```
+
+### Create a client
+
+```typescript
+import { VargClient } from "@vargai/gateway";
+
+const client = new VargClient({ apiKey: "varg_xxx" });
+```
+
+### Generate video
+
+```typescript
+// Create job and wait for completion
+const job = await client.createVideo({
+  model: "kling-v2.5",
+  prompt: "cat jumping over a fence in slow motion",
+  duration: 5,
+  aspect_ratio: "16:9",
+});
+
+const result = await client.waitForJob(job.job_id);
+console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp4
+
+// Image-to-video
+const i2vJob = await client.createVideo({
+  model: "kling-v2.5",
+  prompt: "cat turns and looks at camera",
+  files: [{ url: "https://example.com/cat.jpg" }],
+});
+```
+
+### Generate image
+
+```typescript
+const job = await client.createImage({
+  model: "flux-schnell",
+  prompt: "sunset over mountains, dramatic lighting",
+  aspect_ratio: "16:9",
+});
+
+const result = await client.waitForJob(job.job_id);
+console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.jpg
+```
+
+### Generate speech
+
+```typescript
+const job = await client.createSpeech({
+  model: "eleven_multilingual_v2",
+  text: "Hello everyone! Welcome to my channel.",
+  voice: "rachel", // rachel, domi, sarah, antoni, elli, josh, arnold, adam, sam
+});
+
+const result = await client.waitForJob(job.job_id);
+console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp3
+```
+
+### Upload a file
+
+```typescript
+const file = await fs.readFile("./photo.jpg");
+
+const uploaded = await client.uploadFile(file, {
+  contentHash: "sha256:abc123...", // optional, for deduplication
+});
+
+console.log(uploaded.url); // https://s3.varg.ai/u/user_xxx/abc123.jpg
+
+// Use in generation
+const job = await client.createVideo({
+  model: "kling-v2.5",
+  prompt: "photo comes to life",
+  files: [{ url: uploaded.url }],
+});
+```
+
+## Model resolution
+
+Models can be specified as `provider:model` or just the model name. The gateway resolves the provider automatically.
 
 ```json
-{
-  "job_id": "job_a1b2c3d4",
-  "status": "completed",
-  "model": "fal:kling-v2.5",
-  "output": {
-    "url": "https://s3.varg.ai/o/job_a1b2c3d4.mp4",
-    "media_type": "video/mp4"
-  },
-  "created_at": "2026-02-13T10:00:00Z",
-  "completed_at": "2026-02-13T10:02:30Z"
-}
+{ "model": "fal:kling-v2.5" }  // explicit
+{ "model": "kling-v2.5" }      // auto-resolved to fal
+{ "model": "soul" }            // auto-resolved to higgsfield
 ```
-
-## Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/v1/video` | Generate video |
-| POST | `/v1/image` | Generate image |
-| POST | `/v1/speech` | Text-to-speech |
-| POST | `/v1/music` | Generate music |
-| POST | `/v1/transcription` | Transcribe audio |
-| POST | `/v1/files` | Upload file |
-| GET | `/v1/jobs/:id` | Get job status |
-| DELETE | `/v1/jobs/:id` | Cancel job |
-
----
-
-## Video Generation
-
-Generate video from text or image.
-
-```http
-POST /v1/video
-```
-
-**Request:**
-
-```json
-{
-  "model": "kling-v2.5",
-  "prompt": "ocean waves crashing on beach",
-  "duration": 5
-}
-```
-
-**Image-to-video:**
-
-```json
-{
-  "model": "kling-v2.5",
-  "prompt": {
-    "text": "cat turns and looks at camera",
-    "images": ["https://example.com/cat.jpg"]
-  },
-  "duration": 5
-}
-```
-
-**Parameters:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `model` | string | Yes | Video model (e.g., `kling-v2.5`, `wan-2.5`) |
-| `prompt` | string/object | Yes | Text or `{text, images}` object |
-| `duration` | number | No | Duration in seconds (default: 5) |
-
-**Response:** Job object with `job_id` and `status: "queued"`.
-
----
-
-## Image Generation
-
-Generate image from text.
-
-```http
-POST /v1/image
-```
-
-**Request:**
-
-```json
-{
-  "model": "flux-schnell",
-  "prompt": "sunset over mountains, dramatic lighting",
-  "aspect_ratio": "16:9"
-}
-```
-
-**Parameters:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `model` | string | Yes | Image model (e.g., `flux-schnell`, `flux-pro`) |
-| `prompt` | string | Yes | Image description |
-| `aspect_ratio` | string | No | Output ratio (default: `1:1`) |
-
----
-
-## Speech Generation
-
-Text-to-speech synthesis.
-
-```http
-POST /v1/speech
-```
-
-**Request:**
-
-```json
-{
-  "model": "eleven_multilingual_v2",
-  "text": "Hello everyone! Welcome to my channel.",
-  "voice": "rachel"
-}
-```
-
-**Parameters:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `model` | string | Yes | Speech model |
-| `text` | string | Yes | Text to speak |
-| `voice` | string | No | Voice name (default: `rachel`) |
-
----
-
-## Music Generation
-
-Generate background music.
-
-```http
-POST /v1/music
-```
-
-**Request:**
-
-```json
-{
-  "model": "music_v1",
-  "prompt": "upbeat electronic pop, energetic",
-  "duration": 30
-}
-```
-
-**Parameters:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `model` | string | Yes | Music model |
-| `prompt` | string | Yes | Music description |
-| `duration` | number | No | Duration in seconds |
-
----
-
-## Transcription
-
-Transcribe audio to text.
-
-```http
-POST /v1/transcription
-```
-
-**Request:**
-
-```json
-{
-  "model": "whisper",
-  "audio_url": "https://example.com/audio.mp3"
-}
-```
-
----
-
-## File Upload
-
-Upload files for use in generation.
-
-```http
-POST /v1/files
-Content-Type: application/octet-stream
-
-[binary data]
-```
-
-**Response:**
-
-```json
-{
-  "url": "https://s3.varg.ai/u/user_xxx/abc123.jpg",
-  "media_type": "image/jpeg",
-  "size": 102400
-}
-```
-
-Max file size: 50MB.
-
----
-
-## Job Management
-
-### Get Job Status
-
-```http
-GET /v1/jobs/:job_id
-```
-
-**Response:**
-
-```json
-{
-  "job_id": "job_xxx",
-  "status": "completed",
-  "model": "fal:kling-v2.5",
-  "output": {
-    "url": "https://s3.varg.ai/o/job_xxx.mp4",
-    "media_type": "video/mp4"
-  },
-  "cache": {
-    "hit": false,
-    "key": "sha256:abc..."
-  },
-  "created_at": "2026-02-13T10:00:00Z",
-  "completed_at": "2026-02-13T10:02:30Z"
-}
-```
-
-**Status values:**
-
-| Status | Description |
-|--------|-------------|
-| `queued` | Job created, waiting to start |
-| `processing` | Generation in progress |
-| `completed` | Success, output available |
-| `failed` | Generation failed |
-| `cancelled` | Job was cancelled |
-
-### Cancel Job
-
-```http
-DELETE /v1/jobs/:job_id
-```
-
----
-
-## Caching
-
-The gateway caches all generations. Same parameters = instant cache hit.
-
-**Cache key** is computed from:
-- Capability (video, image, speech, music)
-- Model
-- Prompt
-- Duration/aspect ratio
-- File content hashes (not URLs)
-
-**Cache headers:**
-
-```http
-X-Cache: HIT|MISS
-X-Cache-Key: sha256:abc...
-X-Cache-TTL: 2592000
-```
-
-**Bypass cache:**
-
-```http
-Cache-Control: no-cache   # Skip lookup, still store result
-Cache-Control: no-store   # Skip cache entirely
-```
-
----
-
-## Model Resolution
-
-Models can use `provider:model` format or just the model name:
-
-```json
-// Explicit provider
-{ "model": "fal:kling-v2.5" }
-
-// Auto-resolved
-{ "model": "kling-v2.5" }  // → fal
-{ "model": "soul" }        // → higgsfield
-```
-
-**Model mapping:**
 
 | Model | Provider |
 |-------|----------|
@@ -364,78 +156,68 @@ Models can use `provider:model` format or just the model name:
 | `soul` | Higgsfield |
 | `eleven_turbo_v2`, `eleven_multilingual_v2` | ElevenLabs |
 | `music_v1` | ElevenLabs |
+| `whisper` | Replicate |
 
----
+## Caching
 
-## TypeScript Client
+All generations are cached. Same parameters return instantly from cache at no cost.
 
-Install the official client:
+The cache key is computed from: capability, model, prompt, duration/aspect ratio, and file content hashes (not URLs).
 
-```bash
-bun add @vargai/gateway
+**Response headers:**
+
+```http
+X-Cache: HIT
+X-Cache-Key: sha256:abc123...
+X-Cache-TTL: 2592000
 ```
 
-**Usage:**
+**Bypass cache:**
 
-```typescript
-import { VargClient } from "@vargai/gateway";
-
-const client = new VargClient({ apiKey: "varg_xxx" });
-
-// Create job
-const job = await client.createVideo({
-  model: "kling-v2.5",
-  prompt: "cat jumping over fence",
-});
-
-// Wait for completion
-const result = await client.waitForJob(job.job_id);
-console.log(result.output.url);
+```http
+Cache-Control: no-cache   # skip lookup, still store result
+Cache-Control: no-store   # skip cache entirely
 ```
 
----
+## Billing
 
-## Error Codes
+**Cache hits are free.** Only cache misses with pooled keys are billed.
+
+**BYOK users pay $0** varg cost. You're billed directly by the provider.
+
+Key resolution order:
+1. `X-Provider-Key-*` header — BYOK, $0
+2. Dashboard-saved key — BYOK, $0
+3. Varg pooled key — metered billing
+
+## Error codes
 
 | Status | Error | Description |
 |--------|-------|-------------|
 | 400 | `ValidationError` | Invalid request body |
-| 401 | `AuthError` | Bad/missing API key |
-| 404 | `NotFoundError` | Job/file doesn't exist |
+| 401 | `AuthError` | Missing or invalid API key |
+| 402 | `InsufficientBalanceError` | Account balance too low |
+| 404 | `NotFoundError` | Job or file not found |
+| 413 | — | File too large (max 50MB) |
 | 429 | `RateLimitError` | Too many requests |
 | 500 | `InternalError` | Server error |
 | 502 | `ProviderError` | Upstream provider failed |
 
-**Error response:**
+Error responses follow this shape:
 
 ```json
 {
-  "error": {
-    "code": "ValidationError",
-    "message": "prompt is required"
-  }
+  "error": "ValidationError",
+  "message": "prompt is required",
+  "field": "prompt",
+  "statusCode": 400
 }
 ```
 
----
-
-## Rate Limits
+## Rate limits
 
 | Plan | Requests/minute | Concurrent jobs |
 |------|-----------------|-----------------|
 | Free | 10 | 2 |
 | Pro | 100 | 10 |
 | Enterprise | Custom | Custom |
-
----
-
-## Billing
-
-**Cache hits are free.** Only cache misses with pooled keys are billed.
-
-**BYOK (Bring Your Own Key)** users pay $0 varg cost - you're billed directly by the provider.
-
-**Key resolution order:**
-1. `X-Provider-Key-*` header → BYOK, $0
-2. Dashboard-saved key → BYOK, $0
-3. Varg pooled key → Metered billing

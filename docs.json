@@ -49,21 +49,48 @@
         ]
       },
       {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Gateway API",
-            "pages": [
-              "api/index",
-              "api/video",
-              "api/image",
-              "api/speech",
-              "api/music",
-              "api/jobs"
-            ]
-          }
-        ]
-      }
+      "tab": "API Reference",
+      "openapi": "openapi.yaml",
+      "groups": [
+        {
+          "group": "Overview",
+          "pages": ["api/index"]
+        },
+        {
+          "group": "Generation",
+          "pages": [
+            "POST /video",
+            "POST /image",
+            "POST /speech",
+            "POST /music",
+            "POST /transcription"
+          ]
+        },
+        {
+          "group": "Jobs",
+          "pages": [
+            "GET /jobs/{job_id}",
+            "GET /jobs/{job_id}/stream",
+            "DELETE /jobs/{job_id}"
+          ]
+        },
+        {
+          "group": "Files",
+          "pages": ["POST /files"]
+        },
+        {
+          "group": "Reference",
+          "pages": ["GET /voices"]
+        },
+        {
+          "group": "Account",
+          "pages": [
+            "GET /me",
+            "GET /balance",
+            "GET /usage"
+          ]
+        }
+      ]
     ],
     "global": {
       "anchors": [

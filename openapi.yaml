@@ -1,0 +1,895 @@
+openapi: 3.1.0
+info:
+  title: Varg Gateway API
+  version: 0.1.0
+  description: Unified REST API for AI generation (video, image, speech, music) at api.varg.ai
+
+servers:
+  - url: https://api.varg.ai/v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Generation
+    description: Create AI-generated content
+  - name: Jobs
+    description: Manage and monitor generation jobs
+  - name: Files
+    description: Upload files for use in generation
+  - name: Reference
+    description: Available models and voices
+  - name: Account
+    description: Account info, balance, and usage
+
+paths:
+  /video:
+    post:
+      operationId: createVideo
+      tags: [Generation]
+      summary: Generate video
+      description: Generate video from text or image. Returns a job that you poll or stream for completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, prompt]
+              properties:
+                model:
+                  type: string
+                  description: Video model to use
+                  examples:
+                    - kling-v2.5
+                    - kling-v2.1
+                    - wan-2.5
+                    - minimax
+                    - soul
+                prompt:
+                  type: string
+                  description: Text description of the video to generate
+                  example: ocean waves crashing on a rocky beach at sunset
+                duration:
+                  type: number
+                  description: Duration in seconds
+                  default: 5
+                  example: 5
+                aspect_ratio:
+                  type: string
+                  description: Output aspect ratio
+                  examples:
+                    - "16:9"
+                    - "9:16"
+                    - "1:1"
+                files:
+                  type: array
+                  description: Input images for image-to-video generation
+                  items:
+                    type: object
+                    required: [url]
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                        description: URL of the input image
+                provider_options:
+                  type: object
+                  description: Additional options passed directly to the provider
+                  additionalProperties: true
+            examples:
+              text-to-video:
+                summary: Text to video
+                value:
+                  model: kling-v2.5
+                  prompt: cat jumping over a fence in slow motion
+                  duration: 5
+                  aspect_ratio: "16:9"
+              image-to-video:
+                summary: Image to video
+                value:
+                  model: kling-v2.5
+                  prompt: cat turns and looks at camera
+                  duration: 5
+                  files:
+                    - url: https://example.com/cat.jpg
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /image:
+    post:
+      operationId: createImage
+      tags: [Generation]
+      summary: Generate image
+      description: Generate an image from a text prompt. Returns a job that you poll or stream for completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, prompt]
+              properties:
+                model:
+                  type: string
+                  description: Image model to use
+                  examples:
+                    - flux-schnell
+                    - flux-pro
+                    - soul
+                prompt:
+                  type: string
+                  description: Text description of the image to generate
+                  example: sunset over mountains, dramatic lighting, photorealistic
+                aspect_ratio:
+                  type: string
+                  description: Output aspect ratio
+                  default: "1:1"
+                  examples:
+                    - "1:1"
+                    - "16:9"
+                    - "9:16"
+                files:
+                  type: array
+                  description: Input images for image-to-image generation
+                  items:
+                    type: object
+                    required: [url]
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                provider_options:
+                  type: object
+                  description: Additional options passed directly to the provider
+                  additionalProperties: true
+            examples:
+              basic:
+                summary: Text to image
+                value:
+                  model: flux-schnell
+                  prompt: sunset over mountains, dramatic lighting
+                  aspect_ratio: "16:9"
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /speech:
+    post:
+      operationId: createSpeech
+      tags: [Generation]
+      summary: Generate speech
+      description: Convert text to speech using ElevenLabs voices. Returns a job that you poll or stream for completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, text]
+              properties:
+                model:
+                  type: string
+                  description: Speech model to use
+                  examples:
+                    - eleven_multilingual_v2
+                    - eleven_turbo_v2
+                text:
+                  type: string
+                  description: Text to convert to speech
+                  example: Hello everyone! Welcome to my channel.
+                voice:
+                  type: string
+                  description: Voice to use for synthesis
+                  default: rachel
+                  enum:
+                    - rachel
+                    - domi
+                    - sarah
+                    - antoni
+                    - elli
+                    - josh
+                    - arnold
+                    - adam
+                    - sam
+                provider_options:
+                  type: object
+                  description: Additional options passed directly to the provider
+                  additionalProperties: true
+            examples:
+              basic:
+                summary: Basic speech
+                value:
+                  model: eleven_multilingual_v2
+                  text: Hello everyone! Welcome to my channel.
+                  voice: rachel
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /music:
+    post:
+      operationId: createMusic
+      tags: [Generation]
+      summary: Generate music
+      description: Generate background music from a text description. Returns a job that you poll or stream for completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, prompt]
+              properties:
+                model:
+                  type: string
+                  description: Music model to use
+                  example: music_v1
+                prompt:
+                  type: string
+                  description: Description of the music to generate
+                  example: upbeat electronic pop, energetic, 120bpm
+                duration:
+                  type: number
+                  description: Duration in seconds
+                  example: 30
+                provider_options:
+                  type: object
+                  description: Additional options passed directly to the provider
+                  additionalProperties: true
+            examples:
+              basic:
+                summary: Background music
+                value:
+                  model: music_v1
+                  prompt: upbeat electronic pop, energetic
+                  duration: 30
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /transcription:
+    post:
+      operationId: createTranscription
+      tags: [Generation]
+      summary: Transcribe audio
+      description: Transcribe audio to text using Whisper. Returns a job that you poll or stream for completion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model, audio_url]
+              properties:
+                model:
+                  type: string
+                  description: Transcription model to use
+                  example: whisper
+                audio_url:
+                  type: string
+                  format: uri
+                  description: URL of the audio file to transcribe
+                  example: https://example.com/audio.mp3
+                language:
+                  type: string
+                  description: Language code (e.g. "en", "es"). Auto-detected if omitted.
+                  example: en
+                provider_options:
+                  type: object
+                  description: Additional options passed directly to the provider
+                  additionalProperties: true
+            examples:
+              basic:
+                summary: Transcribe audio
+                value:
+                  model: whisper
+                  audio_url: https://example.com/audio.mp3
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/ProviderError"
+
+  /jobs/{job_id}:
+    get:
+      operationId: getJob
+      tags: [Jobs]
+      summary: Get job status
+      description: Retrieve the current status and output of a generation job.
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The job ID returned when the job was created
+          example: job_a1b2c3d4
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      operationId: cancelJob
+      tags: [Jobs]
+      summary: Cancel job
+      description: Cancel a queued or processing job. Has no effect on completed or failed jobs.
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The job ID to cancel
+          example: job_a1b2c3d4
+      responses:
+        "204":
+          description: Job cancelled
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /jobs/{job_id}/stream:
+    get:
+      operationId: streamJob
+      tags: [Jobs]
+      summary: Stream job updates
+      description: |
+        Real-time job status updates via Server-Sent Events (SSE).
+
+        Events have type `status` and contain the full job object as JSON data. The stream closes automatically when the job reaches a terminal state (completed, failed, cancelled).
+
+        Keepalive comments are sent every 15 seconds. The connection times out after 10 minutes.
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The job ID to stream
+          example: job_a1b2c3d4
+      responses:
+        "200":
+          description: SSE stream of job status events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                status-event:
+                  summary: Status update event
+                  value: |
+                    event: status
+                    data: {"job_id":"job_a1b2c3d4","status":"processing","model":"fal:kling-v2.5","created_at":"2026-02-13T10:00:00Z"}
+
+                    event: status
+                    data: {"job_id":"job_a1b2c3d4","status":"completed","model":"fal:kling-v2.5","output":{"url":"https://s3.varg.ai/o/job_a1b2c3d4.mp4","media_type":"video/mp4"},"created_at":"2026-02-13T10:00:00Z","completed_at":"2026-02-13T10:02:30Z"}
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /files:
+    post:
+      operationId: uploadFile
+      tags: [Files]
+      summary: Upload file
+      description: |
+        Upload a file (image, audio, video) for use in generation requests. Returns a stable URL you can pass to `files[].url`.
+
+        Max file size: 50MB. Pass `X-Content-Hash` for deduplication — if a file with the same hash already exists, the existing file is returned without re-uploading.
+      parameters:
+        - name: X-Content-Hash
+          in: header
+          required: false
+          schema:
+            type: string
+          description: SHA-256 hash of the file content, used for deduplication
+          example: sha256:abc123def456...
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "413":
+          description: File too large (max 50MB)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /voices:
+    get:
+      operationId: listVoices
+      tags: [Reference]
+      summary: List voices
+      description: Returns all available voices for speech generation.
+      responses:
+        "200":
+          description: List of voices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        voice_id:
+                          type: string
+                          example: rachel
+                        name:
+                          type: string
+                          example: Rachel
+              example:
+                voices:
+                  - voice_id: rachel
+                    name: Rachel
+                  - voice_id: domi
+                    name: Domi
+                  - voice_id: sarah
+                    name: Sarah
+                  - voice_id: antoni
+                    name: Antoni
+                  - voice_id: elli
+                    name: Elli
+                  - voice_id: josh
+                    name: Josh
+                  - voice_id: arnold
+                    name: Arnold
+                  - voice_id: adam
+                    name: Adam
+                  - voice_id: sam
+                    name: Sam
+        "401":
+          $ref: "#/components/responses/AuthError"
+
+  /balance:
+    get:
+      operationId: getBalance
+      tags: [Account]
+      summary: Get balance
+      description: Returns your current account balance in cents.
+      responses:
+        "200":
+          description: Account balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance_cents:
+                    type: number
+                    description: Current balance in cents
+                    example: 5000
+                  currency:
+                    type: string
+                    example: usd
+              example:
+                balance_cents: 5000
+                currency: usd
+        "401":
+          $ref: "#/components/responses/AuthError"
+
+  /usage:
+    get:
+      operationId: getUsage
+      tags: [Account]
+      summary: Get usage
+      description: Returns usage records for the specified date range.
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date (inclusive), e.g. 2026-01-01
+          example: "2026-01-01"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (inclusive), e.g. 2026-01-31
+          example: "2026-01-31"
+      responses:
+        "200":
+          description: Usage records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageResponse"
+        "401":
+          $ref: "#/components/responses/AuthError"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [Account]
+      summary: Get current user
+      description: Returns the authenticated user's profile.
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: user_abc123
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+              example:
+                userId: user_abc123
+                email: user@example.com
+        "401":
+          $ref: "#/components/responses/AuthError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: varg_xxx
+      description: |
+        API key from [varg.ai/dashboard](https://varg.ai/dashboard).
+
+        Pass as `Authorization: Bearer varg_xxx`.
+
+  schemas:
+    JobResponse:
+      type: object
+      required: [job_id, status, model, created_at]
+      properties:
+        job_id:
+          type: string
+          description: Unique job identifier
+          example: job_a1b2c3d4
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+          description: Current job status
+          example: completed
+        model:
+          type: string
+          description: Resolved model identifier (provider:model format)
+          example: fal:kling-v2.5
+        created_at:
+          type: string
+          format: date-time
+          description: When the job was created
+          example: "2026-02-13T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          description: When the job finished (completed, failed, or cancelled)
+          example: "2026-02-13T10:02:30Z"
+        output:
+          type: object
+          description: Job output, present when status is completed
+          properties:
+            url:
+              type: string
+              format: uri
+              description: URL of the generated file on s3.varg.ai
+              example: https://s3.varg.ai/o/job_a1b2c3d4.mp4
+            media_type:
+              type: string
+              description: MIME type of the output
+              example: video/mp4
+        cache:
+          type: object
+          description: Cache metadata
+          properties:
+            hit:
+              type: boolean
+              description: Whether this result was served from cache
+              example: false
+            key:
+              type: string
+              description: Cache key for this request
+              example: "sha256:abc123..."
+        error:
+          type: string
+          description: Error message, present when status is failed
+          example: Provider returned an error
+
+    FileUploadResponse:
+      type: object
+      required: [file_id, url, hash, size, media_type, deduplicated]
+      properties:
+        file_id:
+          type: string
+          description: Unique file identifier
+          example: file_abc123
+        url:
+          type: string
+          format: uri
+          description: Stable URL for the uploaded file
+          example: https://s3.varg.ai/u/user_xxx/abc123.jpg
+        hash:
+          type: string
+          description: SHA-256 hash of the file content
+          example: sha256:abc123def456...
+        size:
+          type: number
+          description: File size in bytes
+          example: 102400
+        media_type:
+          type: string
+          description: Detected MIME type
+          example: image/jpeg
+        deduplicated:
+          type: boolean
+          description: True if an existing file with the same hash was returned
+          example: false
+
+    UsageResponse:
+      type: object
+      properties:
+        usage:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageRecord"
+        total_cents:
+          type: number
+          description: Total cost in cents for the period
+          example: 1250
+
+    UsageRecord:
+      type: object
+      properties:
+        job_id:
+          type: string
+          example: job_a1b2c3d4
+        model:
+          type: string
+          example: fal:kling-v2.5
+        capability:
+          type: string
+          enum: [video, image, speech, music, transcription]
+          example: video
+        cost_cents:
+          type: number
+          description: Cost in cents
+          example: 25
+        cache_hit:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-13T10:00:00Z"
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: ValidationError
+        message:
+          type: string
+          description: Human-readable error description
+          example: prompt is required
+        field:
+          type: string
+          description: The field that caused the error, if applicable
+          example: prompt
+        provider:
+          type: string
+          description: The upstream provider that returned the error, if applicable
+          example: fal
+        statusCode:
+          type: number
+          description: HTTP status code
+          example: 400
+
+  responses:
+    ValidationError:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: ValidationError
+            message: prompt is required
+            field: prompt
+            statusCode: 400
+
+    AuthError:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: AuthError
+            message: Invalid API key
+            statusCode: 401
+
+    InsufficientBalanceError:
+      description: Account balance too low
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: InsufficientBalanceError
+            message: Insufficient balance. Add credits at varg.ai/dashboard.
+            statusCode: 402
+
+    NotFoundError:
+      description: Job or file not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: NotFoundError
+            message: Job not found
+            statusCode: 404
+
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: RateLimitError
+            message: Rate limit exceeded. Retry after 60 seconds.
+            statusCode: 429
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: InternalError
+            message: An unexpected error occurred
+            statusCode: 500
+
+    ProviderError:
+      description: Upstream provider returned an error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: ProviderError
+            message: Provider returned an error
+            provider: fal
+            statusCode: 502
+
+  headers:
+    X-Cache:
+      description: Whether the response was served from cache (HIT or MISS)
+      schema:
+        type: string
+        enum: [HIT, MISS]
+    X-Cache-Key:
+      description: The cache key for this request
+      schema:
+        type: string
+    X-Cache-TTL:
+      description: Cache TTL in seconds
+      schema:
+        type: number
