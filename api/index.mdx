@@ -123,9 +123,7 @@ console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp3
 ```typescript
 const file = await fs.readFile("./photo.jpg");
 
-const uploaded = await client.uploadFile(file, {
-  contentHash: "sha256:abc123...", // optional, for deduplication
-});
+const uploaded = await client.uploadFile(file, "image/jpeg");
 
 console.log(uploaded.url); // https://s3.varg.ai/u/user_xxx/abc123.jpg
 
