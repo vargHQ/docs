@@ -5,51 +5,69 @@ description: "JSX for AI videos. Write React-like code, get rendered videos."
 
 ## What is varg?
 
-varg is an AI video generation SDK that lets you create videos using JSX syntax. Write declarative code like React components, and varg handles AI generation, caching, and video rendering.
+varg is an AI video generation platform. Write declarative JSX code like React components, and varg handles AI generation, caching, and video rendering. One API key, one gateway, all providers.
 
 ```tsx
-import { render, Render, Clip, Image, Video } from "vargai/react";
-import { fal } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const cat = Image({ prompt: "cute orange cat, Pixar style", aspectRatio: "9:16" });
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-await render(
+const cat = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "cute orange cat character, round body, big eyes, Pixar style",
+  aspectRatio: "9:16",
+})
+
+export default (
   <Render width={1080} height={1920}>
-    <Clip duration={3}>
+    <Clip duration={5}>
       <Video
         prompt={{ text: "cat waves hello, bounces happily", images: [cat] }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-  </Render>,
-  { output: "hello.mp4" }
-);
+  </Render>
+)
 ```
 
-Run it:
+Render it:
 
 ```bash
-bun run hello.tsx
+bunx vargai render hello.tsx --verbose
+```
+
+Or submit via API (no local tools needed):
+
+```bash
+curl -X POST https://render.varg.ai/api/render \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"code": "..."}'
 ```
 
 ## Quick Start
 
 <Steps>
-  <Step title="Install">
+  <Step title="Get your API key">
+    Sign up at [app.varg.ai](https://app.varg.ai) and copy your API key, or log in from the CLI:
     ```bash
-    bun install vargai ai
+    bunx vargai login
     ```
   </Step>
-  <Step title="Set API Key">
+  <Step title="Install the skill (for AI agents)">
     ```bash
-    export FAL_KEY=fal_xxx
+    npx -y skills add vargHQ/skills --all --copy -y
     ```
-    Get your key at [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys)
+    This gives Claude Code, Cursor, Windsurf, and 40+ other agents full varg context.
   </Step>
-  <Step title="Create Video">
+  <Step title="Create a video">
+    Ask your AI agent: *"Create a 10-second TikTok video of a cute robot waving hello"*
+
+    Or render directly:
     ```bash
-    bunx vargai hello
-    bun run hello.tsx
+    bunx vargai render hello.tsx --verbose
     ```
   </Step>
 </Steps>
@@ -57,17 +75,17 @@ bun run hello.tsx
 ## Why varg?
 
 <CardGroup cols={2}>
+  <Card title="One API Key" icon="key">
+    Single `VARG_API_KEY` for images, video, speech, music, and lipsync. No juggling provider keys.
+  </Card>
   <Card title="Declarative JSX" icon="code">
     Write videos like React components. Compose scenes, add transitions, layer audio.
   </Card>
   <Card title="AI-Native" icon="wand-magic-sparkles">
-    Built-in support for image generation, video synthesis, voice, music, and lipsync.
+    Built-in support for Kling, Flux, ElevenLabs, Wan, and more. All through one gateway.
   </Card>
   <Card title="Automatic Caching" icon="bolt">
-    Same props = instant cache hit. Re-render videos without re-generating AI assets.
-  </Card>
-  <Card title="Multiple Providers" icon="plug">
-    Fal, ElevenLabs, Higgsfield, OpenAI, Replicate. One unified API.
+    Same props = instant cache hit at $0. Re-render videos without re-generating AI assets.
   </Card>
 </CardGroup>
 
@@ -82,19 +100,23 @@ bun run hello.tsx
 
 <CardGroup cols={2}>
   <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
-    Full setup with all optional features
+    Full setup in 5 minutes
   </Card>
-  <Card title="Components" icon="puzzle-piece" href="/sdk/components">
-    All available JSX components
-  </Card>
-  <Card title="AI Models" icon="microchip" href="/sdk/models">
-    Supported image, video, and audio models
+  <Card title="Authentication" icon="key" href="/authentication">
+    API keys, login, billing
   </Card>
   <Card title="Templates" icon="clone" href="/templates">
     Copy-paste examples for common video types
+  </Card>
+  <Card title="AI Agent Setup" icon="robot" href="/ai-agents/claude-code">
+    Set up Claude Code, Cursor, or any agent
   </Card>
 </CardGroup>
 
 ## For AI Agents
 
-If you're an AI assistant helping someone create videos with varg, see the [AI Agents](/ai-agents) page for complete context, component tables, and common patterns.
+If you're an AI assistant helping someone create videos with varg, see the [AI Agent Context](/ai-agents) page for complete reference, or install the skill:
+
+```bash
+npx -y skills add vargHQ/skills --all --copy -y
+```

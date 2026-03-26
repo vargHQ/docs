@@ -5,6 +5,8 @@ description: "Copy-paste templates for common video types"
 
 Ready-to-use templates for common video formats. Copy, customize, and run.
 
+All templates use the gateway pattern — only `VARG_API_KEY` needed.
+
 ## Quick Links
 
 <CardGroup cols={2}>
@@ -23,212 +25,126 @@ Ready-to-use templates for common video formats. Copy, customize, and run.
 
 ## Minimal Template
 
-The simplest possible video - single animated image:
+The simplest possible video — single animated image:
 
 ```tsx
-import { render, Render, Clip, Image, Video } from "vargai/react";
-import { fal } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const image = Image({ prompt: "cute cat character", aspectRatio: "9:16" });
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-await render(
+const image = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "cute cat character, big eyes, Pixar style",
+  aspectRatio: "9:16",
+})
+
+export default (
   <Render width={1080} height={1920}>
-    <Clip duration={3}>
+    <Clip duration={5}>
       <Video
-        prompt={{ text: "cat waves hello", images: [image] }}
-        model={fal.videoModel("kling-v2.5")}
+        prompt={{ text: "cat waves hello, bounces happily", images: [image] }}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-  </Render>,
-  { output: "output/minimal.mp4" }
-);
+  </Render>
+)
 ```
+
+```bash
+bunx vargai render minimal.tsx --verbose
+```
+
+Cost: ~$1.55 (5 credits image + 150 credits video)
 
 ---
 
 ## Slideshow with Music
 
-Multiple scenes with transitions and background music:
-
 ```tsx
-import { render, Render, Clip, Image, Music } from "vargai/react";
-import { elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Music } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const SCENES = [
-  "tropical beach at sunset, palm trees",
-  "mountain peaks covered in snow",
-  "cherry blossom trees in Japan",
-  "northern lights over Iceland",
-];
+  "tropical beach at sunset, golden light",
+  "mountain peaks at dawn, misty valleys",
+  "city skyline at night, neon reflections",
+  "autumn forest trail, golden leaves falling",
+]
 
-await render(
+export default (
   <Render width={1080} height={1920}>
-    <Music 
-      prompt="chill ambient travel music, peaceful" 
-      model={elevenlabs.musicModel()} 
-      volume={0.3} 
-    />
-    
+    <Music prompt="chill ambient lofi, relaxing" model={varg.musicModel()} volume={0.3} duration={16} />
     {SCENES.map((prompt, i) => (
-      <Clip 
-        key={i} 
-        duration={3} 
-        transition={{ name: "fade", duration: 0.5 }}
-      >
-        <Image prompt={prompt} zoom="in" />
+      <Clip key={i} duration={4} transition={{ name: "fade", duration: 0.5 }}>
+        <Image prompt={prompt} model={varg.imageModel("nano-banana-pro")} aspectRatio="9:16" zoom="in" />
       </Clip>
     ))}
-  </Render>,
-  { output: "output/slideshow.mp4" }
-);
+  </Render>
+)
 ```
+
+Cost: ~$0.45 (4 images + music)
 
 ---
 
 ## Product Showcase
 
-Rotating product views with text overlays:
-
 ```tsx
-import { render, Render, Clip, Image, Video, Title, Music } from "vargai/react";
-import { fal, elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Music, Title, Packshot } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const product = Image({
-  prompt: "sleek wireless headphones, white background, studio lighting",
-  aspectRatio: "1:1",
-});
-
-await render(
-  <Render width={1080} height={1080}>
-    <Music prompt="modern tech commercial, upbeat" model={elevenlabs.musicModel()} volume={0.2} />
-    
-    <Clip duration={3}>
-      <Video
-        prompt={{ text: "product slowly rotates 360 degrees", images: [product] }}
-        model={fal.videoModel("kling-v2.5")}
-      />
-      <Title position="bottom" color="#ffffff">Premium Sound Quality</Title>
-    </Clip>
-    
-    <Clip duration={2}>
-      <Image src={product} zoom="in" />
-      <Title position="center" color="#ffffff">$299</Title>
-    </Clip>
-  </Render>,
-  { output: "output/product.mp4" }
-);
-```
-
----
-
-## Talking Character (Simple)
-
-Character with voiceover and captions:
-
-```tsx
-import { render, Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
-import { fal, elevenlabs, higgsfield } from "vargai/ai";
-
-const character = Image({
-  prompt: "friendly tech reviewer, casual style, ring light, bedroom background",
-  model: higgsfield.imageModel("soul"),
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "sleek wireless headphones, matte black, floating on dark background, studio lighting",
   aspectRatio: "9:16",
-});
+})
 
-const voiceover = Speech({
-  model: elevenlabs.speechModel("eleven_multilingual_v2"),
-  voice: "josh",
-  children: "Hey everyone! Today I'm going to show you something really cool that changed how I work.",
-});
+const hero = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "product slowly rotates, dramatic lighting shifts", images: [product] },
+  duration: 5,
+})
 
-await render(
+export default (
   <Render width={1080} height={1920}>
-    <Music prompt="upbeat tech vlog intro" model={elevenlabs.musicModel()} volume={0.1} />
-    
-    <Clip duration={6}>
-      <Video
-        prompt={{ text: "person talking naturally, gesturing", images: [character] }}
-        model={fal.videoModel("kling-v2.5")}
-      />
+    <Music prompt="premium brand, minimal electronic, sophisticated" model={varg.musicModel()} volume={0.25} duration={10} />
+    <Clip duration={5}>
+      {hero}
+      <Title position="bottom" color="#ffffff">Premium Sound</Title>
     </Clip>
-    
-    <Captions src={voiceover} style="tiktok" color="#ffffff" />
-  </Render>,
-  { output: "output/talking.mp4" }
-);
+    <Clip duration={3} transition={{ name: "fade", duration: 0.5 }}>
+      <Packshot background="#000000" cta="Shop Now" blinkCta />
+    </Clip>
+  </Render>
+)
 ```
 
 ---
 
 ## Social Media Formats
 
-### TikTok/Reels (9:16)
+| Platform | Resolution | Aspect Ratio | `<Render>` |
+|----------|-----------|--------------|------------|
+| TikTok / Reels / Shorts | 1080x1920 | 9:16 | `width={1080} height={1920}` |
+| YouTube | 1920x1080 | 16:9 | `width={1920} height={1080}` |
+| Instagram Feed | 1080x1080 | 1:1 | `width={1080} height={1080}` |
+| Instagram Story | 1080x1920 | 9:16 | `width={1080} height={1920}` |
+| YouTube Shorts | 1080x1920 | 9:16 | `width={1080} height={1920}` |
 
-```tsx
-<Render width={1080} height={1920}>
+## Rendering
+
+```bash
+bunx vargai render template.tsx --preview   # Free preview (placeholders)
+bunx vargai render template.tsx --verbose   # Full render (costs credits)
+
+# Background rendering
+nohup bunx vargai render template.tsx --verbose > output/render.log 2>&1 &
 ```
-
-### YouTube (16:9)
-
-```tsx
-<Render width={1920} height={1080}>
-```
-
-### Instagram Feed (1:1)
-
-```tsx
-<Render width={1080} height={1080}>
-```
-
-### YouTube Shorts (9:16 short)
-
-```tsx
-<Render width={1080} height={1920}>
-  {/* Keep total duration under 60 seconds */}
-</Render>
-```
-
----
-
-## Transition Gallery
-
-Preview different transitions:
-
-```tsx
-const TRANSITIONS = ["fade", "crossfade", "wipeleft", "wiperight", "slideup", "cube"];
-
-await render(
-  <Render width={1080} height={1920}>
-    {TRANSITIONS.map((name, i) => (
-      <Clip 
-        key={i}
-        duration={2} 
-        transition={{ name, duration: 0.8 }}
-      >
-        <Image prompt={`abstract gradient ${i}`} />
-        <Title position="center">{name}</Title>
-      </Clip>
-    ))}
-  </Render>,
-  { output: "output/transitions.mp4" }
-);
-```
-
----
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Slideshow Template" icon="images" href="/templates/slideshow">
-    Full slideshow with customization options
-  </Card>
-  <Card title="Talking Character" icon="comment" href="/templates/talking-character">
-    Complete talking head with lipsync
-  </Card>
-  <Card title="Transformation" icon="arrows-left-right" href="/templates/transformation">
-    Before/after comparison video
-  </Card>
-  <Card title="Components" icon="puzzle-piece" href="/sdk/components">
-    All available components
-  </Card>
-</CardGroup>

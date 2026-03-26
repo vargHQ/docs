@@ -17,7 +17,9 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "quickstart"
+              "quickstart",
+              "authentication",
+              "byok"
             ]
           },
           {
@@ -116,13 +118,13 @@
     "links": [
       {
         "label": "Dashboard",
-        "href": "https://varg.ai"
+        "href": "https://app.varg.ai"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Get API Key",
-      "href": "https://varg.ai/dashboard"
+      "href": "https://app.varg.ai"
     }
   },
   "contextual": {

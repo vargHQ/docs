@@ -9,115 +9,164 @@ This page provides complete context for AI agents (Claude, GPT, Cursor, etc.) to
 
 ## What is varg?
 
-varg is a JSX-based AI video generation SDK. Users write React-like code to describe video compositions, and varg handles AI generation (images, video, voice, music) and final video rendering.
+varg is a JSX-based AI video generation platform. Users write React-like code to describe video compositions, and varg handles AI generation (images, video, voice, music) and final video rendering. Everything goes through one gateway, one API key.
 
-**Key insight**: varg extends the Vercel AI SDK pattern to video. Same `generateImage`, `generateVideo` functions, but with JSX composition layer on top.
-
-## Installation
+**For the best agent experience**, install the varg skill which includes 10 reference docs, setup scripts, and auto-update:
 
 ```bash
-bun install vargai ai
+npx -y skills add vargHQ/skills --all --copy -y
 ```
 
 ## Required Environment
 
 ```bash
-# .env file
-FAL_KEY=fal_xxx                    # Required - images, video, lipsync
-ELEVENLABS_API_KEY=xxx             # Optional - voice, music
-HIGGSFIELD_API_KEY=hf_xxx          # Optional - character images
-OPENAI_API_KEY=sk_xxx              # Optional - Sora video
-REPLICATE_API_TOKEN=r8_xxx         # Optional - background removal
+# .env file — only VARG_API_KEY is needed
+VARG_API_KEY=varg_xxx
 ```
 
-## Minimal Working Example
+Get a key at [app.varg.ai](https://app.varg.ai). This single key provides access to all AI providers (images, video, speech, music, lipsync) through the varg gateway.
+
+<Tip>
+If the user doesn't have a key, you can drive the OTP login flow with curl. See [Authentication](/authentication) for the agent-driven login flow.
+</Tip>
+
+## Two Rendering Modes
+
+| You have | Mode | How |
+|----------|------|-----|
+| Just `curl` | **Cloud Render** | Submit TSX via `POST https://render.varg.ai/api/render` |
+| `bun` + `ffmpeg` | **Local Render** | Write TSX files, run `bunx vargai render file.tsx` |
+
+## Minimal Working Example (Local Render)
 
 ```tsx
-import { render, Render, Clip, Image, Video } from "vargai/react";
-import { fal } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const image = Image({ prompt: "cute cat", aspectRatio: "9:16" });
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-await render(
+const image = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "cute cat, big eyes, Pixar style",
+  aspectRatio: "9:16",
+})
+
+export default (
   <Render width={1080} height={1920}>
-    <Clip duration={3}>
+    <Clip duration={5}>
       <Video
         prompt={{ text: "cat waves hello", images: [image] }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-  </Render>,
-  { output: "output/video.mp4" }
-);
+  </Render>
+)
 ```
 
-Run: `bun run video.tsx`
+Render: `bunx vargai render video.tsx --verbose`
+
+## Minimal Working Example (Cloud Render)
+
+```bash
+curl -s -X POST https://render.varg.ai/api/render \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"code": "const img = Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"cute cat\", aspectRatio: \"9:16\" });\nexport default (<Render width={1080} height={1920}><Clip duration={5}><Video prompt={{ text: \"cat waves hello\", images: [img] }} model={fal.videoModel(\"kling-v3\")} /></Clip></Render>);"}'
+```
+
+<Note>
+Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local render uses `varg.*Model()` via `createVarg()`.
+</Note>
 
 ## All Components
 
-| Component | Purpose | Key Props | Required Key |
-|-----------|---------|-----------|--------------|
-| `<Render>` | Root container | `width`, `height`, `fps` | - |
-| `<Clip>` | Time segment | `duration`, `transition`, `cutFrom`, `cutTo` | - |
-| `<Image>` | AI or static image | `prompt`, `src`, `model`, `zoom`, `aspectRatio` | FAL |
-| `<Video>` | AI or source video | `prompt`, `src`, `model`, `volume`, `cutFrom`, `cutTo` | FAL |
-| `<Speech>` | Text-to-speech | `voice`, `model`, `volume`, `children` (text) | ElevenLabs |
-| `<Music>` | Background music | `prompt`, `src`, `model`, `volume`, `loop`, `ducking` | ElevenLabs |
-| `<Title>` | Text overlay | `position`, `color`, `start`, `end` | - |
-| `<Subtitle>` | Subtitle text | `backgroundColor` | - |
-| `<Captions>` | Auto-generated subs | `src`, `srt`, `style`, `color`, `activeColor` | - |
-| `<Overlay>` | Positioned layer | `left`, `top`, `width`, `height`, `keepAudio` | - |
-| `<Split>` | Side-by-side | `direction` | - |
-| `<Slider>` | Before/after reveal | `direction` | - |
-| `<Swipe>` | Tinder-style cards | `direction`, `interval` | - |
-| `<TalkingHead>` | Animated character | `character`, `src`, `voice`, `model`, `lipsyncModel` | FAL + ElevenLabs |
-| `<Packshot>` | End card with CTA | `background`, `logo`, `cta`, `blinkCta` | - |
+| Component | Type | Purpose | Key Props |
+|-----------|------|---------|-----------|
+| `<Render>` | JSX | Root container | `width`, `height`, `fps` |
+| `<Clip>` | JSX | Time segment | `duration`, `transition` |
+| `Image()` | Function | Generate AI image | `model`, `prompt`, `aspectRatio`, `zoom` |
+| `Video()` | Function | Generate AI video | `model`, `prompt`, `duration` |
+| `Speech()` | Function | Text-to-speech | `model`, `voice`, `children` |
+| `<Music>` | JSX | Background music | `model`, `prompt`, `volume`, `duration` |
+| `<Captions>` | JSX | Subtitles | `src`, `style`, `color`, `withAudio` |
+| `<Title>` | JSX | Text overlay | `position`, `color`, `start`, `end` |
+| `<Subtitle>` | JSX | Subtitle text | `backgroundColor` |
+| `<Overlay>` | JSX | Positioned layer | `left`, `top`, `width`, `height` |
+| `<Split>` | JSX | Side-by-side | `direction` |
+| `<Grid>` | JSX | Grid layout | `columns` |
+| `<Slider>` | JSX | Before/after reveal | `direction` |
+| `<Swipe>` | JSX | Card stack | `direction`, `interval` |
+| `<TalkingHead>` | JSX | Animated character | `character`, `voice`, `model` |
+| `<Packshot>` | JSX | End card with CTA | `background`, `logo`, `cta` |
+
+**Critical**: `Image()`, `Video()`, `Speech()` are **function calls** that return references. `<Music>`, `<Captions>`, `<Title>` are **JSX components**. Never write `<Image prompt="..." />`.
 
 ## All AI Models
 
 ### Image Models
 
-| Model | Provider | Code | Best For |
-|-------|----------|------|----------|
-| Flux Schnell | Fal | `fal.imageModel("flux-schnell")` | Fast generation |
-| Flux Pro | Fal | `fal.imageModel("flux-pro")` | High quality |
-| Nano Banana Pro | Fal | `fal.imageModel("nano-banana-pro")` | Versatile |
-| Nano Banana Edit | Fal | `fal.imageModel("nano-banana-pro/edit")` | Image editing |
-| Recraft V3 | Fal | `fal.imageModel("recraft-v3")` | Alternative |
-| Soul | Higgsfield | `higgsfield.imageModel("soul")` | Character consistency |
+| Model | Code (gateway) | Best For | Credits |
+|-------|---------------|----------|---------|
+| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | Versatile, fast | 5 |
+| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | Image editing | 5 |
+| Flux Schnell | `varg.imageModel("flux-schnell")` | Fast generation | 5 |
+| Flux Pro | `varg.imageModel("flux-pro")` | High quality | 25 |
+| Recraft V3 | `varg.imageModel("recraft-v3")` | Graphic design | 15 |
+| Soul | `varg.imageModel("soul")` | Character consistency | 15 |
+| Background Remover | `varg.imageModel("background-remover")` | Remove backgrounds | 5 |
 
 ### Video Models
 
-| Model | Provider | Code | Best For |
-|-------|----------|------|----------|
-| Kling 2.5 | Fal | `fal.videoModel("kling-v2.5")` | High quality |
-| Kling 2.1 | Fal | `fal.videoModel("kling-v2.1")` | Previous version |
-| Wan 2.5 | Fal | `fal.videoModel("wan-2.5")` | Characters |
-| Minimax | Fal | `fal.videoModel("minimax")` | Alternative |
-| Sora 2 | OpenAI | `openai.videoModel("sora-2")` | Premium quality |
-| Sync V2 Pro | Fal | `fal.videoModel("sync-v2-pro")` | Lipsync |
+| Model | Code (gateway) | Duration | Best For | Credits |
+|-------|---------------|----------|----------|---------|
+| Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | 150 |
+| Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
+| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters | 75 |
+| Minimax | `varg.videoModel("minimax")` | 5-10s | Alternative | 75 |
+
+### Lipsync Models
+
+| Model | Code (gateway) | Best For | Credits |
+|-------|---------------|----------|---------|
+| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | Lip sync | 100 |
+| Sync V2 | `varg.videoModel("sync-v2")` | Lip sync (fast) | 75 |
 
 ### Audio Models
 
-| Model | Provider | Code | Best For |
-|-------|----------|------|----------|
-| Eleven Turbo V2 | ElevenLabs | `elevenlabs.speechModel("eleven_turbo_v2")` | Fast TTS |
-| Eleven Multilingual | ElevenLabs | `elevenlabs.speechModel("eleven_multilingual_v2")` | Multiple languages |
-| Music V1 | ElevenLabs | `elevenlabs.musicModel()` | Background music |
-| Whisper | Fal | `fal.transcriptionModel("whisper")` | Transcription |
+| Model | Code (gateway) | Best For | Credits |
+|-------|---------------|----------|---------|
+| Eleven V3 | `varg.speechModel("eleven_v3")` | Best TTS | 25 |
+| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | Multi-language | 20 |
+| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | Fast TTS | 15 |
+| Music V1 | `varg.musicModel()` | Background music | 25 |
 
-## Import Statement
+### Voices
+
+| Voice | Gender | Style |
+|-------|--------|-------|
+| `rachel` | Female | Calm, warm |
+| `bella` | Female | Soft, gentle |
+| `domi` | Female | Confident |
+| `elli` | Female | Young, cheerful |
+| `adam` | Male | Deep, warm |
+| `josh` | Male | Young, energetic |
+| `sam` | Male | Raspy |
+| `antoni` | Male | Calm |
+| `arnold` | Male | Authoritative |
+
+## Import Statement (Local Render)
 
 ```tsx
-// Components
-import { 
-  render, Render, Clip, Image, Video, 
-  Speech, Music, Title, Captions, 
-  Overlay, Split, Slider, Swipe, Packshot 
-} from "vargai/react";
+/** @jsxImportSource vargai */
+import {
+  Render, Clip, Image, Video,
+  Speech, Music, Title, Captions,
+  Overlay, Split, Grid, Slider, Swipe, Packshot
+} from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-// AI Providers
-import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 ```
 
 ## Common Patterns
@@ -126,15 +175,15 @@ import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
 
 ```tsx
 // Create character ONCE, reuse everywhere
-const character = Image({ 
+const character = Image({
+  model: varg.imageModel("nano-banana-pro"),
   prompt: "woman, brown hair, green eyes, professional attire",
-  model: higgsfield.imageModel("soul"),
-  aspectRatio: "9:16"
-});
+  aspectRatio: "9:16",
+})
 
 // Same character in different scenes
-<Video prompt={{ text: "character waves", images: [character] }} />
-<Video prompt={{ text: "character smiles", images: [character] }} />
+<Video prompt={{ text: "character waves", images: [character] }} model={varg.videoModel("kling-v3")} />
+<Video prompt={{ text: "character smiles", images: [character] }} model={varg.videoModel("kling-v3")} />
 ```
 
 ### Transitions Between Clips
@@ -144,18 +193,19 @@ const character = Image({
 <Clip duration={3} transition={{ name: "crossfade", duration: 0.5 }}>
 <Clip duration={3} transition={{ name: "wipeleft", duration: 0.5 }}>
 <Clip duration={3} transition={{ name: "cube", duration: 0.8 }}>
+<Clip duration={3} transition={{ name: "pixelize", duration: 0.5 }}>
 ```
 
 ### Caption Styles
 
 ```tsx
-<Captions src={voiceover} style="tiktok" />     // Word-by-word highlight
-<Captions src={voiceover} style="karaoke" />    // Fill left-to-right
-<Captions src={voiceover} style="bounce" />     // Words bounce in
-<Captions src={voiceover} style="typewriter" /> // Typing effect
+<Captions src={voiceover} style="tiktok" withAudio />    // Word-by-word highlight
+<Captions src={voiceover} style="karaoke" withAudio />   // Fill left-to-right
+<Captions src={voiceover} style="bounce" withAudio />    // Words bounce in
+<Captions src={voiceover} style="typewriter" withAudio /> // Typing effect
 ```
 
-### Zoom Effects on Images
+### Zoom Effects
 
 ```tsx
 <Image prompt="landscape" zoom="in" />   // Zoom in (Ken Burns)
@@ -175,159 +225,173 @@ const character = Image({
 ## Template: Simple Slideshow
 
 ```tsx
-import { render, Render, Clip, Image } from "vargai/react";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Music } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const SCENES = ["sunset over ocean", "mountain peaks at dawn", "city lights at night"];
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-await render(
+const SCENES = ["sunset over ocean", "mountain peaks at dawn", "city lights at night"]
+
+export default (
   <Render width={1080} height={1920}>
+    <Music prompt="chill ambient lofi" model={varg.musicModel()} volume={0.3} duration={12} />
     {SCENES.map((prompt, i) => (
-      <Clip key={i} duration={3} transition={{ name: "fade", duration: 0.5 }}>
-        <Image prompt={prompt} zoom="in" />
+      <Clip key={i} duration={4} transition={{ name: "fade", duration: 0.5 }}>
+        <Image prompt={prompt} model={varg.imageModel("nano-banana-pro")} aspectRatio="9:16" zoom="in" />
       </Clip>
     ))}
-  </Render>,
-  { output: "slideshow.mp4" }
-);
+  </Render>
+)
 ```
 
 ## Template: Talking Character
 
 ```tsx
-import { render, Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react";
-import { fal, elevenlabs, higgsfield } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const character = Image({
-  prompt: "friendly tech influencer, casual style, ring light",
-  model: higgsfield.imageModel("soul"),
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "friendly tech influencer, casual style, ring light, 9:16",
   aspectRatio: "9:16",
-});
+})
 
 const voiceover = Speech({
-  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  model: varg.speechModel("eleven_v3"),
   voice: "rachel",
   children: "Hey everyone! Today I want to show you something amazing.",
-});
+})
 
-const animatedCharacter = Video({
-  prompt: { text: "person speaking naturally, subtle movements", images: [character] },
-  model: fal.videoModel("kling-v2.5"),
-});
+const animated = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "person speaking naturally, subtle head movements", images: [character] },
+  duration: 5,
+})
 
-await render(
+const lipsynced = Video({
+  model: varg.videoModel("sync-v2-pro"),
+  prompt: { video: animated, audio: voiceover },
+})
+
+export default (
   <Render width={1080} height={1920}>
-    <Music prompt="upbeat tech podcast intro" model={elevenlabs.musicModel()} volume={0.15} />
-    
-    <Clip duration={5}>
-      <Video
-        prompt={{ video: animatedCharacter, audio: voiceover }}
-        model={fal.videoModel("sync-v2-pro")}
-      />
-    </Clip>
-    
-    <Captions src={voiceover} style="tiktok" color="#ffffff" />
-  </Render>,
-  { output: "talking-character.mp4" }
-);
+    <Music prompt="upbeat tech podcast intro" model={varg.musicModel()} volume={0.15} duration={8} />
+    <Clip duration={5}>{lipsynced}</Clip>
+    <Captions src={voiceover} style="tiktok" color="#ffffff" withAudio />
+  </Render>
+)
 ```
 
 ## Template: Before/After Transformation
 
 ```tsx
-import { render, Render, Clip, Image, Video, SplitLayout, Title } from "vargai/react";
-import { fal, higgsfield } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Split, Title } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const CHARACTER = "woman in her 30s, brown hair";
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-const beforeImage = Image({
+const CHARACTER = "woman in her 30s, brown hair"
+
+const before = Image({
+  model: varg.imageModel("nano-banana-pro"),
   prompt: `${CHARACTER}, tired expression, loose clothing`,
-  model: higgsfield.imageModel("soul"),
   aspectRatio: "9:16",
-});
+})
 
-const afterImage = Image({
-  prompt: { 
-    text: `${CHARACTER}, fit and confident, athletic wear, same person transformed`,
-    images: [beforeImage]
-  },
-  model: fal.imageModel("nano-banana-pro/edit"),
+const after = Image({
+  model: varg.imageModel("nano-banana-pro/edit"),
+  prompt: { text: `${CHARACTER}, fit and confident, athletic wear, same person transformed`, images: [before] },
   aspectRatio: "9:16",
-});
+})
 
-const beforeVideo = Video({
-  prompt: { text: "person sighs, looks down sadly", images: [beforeImage] },
-  model: fal.videoModel("kling-v2.5"),
-});
+const beforeVid = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "person sighs, looks down sadly", images: [before] },
+  duration: 5,
+})
 
-const afterVideo = Video({
-  prompt: { text: "person smiles confidently, proud posture", images: [afterImage] },
-  model: fal.videoModel("kling-v2.5"),
-});
+const afterVid = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "person smiles confidently, proud posture", images: [after] },
+  duration: 5,
+})
 
-await render(
+export default (
   <Render width={2160} height={1920}>
     <Clip duration={5}>
-      <SplitLayout direction="horizontal" left={beforeVideo} right={afterVideo} />
+      <Split direction="horizontal">
+        {beforeVid}
+        {afterVid}
+      </Split>
       <Title position="top" color="#ffffff">My 3-Month Transformation</Title>
     </Clip>
-  </Render>,
-  { output: "transformation.mp4" }
-);
+  </Render>
+)
 ```
 
 ## Common Errors and Solutions
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `FAL_KEY not found` | Missing API key | Add `FAL_KEY=fal_xxx` to `.env` |
+| `VARG_API_KEY not found` | Missing API key | Get one at [app.varg.ai](https://app.varg.ai) or `bunx vargai login` |
+| `402 Insufficient Balance` | No credits | Add credits at [app.varg.ai](https://app.varg.ai) or `bunx vargai topup` |
 | `Rate limit exceeded` | Too many requests | Wait, or upgrade plan |
 | `Video generation failed` | Content policy or bad prompt | Simplify prompt, check content |
+| `Duration must be integer` | kling-v3 needs integer seconds | Use `duration: 5` not `duration: 4.5` |
+| `kling-v2.5 only 5 or 10` | Duration constraint | Use exactly 5 or 10 for kling-v2.5 |
 | `Lipsync failed` | Poor quality input | Use close-up face shots, clear audio |
-| `Cache miss on re-render` | Props changed | Same props = cache hit, check values |
+| `Cache miss on re-render` | Props changed | Keep unchanged prompts exactly the same |
 
 ## CLI Commands
 
 ```bash
-varg run image --prompt "sunset"        # Generate image
-varg run video --prompt "waves" -d 5    # Generate video (5 sec)
-varg run voice --text "Hello" -v rachel # Generate voice
-varg list                               # List all actions
-varg studio                             # Visual editor
+bunx vargai login                           # Sign in, get API key
+bunx vargai balance                         # Check credit balance
+bunx vargai topup                           # Add credits
+bunx vargai render video.tsx --preview      # Free preview
+bunx vargai render video.tsx --verbose      # Full render
+bunx vargai render video.tsx --no-cache     # Skip cache
 ```
+
+## Cost Reference
+
+1 credit = 1 cent. Cache hits are always free.
+
+| Action | Model | Credits |
+|--------|-------|---------|
+| Image | nano-banana-pro | 5 |
+| Image | flux-pro | 25 |
+| Video 5s | kling-v3 | 150 |
+| Video 5s | wan-2.5 | 75 |
+| Speech | eleven_v3 | 25 |
+| Music | music_v1 | 25 |
+| Lipsync | sync-v2-pro | 100 |
+
+Typical 3-clip video: $2-5.
 
 ## File Structure
 
 ```
 project/
-├── .env              # API keys
+├── .env              # VARG_API_KEY=varg_xxx
 ├── package.json
-├── media/            # Input assets
 ├── output/           # Generated videos
+├── .cache/ai/        # Cached AI generations
 └── videos/
     └── my-video.tsx  # Video composition
 ```
 
-## Render Options
-
-```tsx
-// Save to file
-await render(<Render>...</Render>, { output: "video.mp4" });
-
-// With custom cache directory
-await render(<Render>...</Render>, { 
-  output: "video.mp4",
-  cache: ".cache/ai"
-});
-
-// Get buffer directly
-const buffer = await render(<Render>...</Render>);
-await Bun.write("video.mp4", buffer);
-```
-
 ## Tips for Best Results
 
-1. **Character Consistency**: Use `higgsfield.imageModel("soul")` for characters, reference same image
-2. **Video Quality**: Use `kling-v2.5` for best quality, `wan-2.5` for characters
-3. **Lipsync**: Works best with frontal face, clear audio, 5-10 second clips
-4. **Caching**: Same props = instant. Change prompt slightly = full regeneration
-5. **Music Volume**: Keep at 0.1-0.3 for background, voices at 1.0
+1. **One API key**: Use `VARG_API_KEY` with `createVarg()` — no need for individual provider keys
+2. **Character consistency**: Use `soul` for characters, or generate once with `nano-banana-pro` and reference in all scenes
+3. **Video quality**: `kling-v3` for best quality, `wan-2.5` for characters
+4. **Lipsync**: Works best with frontal face, clear audio, 5-10 second clips
+5. **Caching**: Same props = instant $0. Even slightly different prompt = full regeneration
+6. **Music volume**: Keep at 0.1-0.3 for background, voices at 1.0
+7. **Duration**: kling-v3 needs integer 3-15s. kling-v2.5 needs exactly 5 or 10.

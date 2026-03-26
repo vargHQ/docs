@@ -1,16 +1,16 @@
 ---
 title: "CLI Reference"
-description: "varg command-line interface for quick operations"
+description: "varg command-line interface"
 ---
 
-The varg CLI provides quick commands for common operations without writing code.
+The varg CLI provides commands for authentication, rendering, and quick generation.
 
 ## Installation
 
 The CLI is included with the `vargai` package:
 
 ```bash
-bun install vargai ai
+bun install vargai ai @vargai/gateway
 ```
 
 Or use directly with `bunx`:
@@ -19,24 +19,61 @@ Or use directly with `bunx`:
 bunx vargai <command>
 ```
 
-## Commands
+## Authentication Commands
+
+### Login
+
+Sign in to varg.ai and save your API key:
+
+```bash
+bunx vargai login
+```
+
+Two modes:
+- **Email** — enter email, receive a 6-digit code, verify. Creates account + API key automatically.
+- **API key** — paste an existing key from the dashboard.
+
+Credentials are saved to `~/.varg/credentials`.
+
+### Logout
+
+Clear saved credentials:
+
+```bash
+bunx vargai logout
+```
+
+### Check Balance
+
+View your credit balance:
+
+```bash
+bunx vargai balance
+```
+
+### Top Up
+
+Open the billing page to add credits:
+
+```bash
+bunx vargai topup
+```
+
+## Project Commands
 
 ### Initialize Project
 
-Create a new varg project:
+Set up a new varg project:
 
 ```bash
 bunx vargai init
 ```
 
-Creates:
-- `package.json` with vargai dependency
-- `.env.example` with API key placeholders
-- `hello.tsx` starter video
+This runs login (if needed), installs the varg-ai Agent Skill, creates `hello.tsx`, output directories, and `.gitignore`.
 
 ### Create Hello World
 
-Generate just the hello world starter:
+Generate the hello world starter:
 
 ```bash
 bunx vargai hello
@@ -53,206 +90,124 @@ bunx vargai render <file.tsx>
 ```
 
 Options:
-- `--output, -o` - Output file path (default: `output/video.mp4`)
-- `--cache` - Cache directory (default: `.cache/ai`)
-- `--verbose, -v` - Show detailed progress
 
-Example:
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--output, -o` | Output file path | `output/video.mp4` |
+| `--preview` | Free preview with placeholders | - |
+| `--verbose, -v` | Show detailed progress | - |
+| `--no-cache` | Skip cache (regenerate everything) | - |
+| `--cache` | Cache directory | `.cache/ai` |
 
-```bash
-bunx vargai render my-video.tsx -o output/my-video.mp4 -v
-```
-
-### Run Actions
-
-Execute individual generation actions:
+Examples:
 
 ```bash
-varg run <action> [options]
+bunx vargai render video.tsx --preview      # Free preview
+bunx vargai render video.tsx --verbose      # Full render
+bunx vargai render video.tsx -o output/my-video.mp4 -v
+bunx vargai render video.tsx --no-cache     # Force regeneration
+
+# Background rendering
+nohup bunx vargai render video.tsx --verbose > output/render.log 2>&1 &
 ```
 
-#### Generate Image
+## Generation Commands
+
+Run individual generation actions:
 
 ```bash
-varg run image --prompt "sunset over mountains"
-varg run image --prompt "cute cat" --model flux-pro --aspect-ratio 16:9
+bunx vargai run <action> [options]
 ```
 
-Options:
-- `--prompt, -p` - Image description (required)
-- `--model, -m` - Model name (default: `flux-schnell`)
-- `--aspect-ratio, -a` - Output ratio (default: `1:1`)
-- `--output, -o` - Output path
-- `--quiet, -q` - Minimal output
-- `--json` - JSON output
-
-#### Generate Video
+### Generate Image
 
 ```bash
-varg run video --prompt "ocean waves" --duration 5
-varg run video --prompt "cat waving" --image media/cat.jpg --duration 5
+bunx vargai run image --prompt "sunset over mountains"
+bunx vargai run image --prompt "cute cat" --model nano-banana-pro --aspect-ratio 16:9
 ```
 
-Options:
-- `--prompt, -p` - Video description (required)
-- `--image, -i` - Input image for image-to-video
-- `--duration, -d` - Duration in seconds (default: `5`)
-- `--model, -m` - Model name (default: `kling-v2.5`)
-- `--output, -o` - Output path
-- `--quiet, -q` - Minimal output
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--prompt, -p` | Image description | required |
+| `--model, -m` | Model name | `nano-banana-pro` |
+| `--aspect-ratio, -a` | Output ratio | `1:1` |
+| `--output, -o` | Output path | - |
 
-#### Generate Voice
+### Generate Video
 
 ```bash
-varg run voice --text "Hello world" --voice rachel
+bunx vargai run video --prompt "ocean waves" --duration 5
+bunx vargai run video --prompt "cat waving" --image media/cat.jpg --duration 5
 ```
 
-Options:
-- `--text, -t` - Text to speak (required)
-- `--voice, -v` - Voice name (default: `rachel`)
-- `--model, -m` - TTS model
-- `--output, -o` - Output path
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--prompt, -p` | Video description | required |
+| `--image, -i` | Input image (image-to-video) | - |
+| `--duration, -d` | Duration in seconds | `5` |
+| `--model, -m` | Model name | `kling-v3` |
+| `--output, -o` | Output path | - |
 
-#### Generate Music
+### Generate Voice
 
 ```bash
-varg run music --prompt "upbeat electronic" --duration 30
+bunx vargai run voice --text "Hello world" --voice rachel
 ```
 
-Options:
-- `--prompt, -p` - Music description (required)
-- `--duration, -d` - Duration in seconds
-- `--output, -o` - Output path
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--text, -t` | Text to speak | required |
+| `--voice, -v` | Voice name | `rachel` |
+| `--model, -m` | TTS model | - |
+| `--output, -o` | Output path | - |
 
-#### Transcribe Audio
+### Generate Music
 
 ```bash
-varg run transcribe audio.mp3
+bunx vargai run music --prompt "upbeat electronic" --duration 30
 ```
 
-Options:
-- `--provider` - Transcription provider (`fal`, `groq`)
-- `--output, -o` - Output SRT path
-
-#### Add Captions
+### Transcribe Audio
 
 ```bash
-varg run captions video.mp4 --style tiktok
+bunx vargai run transcribe audio.mp3
 ```
-
-Options:
-- `--style, -s` - Caption style (`tiktok`, `karaoke`, `bounce`)
-- `--color, -c` - Text color
-- `--output, -o` - Output path
 
 ### List Actions
 
-Show all available actions:
-
 ```bash
-varg list
+bunx vargai list
 ```
 
-### Action Help
+## Environment
 
-Get help for a specific action:
+The CLI reads `VARG_API_KEY` from:
 
-```bash
-varg run <action> --help
-```
-
-### Visual Studio
-
-Open the visual editor:
-
-```bash
-varg studio
-```
-
-Opens `http://localhost:8282` with:
-- Monaco code editor with TypeScript support
-- Node graph visualization
-- Step-by-step execution with previews
-- Cache viewer
-
----
-
-## Examples
-
-### Quick Image Generation
-
-```bash
-# Generate and save
-varg run image -p "cyberpunk cityscape at night" -o output/city.png
-
-# With specific model and ratio
-varg run image -p "portrait headshot, studio lighting" -m flux-pro -a 9:16
-```
-
-### Image-to-Video Pipeline
-
-```bash
-# 1. Generate character image
-varg run image -p "friendly robot character" -o media/robot.png
-
-# 2. Animate to video
-varg run video -p "robot waves hello" -i media/robot.png -d 5 -o output/robot.mp4
-```
-
-### Voice + Video
-
-```bash
-# Generate voiceover
-varg run voice -t "Welcome to my channel!" -v josh -o media/intro.mp3
-
-# Add captions to existing video
-varg run captions video.mp4 --style tiktok -o output/captioned.mp4
-```
-
-### Batch Processing
-
-```bash
-# Generate multiple images
-for prompt in "sunset" "mountains" "ocean"; do
-  varg run image -p "$prompt landscape" -o "output/$prompt.png" -q
-done
-```
-
----
-
-## Environment Variables
-
-The CLI reads from `.env` file or environment:
-
-```bash
-FAL_KEY=fal_xxx                    # Required for images/video
-ELEVENLABS_API_KEY=xxx             # Required for voice/music
-HIGGSFIELD_API_KEY=hf_xxx          # Optional for character images
-```
-
----
+1. Environment variable: `export VARG_API_KEY=varg_xxx`
+2. `.env` file: `VARG_API_KEY=varg_xxx`
+3. Global credentials: `~/.varg/credentials`
 
 ## Output Formats
 
-### Default Output
+### Default
 
 ```
-[image] Generating with flux-schnell...
+[image] Generating with nano-banana-pro...
 [image] Generated: output/image.png
 ```
 
-### Quiet Mode (`--quiet`)
+### Quiet (`--quiet`)
 
 ```
 output/image.png
 ```
 
-### JSON Mode (`--json`)
+### JSON (`--json`)
 
 ```json
 {
   "url": "output/image.png",
-  "model": "flux-schnell",
+  "model": "nano-banana-pro",
   "prompt": "sunset over mountains",
   "duration_ms": 2340
 }

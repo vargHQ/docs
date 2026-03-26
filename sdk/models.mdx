@@ -1,348 +1,222 @@
 ---
 title: "AI Models"
-description: "All supported image, video, speech, and music models"
+description: "All supported image, video, speech, and music models with pricing"
 ---
 
-## Import
+## Setup
 
 ```tsx
-import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 ```
+
+All models are accessed through the `varg` client. 1 credit = 1 cent.
 
 ## Quick Reference
 
-| Category | Recommended Model | Provider | Use Case |
-|----------|-------------------|----------|----------|
-| Image (fast) | `flux-schnell` | Fal | Quick iterations |
-| Image (quality) | `flux-pro` | Fal | Final output |
-| Image (characters) | `soul` | Higgsfield | Consistent characters |
-| Video | `kling-v2.5` | Fal | Best quality |
-| Video (characters) | `wan-2.5` | Fal | Character animation |
-| Lipsync | `sync-v2-pro` | Fal | Lip synchronization |
-| Speech | `eleven_multilingual_v2` | ElevenLabs | Multiple languages |
-| Music | `music_v1` | ElevenLabs | Background music |
+| Category | Recommended | Code | Credits |
+|----------|-------------|------|---------|
+| Image (versatile) | Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | 5 |
+| Image (quality) | Flux Pro | `varg.imageModel("flux-pro")` | 25 |
+| Image (editing) | Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | 5 |
+| Image (characters) | Soul | `varg.imageModel("soul")` | 15 |
+| Video (best) | Kling V3 | `varg.videoModel("kling-v3")` | 150 |
+| Video (characters) | Wan 2.5 | `varg.videoModel("wan-2.5")` | 75 |
+| Lipsync | Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | 100 |
+| Speech (best) | Eleven V3 | `varg.speechModel("eleven_v3")` | 25 |
+| Speech (multi-lang) | Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | 20 |
+| Music | Music V1 | `varg.musicModel()` | 25 |
 
 ---
 
 ## Image Models
 
-### Fal
+| Model | Code | Best For | Credits | Aspect Ratios |
+|-------|------|----------|---------|---------------|
+| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | Versatile, fast | 5 | Any |
+| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | Image editing (requires input) | 5 | Any |
+| Flux Schnell | `varg.imageModel("flux-schnell")` | Fast generation | 5 | Any |
+| Flux Pro | `varg.imageModel("flux-pro")` | High quality | 25 | Any |
+| Flux Dev | `varg.imageModel("flux-dev")` | Development | 10 | Any |
+| Recraft V3 | `varg.imageModel("recraft-v3")` | Graphic design, icons | 15 | Any |
+| Qwen VL | `varg.imageModel("qwen-vl")` | Vision-language | 10 | Any |
+| Soul | `varg.imageModel("soul")` | Character consistency (5 styles) | 15 | 9:16, 1:1 |
+| Background Remover | `varg.imageModel("background-remover")` | Remove backgrounds | 5 | Any |
+
+### Image editing with nano-banana-pro/edit
+
+Edit an existing image with a text prompt:
 
 ```tsx
-import { fal } from "vargai/ai";
+const original = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "woman in casual clothes",
+  aspectRatio: "9:16",
+})
 
-// Fast generation
-fal.imageModel("flux-schnell")
-
-// High quality
-fal.imageModel("flux-pro")
-
-// Development
-fal.imageModel("flux-dev")
-
-// Versatile
-fal.imageModel("nano-banana-pro")
-
-// Image editing (requires input image)
-fal.imageModel("nano-banana-pro/edit")
-
-// Alternative
-fal.imageModel("recraft-v3")
-```
-
-| Model | Speed | Quality | Best For |
-|-------|-------|---------|----------|
-| `flux-schnell` | Fast | Good | Iterations, previews |
-| `flux-pro` | Slow | Excellent | Final output |
-| `flux-dev` | Medium | Good | Development |
-| `nano-banana-pro` | Medium | Good | General purpose |
-| `nano-banana-pro/edit` | Medium | Good | Image-to-image editing |
-| `recraft-v3` | Medium | Good | Alternative style |
-
-**Usage:**
-
-```tsx
-const image = Image({
-  prompt: "sunset over mountains, dramatic lighting",
-  model: fal.imageModel("flux-schnell"),
-  aspectRatio: "16:9",
-});
-```
-
-### Higgsfield (Character Consistency)
-
-```tsx
-import { higgsfield } from "vargai/ai";
-
-// Default style
-higgsfield.imageModel("soul")
-
-// With specific style
-higgsfield.imageModel("soul", { 
-  styleId: higgsfield.styles.REALISTIC,
-  quality: "1080p"
+const edited = Image({
+  model: varg.imageModel("nano-banana-pro/edit"),
+  prompt: { text: "same woman wearing elegant red dress", images: [original] },
+  aspectRatio: "9:16",
 })
 ```
 
-**Available styles:**
+<Warning>
+`nano-banana-pro/edit` requires an input image in the prompt. Plain text prompts will fail.
+</Warning>
 
-| Style | Description |
-|-------|-------------|
-| `REALISTIC` | Photorealistic |
-| `ANIME` | Anime style |
-| `EDITORIAL_90S` | 90s editorial |
-| `Y2K` | Year 2000 aesthetic |
-| `GRUNGE` | Grunge style |
+### Character images with Soul (Higgsfield)
 
-**Usage:**
+Generate consistent characters across scenes with style presets:
 
 ```tsx
 const character = Image({
-  prompt: "professional woman, friendly smile, business attire",
-  model: higgsfield.imageModel("soul", { 
-    styleId: higgsfield.styles.REALISTIC 
-  }),
+  model: varg.imageModel("soul"),
+  prompt: "friendly tech influencer, casual hoodie, ring light",
   aspectRatio: "9:16",
-});
+  providerOptions: {
+    varg: {
+      styleId: "REALISTIC",  // REALISTIC, ANIME, EDITORIAL_90S, Y2K, GRUNGE
+    },
+  },
+})
 ```
 
-<Note>
-Higgsfield Soul excels at generating consistent human characters. Use it when you need the same person across multiple scenes.
-</Note>
-
-### Replicate
-
-```tsx
-import { replicate } from "vargai/ai";
-
-// Background removal
-replicate.imageModel("851-labs/background-remover")
-
-// Any replicate model
-replicate.imageModel("owner/model-name")
-```
+Soul is ideal for creating a character once and reusing it across multiple video scenes.
 
 ---
 
 ## Video Models
 
-### Fal
+| Model | Code | Duration | Best For | Credits |
+|-------|------|----------|----------|---------|
+| Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (integer only) | Best quality | 150 |
+| Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
+| Kling V2.5 | `varg.videoModel("kling-v2.5")` | 5 or 10s only | Previous gen | 100 |
+| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters, motion | 75 |
+| Minimax | `varg.videoModel("minimax")` | 5-10s | Alternative | 75 |
+| LTX | `varg.videoModel("ltx")` | 3-10s | Fast, experimental | 50 |
+
+<Warning>
+**Duration constraints are strict:**
+- `kling-v3`: integer seconds only (3, 4, 5, ... 15). No decimals.
+- `kling-v2.5` / `kling-v2.6`: exactly 5 or 10 seconds. Nothing else.
+- `wan-2.5`: 3-10 seconds.
+</Warning>
+
+### Video prompt formats
 
 ```tsx
-import { fal } from "vargai/ai";
+// Text-to-video
+Video({ model: varg.videoModel("kling-v3"), prompt: "ocean waves", duration: 5 })
 
-// High quality (recommended)
-fal.videoModel("kling-v2.5")
+// Image-to-video (recommended — better quality)
+Video({ model: varg.videoModel("kling-v3"), prompt: { text: "camera push-in", images: [img] }, duration: 5 })
 
-// Previous version
-fal.videoModel("kling-v2.1")
-
-// Good for characters
-fal.videoModel("wan-2.5")
-
-// Alternative
-fal.videoModel("minimax")
-
-// Lipsync models
-fal.videoModel("sync-v2")
-fal.videoModel("sync-v2-pro")
+// Video-to-video (lipsync)
+Video({ model: varg.videoModel("sync-v2-pro"), prompt: { video: vid, audio: speech } })
 ```
 
-| Model | Duration | Quality | Best For |
-|-------|----------|---------|----------|
-| `kling-v2.5` | 5-10s | Excellent | General video |
-| `kling-v2.1` | 5-10s | Good | Alternative |
-| `wan-2.5` | 5s | Good | Character animation |
-| `minimax` | 5s | Good | Quick generation |
-| `sync-v2-pro` | - | Excellent | Lip synchronization |
+---
 
-**Text-to-video:**
+## Lipsync Models
 
-```tsx
-<Video
-  prompt="ocean waves crashing on rocky shore"
-  model={fal.videoModel("kling-v2.5")}
-/>
-```
-
-**Image-to-video:**
-
-```tsx
-const character = Image({ prompt: "robot character" });
-
-<Video
-  prompt={{ 
-    text: "robot waves hello, subtle movement",
-    images: [character] 
-  }}
-  model={fal.videoModel("kling-v2.5")}
-/>
-```
-
-**Lipsync (video + audio):**
-
-```tsx
-const animated = Video({
-  prompt: { text: "person talking", images: [character] },
-  model: fal.videoModel("kling-v2.5"),
-});
-
-const speech = Speech({
-  children: "Hello everyone!",
-  voice: "rachel",
-});
-
-<Video
-  prompt={{ video: animated, audio: speech }}
-  model={fal.videoModel("sync-v2-pro")}
-/>
-```
-
-### OpenAI (Sora)
-
-```tsx
-import { openai } from "vargai/ai";
-
-// Sora video generation
-openai.videoModel("sora-2")
-openai.videoModel("sora-2-pro")
-```
-
-<Note>
-Requires `OPENAI_API_KEY` environment variable. Sora is in limited access.
-</Note>
+| Model | Code | Best For | Credits |
+|-------|------|----------|---------|
+| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | High quality lip sync | 100 |
+| Sync V2 | `varg.videoModel("sync-v2")` | Fast lip sync | 75 |
+| OmniHuman | `varg.videoModel("omnihuman")` | Full body animation | 150 |
 
 ---
 
 ## Speech Models
 
-### ElevenLabs
+| Model | Code | Best For | Credits |
+|-------|------|----------|---------|
+| Eleven V3 | `varg.speechModel("eleven_v3")` | Best quality TTS | 25 |
+| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | Multiple languages | 20 |
+| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | Fast TTS | 15 |
+| Eleven Turbo V2 | `varg.speechModel("eleven_turbo_v2")` | Fast TTS | 15 |
 
-```tsx
-import { elevenlabs } from "vargai/ai";
+### Available Voices
 
-// Fast TTS (default)
-elevenlabs.speechModel("eleven_turbo_v2")
-
-// Multilingual (recommended)
-elevenlabs.speechModel("eleven_multilingual_v2")
-```
-
-| Model | Speed | Languages | Best For |
-|-------|-------|-----------|----------|
-| `eleven_turbo_v2` | Fast | English | Quick generation |
-| `eleven_multilingual_v2` | Medium | 29+ | Multiple languages |
-
-**Available voices:**
-
-| Voice | Gender | Style |
-|-------|--------|-------|
-| `rachel` | Female | Professional |
-| `bella` | Female | Warm |
-| `adam` | Male | Professional |
-| `josh` | Male | Casual |
-| `sam` | Male | Authoritative |
-| `antoni` | Male | Friendly |
-| `elli` | Female | Young |
-| `arnold` | Male | Deep |
-| `domi` | Female | Energetic |
-
-**Usage:**
-
-```tsx
-const voiceover = Speech({
-  model: elevenlabs.speechModel("eleven_multilingual_v2"),
-  voice: "rachel",
-  children: "Welcome to our channel! Today we're exploring AI video.",
-});
-```
+| Voice | Gender | Style | Best For |
+|-------|--------|-------|----------|
+| `rachel` | Female | Calm, warm | Narration |
+| `bella` | Female | Soft, gentle | Storytelling |
+| `domi` | Female | Confident | Presentations |
+| `elli` | Female | Young, cheerful | Social media |
+| `adam` | Male | Deep, warm | Narration |
+| `josh` | Male | Young, energetic | Social media |
+| `sam` | Male | Raspy | Character voices |
+| `antoni` | Male | Calm | Podcasts |
+| `arnold` | Male | Authoritative | Announcements |
 
 ---
 
-## Music Models
-
-### ElevenLabs
+## Music Model
 
 ```tsx
-import { elevenlabs } from "vargai/ai";
-
-// Music generation
-elevenlabs.musicModel()
-```
-
-**Usage:**
-
-```tsx
-<Music 
-  prompt="upbeat electronic pop, energetic, modern" 
-  model={elevenlabs.musicModel()} 
-  volume={0.2}
+<Music
+  prompt="upbeat electronic music, cheerful vibes"
+  model={varg.musicModel()}
+  volume={0.3}
+  duration={15}
 />
 ```
 
-**Prompt tips:**
+One model: `music_v1` (25 credits). Always set `duration` explicitly.
 
-- Be specific about genre: "lo-fi hip hop", "cinematic orchestral", "upbeat pop"
-- Include mood: "energetic", "calm", "dramatic", "mysterious"
-- Mention instruments: "piano", "guitar", "synth", "strings"
-- Specify tempo if important: "slow", "uptempo", "120 BPM"
+**Prompt tips**: Include genre, mood, tempo, and instruments. Examples:
+- `"chill lofi hip hop, relaxing study vibes"`
+- `"epic orchestral cinematic trailer music"`
+- `"upbeat pop, energetic, catchy melody"`
 
 ---
 
-## Transcription Models
+## Transcription Model
 
-### Fal
-
-```tsx
-import { fal } from "vargai/ai";
-
-fal.transcriptionModel("whisper")
-```
-
-**Usage (via CLI):**
-
-```bash
-varg run transcribe audio.mp3 --provider fal
-```
+| Model | Code | Best For |
+|-------|------|----------|
+| Whisper | `varg.transcriptionModel("whisper")` | Audio-to-text |
 
 ---
 
 ## Model Selection Guide
 
-### For Images
+### By Use Case
 
-| Need | Recommended Model |
-|------|-------------------|
-| Fast iteration | `fal.imageModel("flux-schnell")` |
-| Final quality | `fal.imageModel("flux-pro")` |
-| Consistent characters | `higgsfield.imageModel("soul")` |
-| Image editing | `fal.imageModel("nano-banana-pro/edit")` |
+| Use Case | Image Model | Video Model | Speech |
+|----------|-------------|-------------|--------|
+| TikTok/Reels | nano-banana-pro | kling-v3 | eleven_v3 |
+| Product video | flux-pro | kling-v3 | eleven_v3 |
+| Talking head | soul or nano-banana-pro | kling-v3 + sync-v2-pro | eleven_v3 |
+| Slideshow | nano-banana-pro | - (images only) | eleven_v3 |
+| Character animation | soul | wan-2.5 | - |
+| Multi-language | nano-banana-pro | kling-v3 | eleven_multilingual_v2 |
 
-### For Videos
+### By Budget
 
-| Need | Recommended Model |
-|------|-------------------|
-| General video | `fal.videoModel("kling-v2.5")` |
-| Character animation | `fal.videoModel("wan-2.5")` |
-| Lip synchronization | `fal.videoModel("sync-v2-pro")` |
-| Premium quality | `openai.videoModel("sora-2")` |
+| Budget | Image | Video | Total per clip |
+|--------|-------|-------|---------------|
+| Cheap | nano-banana-pro (5) | wan-2.5 (75) | ~$0.80 |
+| Standard | nano-banana-pro (5) | kling-v3 (150) | ~$1.55 |
+| Premium | flux-pro (25) | kling-v3 (150) | ~$1.75 |
 
-### For Audio
+## BYOK (Direct Provider Access)
 
-| Need | Recommended Model |
-|------|-------------------|
-| English voiceover | `elevenlabs.speechModel("eleven_turbo_v2")` |
-| Multilingual | `elevenlabs.speechModel("eleven_multilingual_v2")` |
-| Background music | `elevenlabs.musicModel()` |
+If you have your own provider keys, you can use them directly:
 
----
+```tsx
+import { fal, elevenlabs, higgsfield, replicate } from "vargai/ai"
 
-## API Keys
+fal.imageModel("nano-banana-pro")
+fal.videoModel("kling-v3")
+elevenlabs.speechModel("eleven_v3")
+elevenlabs.musicModel()
+higgsfield.imageModel("soul")
+replicate.imageModel("background-remover")
+```
 
-| Provider | Variable | Get Key |
-|----------|----------|---------|
-| Fal | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
-| ElevenLabs | `ELEVENLABS_API_KEY` | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
-| Higgsfield | `HIGGSFIELD_API_KEY`, `HIGGSFIELD_SECRET` | Contact Higgsfield |
-| OpenAI | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| Replicate | `REPLICATE_API_TOKEN` | [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens) |
+Requires individual provider keys in `.env`. See [BYOK](/byok) for details.
