@@ -1,0 +1,152 @@
+---
+title: "Authentication"
+description: "API keys, login, credentials, and billing"
+---
+
+varg uses a single API key (`VARG_API_KEY`) for all AI generation. This key authenticates you with the varg gateway, which routes requests to the right AI provider (Fal, ElevenLabs, Higgsfield, Replicate) and handles billing.
+
+## Get your API key
+
+### Option 1: Sign up on the web
+
+1. Go to [app.varg.ai](https://app.varg.ai)
+2. Sign up with your email
+3. Copy your API key from the dashboard
+
+### Option 2: Log in from the CLI
+
+```bash
+bunx vargai login
+```
+
+This gives you two choices:
+- **Email login** — enter your email, receive a 6-digit code, verify it. Creates an account and API key automatically.
+- **Paste API key** — if you already have one from the dashboard.
+
+Your credentials are saved to `~/.varg/credentials` (permissions `0600`).
+
+### Option 3: Agent-driven login (for AI agents)
+
+AI agents can drive the login flow using `curl` — no interactive CLI needed:
+
+```bash
+# 1. Send OTP to user's email
+curl -s -X POST https://app.varg.ai/api/auth/cli/send-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+
+# 2. User checks inbox for 6-digit code
+
+# 3. Verify OTP (creates account + API key if needed)
+curl -s -X POST https://app.varg.ai/api/auth/cli/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","code":"123456"}'
+
+# Response: {"api_key":"varg_xxx","email":"...","balance_cents":0,"access_token":"..."}
+```
+
+## Using your API key
+
+### In a `.env` file (recommended for projects)
+
+```bash
+VARG_API_KEY=varg_xxx
+```
+
+Bun auto-loads `.env` — no `dotenv` needed.
+
+### As an environment variable
+
+```bash
+export VARG_API_KEY=varg_xxx
+```
+
+### In global credentials
+
+The CLI saves credentials to `~/.varg/credentials`:
+
+```json
+{
+  "api_key": "varg_xxx",
+  "email": "user@example.com",
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```
+
+The SDK automatically checks this file if `VARG_API_KEY` is not set in the environment.
+
+### In code
+
+```typescript
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+```
+
+Or with the REST API:
+
+```bash
+curl -H "Authorization: Bearer varg_xxx" https://api.varg.ai/v1/balance
+```
+
+## Credits and billing
+
+### Check your balance
+
+```bash
+bunx vargai balance
+```
+
+Or via API:
+
+```bash
+curl -s -H "Authorization: Bearer $VARG_API_KEY" https://api.varg.ai/v1/balance
+# {"balance_cents": 10000}
+```
+
+1 credit = 1 cent. `balance_cents: 10000` means 10,000 credits ($100).
+
+### Add credits
+
+```bash
+bunx vargai topup
+```
+
+This opens the billing page in your browser. Or go directly to [app.varg.ai](https://app.varg.ai).
+
+Available packages:
+
+| Package | Credits | Price |
+|---------|---------|-------|
+| Starter | 2,000 | $20 |
+| Basic | 5,000 | $50 |
+| Popular | 10,000 | $100 |
+| Pro | 20,000 | $200 |
+| Business | 50,000 | $500 |
+| Enterprise | 100,000 | $1,000 |
+
+### Pricing
+
+| Action | Model | Credits | Cost |
+|--------|-------|---------|------|
+| Image | nano-banana-pro | 5 | $0.05 |
+| Image | flux-pro | 25 | $0.25 |
+| Video (5s) | kling-v3 | 150 | $1.50 |
+| Video (5s) | wan-2.5 | 75 | $0.75 |
+| Speech | eleven_v3 | 25 | $0.25 |
+| Music | music_v1 | 25 | $0.25 |
+
+**Cache hits are always free.** Same prompt + params = $0 instant result.
+
+## CLI commands
+
+| Command | Description |
+|---------|-------------|
+| `bunx vargai login` | Sign in or paste API key |
+| `bunx vargai logout` | Clear saved credentials |
+| `bunx vargai balance` | Check credit balance |
+| `bunx vargai topup` | Open billing page in browser |
+
+## Bring Your Own Keys (BYOK)
+
+If you have your own provider API keys (fal, ElevenLabs, etc.), you can use them through the varg gateway at **$0 varg cost**. See the [BYOK guide](/byok) for details.

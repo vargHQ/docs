@@ -4,18 +4,45 @@ description: "Configure Cursor for video generation with varg"
 icon: "i-cursor"
 ---
 
-Set up Cursor to help you create AI videos with varg.
+Set up Cursor to create AI videos with varg.
 
 ## Prerequisites
 
 - [Cursor](https://cursor.sh) installed
-- varg project initialized (`bun install vargai ai`)
-- API keys configured (at minimum `FAL_KEY`)
+- A `VARG_API_KEY` — get one at [app.varg.ai](https://app.varg.ai)
 
 ## Setup
 
 <Steps>
-<Step title="Create .cursorrules">
+<Step title="Install the varg skill">
+  In your project directory:
+
+  ```bash
+  npx -y skills add vargHQ/skills --all --copy -y
+  ```
+
+  This installs the varg skill with full context into Cursor's skills directory.
+</Step>
+
+<Step title="Set your API key">
+  Create a `.env` file:
+
+  ```bash
+  VARG_API_KEY=varg_xxx
+  ```
+</Step>
+
+<Step title="Add docs reference (optional)">
+  In Cursor settings, add the varg docs as a reference:
+
+  ```
+  https://docs.varg.ai
+  ```
+
+  This gives Cursor access to the full documentation when generating code.
+</Step>
+
+<Step title="Create a .cursorrules file">
   Add a `.cursorrules` file to your project root:
 
   ```markdown
@@ -23,171 +50,107 @@ Set up Cursor to help you create AI videos with varg.
 
   ## About
   This project uses varg SDK for AI video generation.
-  Videos are composed using JSX syntax similar to React.
+  Videos are composed using JSX syntax.
+
+  ## Setup
+  - API key: VARG_API_KEY in .env
+  - Render: `bunx vargai render <file.tsx> --verbose`
+  - Preview: `bunx vargai render <file.tsx> --preview` (free)
 
   ## Key Concepts
-  - `render()` - Renders JSX to video file
-  - `<Render>` - Root container with width, height, fps
-  - `<Clip>` - Time segment with duration and transitions
-  - `<Image>` - AI-generated or static image
-  - `<Video>` - AI-generated or source video
-  - `<Speech>` - Text-to-speech voiceover
-  - `<Music>` - Background music
-  - `<Captions>` - Auto-generated subtitles
+  - `<Render>` - Root container (width, height, fps)
+  - `<Clip>` - Time segment (duration, transitions)
+  - `Image()` - Generate AI image (function call, not JSX)
+  - `Video()` - Generate AI video (function call, not JSX)
+  - `Speech()` - Text-to-speech (function call, not JSX)
+  - `<Music>` - Background music (JSX component)
+  - `<Captions>` - Subtitles synced to speech
 
   ## Import Pattern
   ```tsx
-  import { render, Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react";
-  import { fal, elevenlabs, higgsfield } from "vargai/ai";
+  import { Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react"
+  import { createVarg } from "@vargai/gateway"
+
+  const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
   ```
 
-  ## Common Models
-  - Images: `fal.imageModel("flux-schnell")` (fast), `higgsfield.imageModel("soul")` (characters)
-  - Video: `fal.videoModel("kling-v2.5")` (quality), `fal.videoModel("wan-2.5")` (characters)
-  - Speech: `elevenlabs.speechModel("eleven_multilingual_v2")`
-  - Music: `elevenlabs.musicModel()`
-  - Lipsync: `fal.videoModel("sync-v2-pro")`
+  ## Common Models (via gateway)
+  - Images: `varg.imageModel("nano-banana-pro")` (versatile), `varg.imageModel("flux-pro")` (quality)
+  - Video: `varg.videoModel("kling-v3")` (best quality), `varg.videoModel("wan-2.5")` (characters)
+  - Speech: `varg.speechModel("eleven_v3")`
+  - Music: `varg.musicModel()`
+  - Lipsync: `varg.videoModel("sync-v2-pro")`
 
-  ## Running Videos
-  ```bash
-  bun run <file.tsx>
-  ```
-
-  ## Folder Structure
-  - `media/` - Input assets
-  - `output/` - Generated videos
-  - `.env` - API keys (FAL_KEY, ELEVENLABS_API_KEY)
-
-  ## Tips
-  - Use same Image reference for character consistency
-  - Keep video clips 5-10 seconds for best results
-  - Music volume 0.1-0.3 for background
-  - Use "9:16" aspect ratio for TikTok/Reels/Shorts
+  ## Critical Rules
+  1. Use function calls for media: `Image({...})`, `Video({...})`, `Speech({...})`
+  2. Use JSX for composition: `<Clip>`, `<Render>`, `<Music>`
+  3. Never write `<Image prompt="..." />` — it's `Image({ prompt: "..." })`
+  4. One image per Video: `Video({ prompt: { images: [img] } })`
+  5. kling-v3 duration: integer 3-15 seconds only
+  6. Always set Music duration explicitly
   ```
 </Step>
 
-<Step title="Add Documentation Reference">
-  In Cursor settings, add docs reference:
-
-  1. Open Cursor Settings (`Cmd+,`)
-  2. Go to "Features" > "Docs"
-  3. Add: `https://varg.ai/docs`
-</Step>
-
-<Step title="Configure Environment">
-  Create `.env` with API keys:
-
-  ```bash
-  FAL_KEY=fal_xxx
-  ELEVENLABS_API_KEY=xxx
-  ```
+<Step title="Start creating">
+  Open Cursor and try:
+  - *"Create a 10-second vertical video of a cat dancing"*
+  - *"Make a product showcase video for sneakers"*
+  - *"Generate a talking head video with TikTok captions"*
 </Step>
 </Steps>
 
-## Example .cursorrules (Extended)
+## Example prompts for Cursor
 
-For more detailed context, use this extended version:
-
-```markdown
-# varg Video Generation
-
-## Quick Start
-```tsx
-import { render, Render, Clip, Image, Video } from "vargai/react";
-import { fal } from "vargai/ai";
-
-const image = Image({ prompt: "cute cat", aspectRatio: "9:16" });
-
-await render(
-  <Render width={1080} height={1920}>
-    <Clip duration={3}>
-      <Video
-        prompt={{ text: "cat waves hello", images: [image] }}
-        model={fal.videoModel("kling-v2.5")}
-      />
-    </Clip>
-  </Render>,
-  { output: "output/video.mp4" }
-);
+### Quick video
+```
+Create a 5-second video of waves crashing on a beach.
+Use 16:9 landscape format with cinematic lighting.
 ```
 
-## Components Reference
+### Multi-scene
+```
+Create a 3-scene product video:
+1. Product reveal with dramatic lighting
+2. Close-up of product features
+3. Packshot with "Shop Now" CTA
 
-| Component | Purpose | Key Props |
-|-----------|---------|-----------|
-| `<Render>` | Root | width, height, fps |
-| `<Clip>` | Time segment | duration, transition |
-| `<Image>` | AI/static image | prompt, src, zoom |
-| `<Video>` | AI/source video | prompt, src, volume |
-| `<Speech>` | TTS | voice, children |
-| `<Music>` | Background audio | prompt, volume, loop |
-| `<Captions>` | Subtitles | src, style |
-| `<Title>` | Text overlay | position, color |
-| `<Split>` | Side-by-side | direction |
-
-## Aspect Ratios
-- TikTok/Reels: 1080x1920 (9:16)
-- YouTube: 1920x1080 (16:9)
-- Instagram: 1080x1080 (1:1)
-
-## Transitions
-fade, crossfade, wipeleft, wiperight, slideup, cube
-
-## Caption Styles
-tiktok (word highlight), karaoke (fill), bounce, typewriter
-
-## Best Practices
-1. Generate images first, then animate to video
-2. Use higgsfield.imageModel("soul") for consistent characters
-3. Keep motion prompts simple: "person talking", "subtle movement"
-4. First render is slow (AI generation), subsequent are instant (cached)
-5. Music volume at 0.1-0.3 for background
+Add upbeat background music. Vertical 9:16 format.
 ```
 
-## Example Prompts for Cursor
-
-### Generate Code
-
+### With voiceover
 ```
-Create a TikTok video with:
-- A cute robot character
-- 3 scenes showing different emotions (happy, sad, excited)
-- Upbeat electronic music
-- Smooth fade transitions between scenes
-```
+Create a talking character video. The character should be a friendly
+young woman in casual clothes. She says:
 
-### Fix Issues
+"Hey guys! Today I'm reviewing the best coffee makers under $100.
+Let me show you my top 3 picks."
 
-```
-The lipsync isn't working well. Review my code and suggest improvements.
-```
-
-### Add Features
-
-```
-Add TikTok-style captions to this video. 
-Use white text with word-by-word highlighting.
+Add TikTok-style captions and background music.
 ```
 
 ## Troubleshooting
 
-### Cursor Not Finding Types
+### Type errors in TSX files
 
-Run `bun install` to ensure types are installed.
-
-### Slow Completions
-
-Add the varg docs URL to Cursor's docs feature for faster, more accurate suggestions.
-
-### Import Errors
-
-Make sure imports are from the correct subpaths:
-
-```tsx
-// Correct
-import { render } from "vargai/react";
-import { fal } from "vargai/ai";
-
-// Incorrect
-import { render, fal } from "vargai";
+Make sure you have the vargai package installed:
+```bash
+bun install vargai ai @vargai/gateway
 ```
+
+### Cursor suggests wrong imports
+
+The `.cursorrules` file should fix this. Make sure it specifies the gateway pattern:
+```tsx
+import { createVarg } from "@vargai/gateway"
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+```
+
+### Slow completions
+
+Cursor may take longer on first use while indexing the project. Subsequent suggestions are faster.
+
+## Next steps
+
+- Browse [Templates](/templates) for copy-paste examples
+- Check [Components](/sdk/components) for all JSX components
+- See [AI Models](/sdk/models) for the full model catalog

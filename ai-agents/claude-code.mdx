@@ -4,80 +4,74 @@ description: "Configure Claude Code for video generation with varg"
 icon: "terminal"
 ---
 
-Set up Claude Code to help you create AI videos with varg.
+Set up Claude Code to create AI videos with varg. The varg skill gives Claude Code full context on components, models, prompting, and rendering.
 
 ## Prerequisites
 
-- [Claude Code CLI](https://claude.ai/docs) installed
-- varg project initialized (`bun install vargai ai`)
-- API keys configured (at minimum `FAL_KEY`)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
+- A `VARG_API_KEY` — get one at [app.varg.ai](https://app.varg.ai) (or log in during setup)
 
 ## Setup
 
 <Steps>
-<Step title="Install Claude Code">
-  ```bash
-  npm install -g @anthropic-ai/claude-code
-  ```
-</Step>
-
-<Step title="Add varg Skill">
+<Step title="Install the varg skill">
   In your project directory:
 
   ```bash
-  npx skills add https://varg.ai/docs
+  npx -y skills add vargHQ/skills --all --copy -y
   ```
 
-  This gives Claude Code:
-  - Component reference
-  - Model information
-  - Code templates
-  - Best practices
+  This installs:
+  - `SKILL.md` — complete instructions for Claude Code
+  - `references/` — 10 reference docs (models, components, recipes, prompting, templates, etc.)
+  - `scripts/` — environment check scripts
 </Step>
 
-<Step title="Configure Project">
-  Create or update `CLAUDE.md` in your project root:
+<Step title="Set your API key">
+  If you already have a key, add it to `.env`:
 
-  ```markdown
-  # varg Video Project
-
-  ## Commands
-  - `bun run <file.tsx>` - Render video
-  - `bunx vargai render <file.tsx>` - Alternative render
-
-  ## Folders
-  - `media/` - Input assets
-  - `output/` - Generated videos
-
-  ## API Keys
-  Required in .env:
-  - FAL_KEY (images, video)
-  - ELEVENLABS_API_KEY (voice, music)
+  ```bash
+  echo "VARG_API_KEY=varg_xxx" >> .env
   ```
+
+  If you don't have one, Claude Code will walk you through authentication when you ask it to create a video. It will:
+  1. Ask for your email
+  2. Send a verification code
+  3. Save your API key to `~/.varg/credentials`
 </Step>
 
-<Step title="Start Creating">
+<Step title="Start creating">
   ```bash
   claude
   ```
 
-  Try:
-  - "Create a 10-second TikTok video about cats"
-  - "Make a talking character video with this script: ..."
-  - "Generate a slideshow from these prompts: ..."
+  Try these prompts:
+  - *"Create a 10-second TikTok video about cats"*
+  - *"Make a talking character video with this script: ..."*
+  - *"Generate a slideshow from these prompts: ..."*
 </Step>
 </Steps>
 
-## Example Prompts
+## How it works
 
-### Simple Video
+The skill teaches Claude Code:
+- All available components (`Render`, `Clip`, `Image`, `Video`, `Speech`, `Music`, `Captions`, etc.)
+- All AI models with pricing (kling-v3, nano-banana-pro, flux, eleven_v3, etc.)
+- Two rendering modes: **cloud render** (curl, zero dependencies) and **local render** (bun + ffmpeg)
+- Prompting best practices for cinematic video
+- Common patterns: talking head, character consistency, slideshows, lipsync
+- Caching strategy to minimize costs
+
+## Example prompts
+
+### Simple video
 
 ```
-Create a simple 5-second video of a cute robot waving hello.
-Use vertical format for TikTok.
+Create a 5-second vertical video of a cute robot waving hello.
+Use 9:16 format for TikTok.
 ```
 
-### Talking Character
+### Talking character
 
 ```
 Create a talking character video with this script:
@@ -87,39 +81,38 @@ Use a friendly female character with casual style.
 Add TikTok-style captions and upbeat background music.
 ```
 
-### Product Video
+### Product video
 
 ```
 Create a product showcase video for wireless headphones.
-Show the product rotating with text overlays highlighting features:
+Show the product with text overlays highlighting features:
 - Premium Sound
 - 40hr Battery
 - Active Noise Cancellation
 
-End with a "Shop Now" call-to-action.
+End with a "Shop Now" call-to-action. Vertical 9:16 format.
 ```
 
-### Before/After
+### Slideshow
 
 ```
-Create a transformation video showing a fitness journey.
-Side-by-side comparison with "before" and "after" states.
-Add motivational music and captions.
+Create a slideshow of 5 nature scenes with smooth transitions,
+background music, and a title card. 16:9 landscape format.
 ```
 
-## Tips for Best Results
+## Tips for best results
 
-### Be Specific About Format
+### Be specific about format
 
 ```
 # Good
-"Create a vertical 9:16 video for TikTok, 15 seconds max"
+"Create a vertical 9:16 video, 15 seconds, for TikTok"
 
 # Less specific
 "Make a social media video"
 ```
 
-### Include Style Details
+### Include style details
 
 ```
 # Good
@@ -129,11 +122,11 @@ Add motivational music and captions.
 "Cute character"
 ```
 
-### Specify Audio
+### Specify audio
 
 ```
 # Good
-"Add upbeat electronic background music at low volume, 
+"Add upbeat electronic background music at low volume,
 with word-by-word TikTok-style captions"
 
 # Less specific
@@ -142,26 +135,40 @@ with word-by-word TikTok-style captions"
 
 ## Troubleshooting
 
-### "FAL_KEY not found"
+### "VARG_API_KEY not found"
 
-Ensure your `.env` file has the API key:
+The skill will prompt you to authenticate. You can also set it manually:
 
 ```bash
-echo "FAL_KEY=fal_xxx" >> .env
+echo "VARG_API_KEY=varg_xxx" >> .env
+```
+
+Or log in:
+
+```bash
+bunx vargai login
 ```
 
 ### "Video rendering failed"
 
 - Check prompt doesn't violate content policy
 - Try simpler motion descriptions
-- Reduce video duration
+- Reduce video duration (kling-v3 supports 3-15s)
 
 ### "Slow generation"
 
-First run generates AI assets (1-2 min). Subsequent runs with same props are instant (cached).
+First run generates AI assets (1-2 min per clip). Subsequent runs with same prompts are instant (cached at $0).
 
-## Next Steps
+## Updating the skill
 
-- Read the [AI Agent Context](/ai-agents) page for complete reference
+The skill checks for updates automatically. You can also update manually:
+
+```bash
+npx -y skills update
+```
+
+## Next steps
+
 - Browse [Templates](/templates) for copy-paste examples
-- Check [Components](/sdk/components) for all available options
+- Check [Components](/sdk/components) for all available JSX components
+- See [AI Models](/sdk/models) for the full model catalog with pricing

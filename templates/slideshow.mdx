@@ -8,271 +8,143 @@ Create beautiful image slideshows with AI-generated images, transitions, and bac
 ## Basic Slideshow
 
 ```tsx
-import { render, Render, Clip, Image } from "vargai/react";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const SCENES = [
   "tropical beach at sunset",
   "mountain peaks at dawn",
   "city skyline at night",
-];
+]
 
-await render(
+export default (
   <Render width={1080} height={1920}>
     {SCENES.map((prompt, i) => (
       <Clip key={i} duration={3} transition={{ name: "fade", duration: 0.5 }}>
-        <Image prompt={prompt} zoom="in" />
+        <Image prompt={prompt} model={varg.imageModel("nano-banana-pro")} aspectRatio="9:16" zoom="in" />
       </Clip>
     ))}
-  </Render>,
-  { output: "output/slideshow.mp4" }
-);
+  </Render>
+)
 ```
-
-**Requirements:** `FAL_KEY` only
-
----
 
 ## With Background Music
 
 ```tsx
-import { render, Render, Clip, Image, Music } from "vargai/react";
-import { elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Music } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const SCENES = [
-  "tropical beach at sunset, palm trees swaying",
-  "crystal clear ocean water, fish swimming",
-  "mountain peaks covered in snow, dramatic sky",
-  "northern lights over Iceland, green aurora",
-];
+  "tropical beach at sunset, golden hour",
+  "mountain peaks at dawn, misty",
+  "city skyline at night, neon lights",
+  "autumn forest, golden leaves falling",
+]
 
-await render(
+export default (
   <Render width={1080} height={1920}>
-    <Music 
-      prompt="chill ambient travel music, peaceful vibes" 
-      model={elevenlabs.musicModel()} 
-      volume={0.3}
-      loop
-    />
-    
+    <Music prompt="chill ambient lofi, relaxing study vibes" model={varg.musicModel()} volume={0.3} duration={16} />
     {SCENES.map((prompt, i) => (
-      <Clip key={i} duration={3} transition={{ name: "crossfade", duration: 0.5 }}>
-        <Image prompt={prompt} zoom="in" />
+      <Clip key={i} duration={4} transition={{ name: "fade", duration: 0.5 }}>
+        <Image prompt={prompt} model={varg.imageModel("nano-banana-pro")} aspectRatio="9:16" zoom="in" />
       </Clip>
     ))}
-  </Render>,
-  { output: "output/slideshow-music.mp4" }
-);
+  </Render>
+)
 ```
-
-**Requirements:** `FAL_KEY` + `ELEVENLABS_API_KEY`
-
----
 
 ## With Narration
 
 ```tsx
-import { render, Render, Clip, Image, Music, Speech, Captions } from "vargai/react";
-import { elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Speech, Music, Captions } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const SCENES = [
-  {
-    image: "tropical beach at sunset",
-    narration: "Imagine waking up to this every morning.",
-  },
-  {
-    image: "luxury overwater villa",
-    narration: "Your own private paradise.",
-  },
-  {
-    image: "couple watching sunset on beach",
-    narration: "Create memories that last forever.",
-  },
-];
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const voiceover = Speech({
-  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  model: varg.speechModel("eleven_v3"),
   voice: "rachel",
-  children: SCENES.map(s => s.narration).join(" "),
-});
+  children: "Let me take you on a journey through the most beautiful places on Earth. From tropical paradises to mountain peaks, nature never fails to amaze.",
+})
 
-await render(
+const SCENES = [
+  "tropical beach, crystal clear water, palm trees",
+  "mountain peaks, snow-capped, golden sunrise",
+  "deep forest, rays of light through canopy",
+]
+
+export default (
   <Render width={1080} height={1920}>
-    <Music prompt="inspiring travel music, emotional" model={elevenlabs.musicModel()} volume={0.15} />
-    
-    {SCENES.map((scene, i) => (
-      <Clip key={i} duration={4} transition={{ name: "fade", duration: 0.5 }}>
-        <Image prompt={scene.image} zoom="in" />
+    <Music prompt="ambient nature documentary, peaceful" model={varg.musicModel()} volume={0.15} duration={15} />
+    {SCENES.map((prompt, i) => (
+      <Clip key={i} duration={5} transition={{ name: "crossfade", duration: 0.5 }}>
+        <Image prompt={prompt} model={varg.imageModel("nano-banana-pro")} aspectRatio="9:16" zoom="in" />
       </Clip>
     ))}
-    
-    <Captions src={voiceover} style="tiktok" color="#ffffff" />
-  </Render>,
-  { output: "output/slideshow-narrated.mp4" }
-);
+    <Captions src={voiceover} style="tiktok" color="#ffffff" withAudio />
+  </Render>
+)
 ```
-
----
 
 ## Customization
 
 ### Zoom Effects
 
 ```tsx
-// Zoom in (Ken Burns)
-<Image prompt="landscape" zoom="in" />
-
-// Zoom out
-<Image prompt="landscape" zoom="out" />
-
-// Pan left
-<Image prompt="landscape" zoom="left" />
-
-// Pan right
-<Image prompt="landscape" zoom="right" />
+<Image prompt="landscape" zoom="in" />   // Ken Burns zoom in
+<Image prompt="landscape" zoom="out" />  // Zoom out
+<Image prompt="landscape" zoom="left" /> // Pan left
+<Image prompt="landscape" zoom="right" />// Pan right
 ```
 
 ### Transitions
 
 ```tsx
-// Fade
 <Clip transition={{ name: "fade", duration: 0.5 }}>
-
-// Crossfade (blend)
 <Clip transition={{ name: "crossfade", duration: 0.5 }}>
-
-// Wipe
 <Clip transition={{ name: "wipeleft", duration: 0.5 }}>
-<Clip transition={{ name: "wiperight", duration: 0.5 }}>
-
-// Slide
-<Clip transition={{ name: "slideup", duration: 0.5 }}>
-<Clip transition={{ name: "slidedown", duration: 0.5 }}>
-
-// 3D
 <Clip transition={{ name: "cube", duration: 0.8 }}>
+<Clip transition={{ name: "pixelize", duration: 0.5 }}>
+<Clip transition={{ name: "dissolve", duration: 0.5 }}>
 ```
 
 ### Aspect Ratios
 
 ```tsx
-// TikTok/Reels (vertical)
+// TikTok / Reels / Shorts
 <Render width={1080} height={1920}>
-<Image aspectRatio="9:16" />
+  <Image aspectRatio="9:16" />
 
-// YouTube (horizontal)
+// YouTube
 <Render width={1920} height={1080}>
-<Image aspectRatio="16:9" />
+  <Image aspectRatio="16:9" />
 
-// Instagram (square)
+// Instagram
 <Render width={1080} height={1080}>
-<Image aspectRatio="1:1" />
+  <Image aspectRatio="1:1" />
 ```
 
 ### Music Styles
 
-```tsx
-// Travel content
-<Music prompt="chill ambient travel music, peaceful" />
-
-// Motivational
-<Music prompt="inspiring orchestral music, uplifting" />
-
-// Tech/Product
-<Music prompt="modern electronic, corporate tech" />
-
-// Emotional
-<Music prompt="piano and strings, emotional, cinematic" />
-
-// Energetic
-<Music prompt="upbeat pop music, energetic" />
 ```
-
----
-
-## Using Existing Images
-
-Instead of AI-generated images, use your own:
-
-```tsx
-import { render, Render, Clip, Image } from "vargai/react";
-
-const photos = [
-  "media/vacation-1.jpg",
-  "media/vacation-2.jpg",
-  "media/vacation-3.jpg",
-];
-
-await render(
-  <Render width={1080} height={1920}>
-    {photos.map((src, i) => (
-      <Clip key={i} duration={3} transition={{ name: "fade", duration: 0.5 }}>
-        <Image src={src} zoom="in" resize="cover" />
-      </Clip>
-    ))}
-  </Render>,
-  { output: "output/photo-slideshow.mp4" }
-);
+"chill lofi hip hop, relaxing study vibes"
+"epic orchestral cinematic trailer"
+"upbeat pop, energetic, catchy melody"
+"ambient nature sounds, peaceful"
+"corporate upbeat, motivational"
 ```
-
----
-
-## Full Featured Example
-
-Complete slideshow with all features:
-
-```tsx
-import { render, Render, Clip, Image, Music, Title, Packshot } from "vargai/react";
-import { elevenlabs } from "vargai/ai";
-
-const SCENES = [
-  { prompt: "tropical beach sunset", title: "Bali" },
-  { prompt: "ancient temple in jungle", title: "Angkor Wat" },
-  { prompt: "snow-capped mountain", title: "Swiss Alps" },
-  { prompt: "northern lights", title: "Iceland" },
-];
-
-await render(
-  <Render width={1080} height={1920}>
-    {/* Background music */}
-    <Music 
-      prompt="inspiring travel montage music, emotional crescendo" 
-      model={elevenlabs.musicModel()} 
-      volume={0.25}
-    />
-    
-    {/* Opening title */}
-    <Clip duration={2}>
-      <Image prompt="world map, travel pins, vintage style" />
-      <Title position="center" color="#ffffff">Our 2025 Adventures</Title>
-    </Clip>
-    
-    {/* Photo slides */}
-    {SCENES.map((scene, i) => (
-      <Clip key={i} duration={3} transition={{ name: "crossfade", duration: 0.5 }}>
-        <Image prompt={scene.prompt} zoom="in" />
-        <Title position="bottom" color="#ffffff">{scene.title}</Title>
-      </Clip>
-    ))}
-    
-    {/* End card */}
-    <Clip duration={3}>
-      <Packshot 
-        background="#000000"
-        cta="Follow for more travel content!"
-        blinkCta
-      />
-    </Clip>
-  </Render>,
-  { output: "output/travel-slideshow.mp4" }
-);
-```
-
----
 
 ## Tips
 
-1. **Duration**: 2-4 seconds per slide works best
-2. **Transitions**: 0.3-0.5s for quick pace, 0.8-1.0s for cinematic
-3. **Zoom**: Alternate between `in` and `out` for variety
-4. **Music**: Keep volume at 0.2-0.3 if adding voiceover later
-5. **Prompts**: Be specific about lighting, mood, and style for consistency
+- **Duration**: 3-4 seconds per slide works well for social media
+- **Transitions**: Keep transition duration at 0.3-0.5s. Longer feels slow.
+- **Zoom**: Vary zoom directions (in, out, left, right) across slides for visual interest
+- **Music volume**: 0.15-0.3 for background. Higher if there's no voiceover.
+- **Prompts**: Be specific about lighting, time of day, and mood for consistent style

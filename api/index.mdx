@@ -19,17 +19,15 @@ All requests require a varg API key:
 Authorization: Bearer varg_xxx
 ```
 
-Get your API key at [varg.ai/dashboard](https://varg.ai/dashboard).
+Get your API key at [app.varg.ai](https://app.varg.ai) or run `bunx vargai login`. See [Authentication](/authentication) for details.
 
 ### Bring Your Own Key (BYOK)
 
-Use your own provider keys to bypass varg billing entirely:
+You can also pass your own provider keys to bypass varg billing. See the [BYOK guide](/byok) for a full tutorial.
 
 ```bash
 X-Provider-Key-Fal: fal_xxx
 X-Provider-Key-ElevenLabs: el_xxx
-X-Provider-Key-Higgsfield: hf_xxx
-X-Provider-Key-Replicate: r8_xxx
 ```
 
 ## Quick Start
@@ -41,7 +39,7 @@ Generate a video and poll for the result:
 curl -X POST https://api.varg.ai/v1/video \
   -H "Authorization: Bearer varg_xxx" \
   -H "Content-Type: application/json" \
-  -d '{"model": "kling-v2.5", "prompt": "cat jumping over a fence"}'
+  -d '{"model": "kling-v3", "prompt": "cat jumping over a fence"}'
 
 # Response
 # {"job_id": "job_a1b2c3d4", "status": "queued", "model": "fal:kling-v2.5", "created_at": "2026-02-13T10:00:00Z"}
@@ -75,7 +73,7 @@ const client = new VargClient({ apiKey: "varg_xxx" });
 ```typescript
 // Create job and wait for completion
 const job = await client.createVideo({
-  model: "kling-v2.5",
+  model: "kling-v3",
   prompt: "cat jumping over a fence in slow motion",
   duration: 5,
   aspect_ratio: "16:9",
@@ -86,7 +84,7 @@ console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp4
 
 // Image-to-video
 const i2vJob = await client.createVideo({
-  model: "kling-v2.5",
+  model: "kling-v3",
   prompt: "cat turns and looks at camera",
   files: [{ url: "https://example.com/cat.jpg" }],
 });
@@ -109,7 +107,7 @@ console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.jpg
 
 ```typescript
 const job = await client.createSpeech({
-  model: "eleven_multilingual_v2",
+  model: "eleven_v3",
   text: "Hello everyone! Welcome to my channel.",
   voice: "rachel", // rachel, domi, sarah, antoni, elli, josh, arnold, adam, sam
 });
@@ -147,14 +145,16 @@ Models can be specified as `provider:model` or just the model name. The gateway 
 
 | Model | Provider |
 |-------|----------|
-| `kling-v2.5`, `kling-v2.1` | Fal |
-| `wan-2.5`, `minimax` | Fal |
-| `flux-schnell`, `flux-pro` | Fal |
-| `sync-v2`, `sync-v2-pro` | Fal |
-| `soul` | Higgsfield |
-| `eleven_turbo_v2`, `eleven_multilingual_v2` | ElevenLabs |
+| `kling-v3`, `kling-v2.6`, `kling-v2.5` | Fal |
+| `wan-2.5`, `minimax`, `ltx` | Fal |
+| `nano-banana-pro`, `flux-schnell`, `flux-pro` | Fal |
+| `sync-v2`, `sync-v2-pro`, `omnihuman` | Fal |
+| `recraft-v3` | Fal |
+| `eleven_v3`, `eleven_multilingual_v2`, `eleven_flash_v2_5` | ElevenLabs |
 | `music_v1` | ElevenLabs |
-| `whisper` | Replicate |
+| `soul` | Higgsfield |
+| `background-remover` | Replicate |
+| `whisper` | Fal |
 
 ## Caching
 

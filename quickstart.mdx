@@ -5,221 +5,233 @@ description: "Get up and running with varg in 5 minutes"
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) runtime (recommended) or Node.js 18+
-- API key from [fal.ai](https://fal.ai/dashboard/keys) (required)
+- A `VARG_API_KEY` — get one at [app.varg.ai](https://app.varg.ai)
+- [Bun](https://bun.sh) runtime + ffmpeg for local rendering (optional — you can use cloud rendering with just `curl`)
 
-## Installation
+## Get your API key
+
+Sign up at [app.varg.ai](https://app.varg.ai) to get your API key. This single key gives you access to all AI providers (image, video, speech, music, lipsync) through the varg gateway.
+
+Or log in from the CLI:
+
+```bash
+bunx vargai login
+```
+
+See [Authentication](/authentication) for details on login methods, billing, and credentials.
+
+## Choose your rendering mode
+
+| You have | Mode | How |
+|----------|------|-----|
+| Just `curl` | **Cloud Render** | Submit TSX via API, poll for result |
+| `bun` + `ffmpeg` | **Local Render** (recommended) | Write TSX files, render locally |
+
+## Cloud Render (zero dependencies)
+
+No installation needed. Submit video code to the render service via `curl`:
+
+```bash
+# Submit a render job
+curl -s -X POST https://render.varg.ai/api/render \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "const img = Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"a cabin in mountains at sunset\", aspectRatio: \"16:9\" });\nexport default (<Render width={1920} height={1080}><Clip duration={3}>{img}</Clip></Render>);"
+  }'
+
+# Poll for result (repeat until "completed")
+curl -s https://render.varg.ai/api/render/jobs/JOB_ID \
+  -H "Authorization: Bearer $VARG_API_KEY"
+```
+
+<Info>
+Cloud render uses `fal.*Model()` syntax (globals are auto-injected). See the [Gateway API](/api) for full details.
+</Info>
+
+## Local Render (bun + ffmpeg)
+
+### Installation
 
 <Tabs>
   <Tab title="Bun (recommended)">
     ```bash
-    bun install vargai ai
+    bun install vargai ai @vargai/gateway
     ```
   </Tab>
   <Tab title="npm">
     ```bash
-    npm install vargai ai
+    npm install vargai ai @vargai/gateway
     ```
   </Tab>
 </Tabs>
 
-## API Keys Setup
+### Set your API key
 
 Create a `.env` file in your project root:
 
 ```bash
-# Required - Image and video generation
-FAL_KEY=fal_xxx
-
-# Optional - Voice and music
-ELEVENLABS_API_KEY=xxx
-
-# Optional - Character images with styles
-HIGGSFIELD_API_KEY=hf_xxx
-HIGGSFIELD_SECRET=secret_xxx
-
-# Optional - Sora video generation
-OPENAI_API_KEY=sk_xxx
-
-# Optional - Background removal
-REPLICATE_API_TOKEN=r8_xxx
+VARG_API_KEY=varg_xxx
 ```
 
-<AccordionGroup>
-  <Accordion title="Get FAL_KEY (required)">
-    1. Go to [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys)
-    2. Create account or sign in
-    3. Generate new API key
-    4. Copy key starting with `fal_`
-  </Accordion>
-  <Accordion title="Get ELEVENLABS_API_KEY (for voice/music)">
-    1. Go to [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)
-    2. Create account or sign in
-    3. Generate new API key
-  </Accordion>
-</AccordionGroup>
+<Tip>
+Bun auto-loads `.env` files — no `dotenv` needed.
+</Tip>
 
-## Your First Video
+### Your first video
 
 Create `hello.tsx`:
 
 ```tsx
-import { render, Render, Clip, Image, Video } from "vargai/react";
-import { fal } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-// Generate a character image
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
 const character = Image({
+  model: varg.imageModel("nano-banana-pro"),
   prompt: "cute kawaii fluffy orange cat character, round body, big eyes, Pixar style",
-  model: fal.imageModel("flux-schnell"),
   aspectRatio: "9:16",
-});
+})
 
-// Render the video
-await render(
+export default (
   <Render width={1080} height={1920}>
-    <Clip duration={3}>
+    <Clip duration={5}>
       <Video
         prompt={{
           text: "character waves hello enthusiastically, bounces up and down",
           images: [character],
         }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-  </Render>,
-  { output: "output/hello.mp4" }
-);
-
-console.log("Video saved to output/hello.mp4");
+  </Render>
+)
 ```
 
-Run it:
+Render it:
 
 ```bash
-bun run hello.tsx
+bunx vargai render hello.tsx --preview   # free preview (placeholders)
+bunx vargai render hello.tsx --verbose   # full render (costs credits)
 ```
 
 <Info>
-First run takes 1-2 minutes (AI generation). Subsequent runs with same props are instant (cached).
+First run takes 1-2 minutes (AI generation). Subsequent runs with same prompts are instant (cached at $0).
 </Info>
 
-## Add Music
-
-With `ELEVENLABS_API_KEY` set:
+### Add music
 
 ```tsx
-import { render, Render, Clip, Image, Video, Music } from "vargai/react";
-import { fal, elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Music } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const character = Image({
+  model: varg.imageModel("nano-banana-pro"),
   prompt: "cute kawaii cat character, Pixar style",
   aspectRatio: "9:16",
-});
+})
 
-await render(
+export default (
   <Render width={1080} height={1920}>
-    {/* Background music for entire video */}
-    <Music 
-      prompt="upbeat happy electronic music, cheerful vibes" 
-      model={elevenlabs.musicModel()} 
+    <Music
+      prompt="upbeat happy electronic music, cheerful vibes"
+      model={varg.musicModel()}
       volume={0.3}
+      duration={5}
     />
-    
-    <Clip duration={3}>
+    <Clip duration={5}>
       <Video
         prompt={{ text: "cat dancing happily", images: [character] }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-  </Render>,
-  { output: "output/dancing-cat.mp4" }
-);
+  </Render>
+)
 ```
 
-## Add Voiceover
+### Add voiceover with captions
 
 ```tsx
-import { render, Render, Clip, Image, Video, Speech, Captions } from "vargai/react";
-import { fal, elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Speech, Captions } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
 const character = Image({
+  model: varg.imageModel("nano-banana-pro"),
   prompt: "friendly robot character, blue metallic, expressive eyes",
   aspectRatio: "9:16",
-});
+})
 
-// Generate voiceover
 const voiceover = Speech({
-  model: elevenlabs.speechModel("eleven_multilingual_v2"),
+  model: varg.speechModel("eleven_v3"),
   voice: "adam",
   children: "Hello! I'm your AI assistant. Let me show you something cool!",
-});
+})
 
-await render(
+export default (
   <Render width={1080} height={1920}>
     <Clip duration={5}>
       <Video
         prompt={{ text: "robot talking, subtle head movements", images: [character] }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
       />
     </Clip>
-    
-    {/* Auto-generated captions synced to voiceover */}
-    <Captions src={voiceover} style="tiktok" color="#ffffff" />
-  </Render>,
-  { output: "output/talking-robot.mp4" }
-);
+    <Captions src={voiceover} style="tiktok" color="#ffffff" withAudio />
+  </Render>
+)
 ```
 
-## CLI Usage
+## Project structure
 
-varg also includes a CLI for quick operations:
-
-```bash
-# Generate single image
-varg run image --prompt "sunset over mountains"
-
-# Generate video from text
-varg run video --prompt "ocean waves crashing" --duration 5
-
-# Generate voice
-varg run voice --text "Hello world" --voice rachel
-
-# List all available actions
-varg list
-
-# Open visual studio
-varg studio
-```
-
-## Project Structure
-
-Recommended project layout:
+Recommended layout:
 
 ```
 my-video-project/
-├── .env              # API keys
+├── .env              # VARG_API_KEY=varg_xxx
 ├── package.json
-├── media/            # Input assets (images, audio)
 ├── output/           # Generated videos
+├── .cache/ai/        # Cached AI generations
 └── videos/
     ├── intro.tsx
     ├── episode-1.tsx
     └── outro.tsx
 ```
 
-## Next Steps
+## Pricing
+
+1 credit = 1 cent. Typical costs:
+
+| Action | Model | Credits | Cost |
+|--------|-------|---------|------|
+| Image | nano-banana-pro | 5 | $0.05 |
+| Image | flux-pro | 25 | $0.25 |
+| Video (5s) | kling-v3 | 150 | $1.50 |
+| Speech | eleven_v3 | 25 | $0.25 |
+| Music | music_v1 | 25 | $0.25 |
+| Cache hit | any | 0 | $0.00 |
+
+A typical 3-clip video costs $2-5. Cache hits are always free.
+
+## Next steps
 
 <CardGroup cols={2}>
   <Card title="Components Reference" icon="puzzle-piece" href="/sdk/components">
-    Learn all available components and their props
+    All JSX components and their props
   </Card>
   <Card title="AI Models" icon="microchip" href="/sdk/models">
-    Explore supported image, video, and audio models
+    All supported models with pricing
   </Card>
   <Card title="Templates" icon="clone" href="/templates">
     Copy-paste examples for common video types
   </Card>
-  <Card title="Gateway API" icon="server" href="/api">
-    Use the REST API for server-side generation
+  <Card title="AI Agent Setup" icon="robot" href="/ai-agents/claude-code">
+    Set up Claude Code, Cursor, or any AI agent
   </Card>
 </CardGroup>

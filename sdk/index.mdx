@@ -3,83 +3,93 @@ title: "SDK Overview"
 description: "vargai SDK for programmatic AI video generation"
 ---
 
-The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syntax. It extends the [Vercel AI SDK](https://sdk.vercel.ai) with video, music, and lipsync capabilities.
+The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syntax. One API key, one gateway, all providers.
 
 ## Installation
 
 <Tabs>
   <Tab title="Bun (recommended)">
     ```bash
-    bun install vargai ai
+    bun install vargai ai @vargai/gateway
     ```
   </Tab>
   <Tab title="npm">
     ```bash
-    npm install vargai ai
+    npm install vargai ai @vargai/gateway
     ```
   </Tab>
 </Tabs>
 
+## Setup
+
+Only one key is needed:
+
+```bash
+# .env
+VARG_API_KEY=varg_xxx
+```
+
+Get your key at [app.varg.ai](https://app.varg.ai) or run `bunx vargai login`.
+
 ## Two Ways to Use varg
 
-### 1. JSX/React Mode (Recommended)
+### 1. Gateway Mode (Recommended)
 
-Compose videos declaratively with JSX components:
+Use `createVarg()` for one-key access to all providers:
 
 ```tsx
-import { render, Render, Clip, Image, Video, Music } from "vargai/react";
-import { fal, elevenlabs } from "vargai/ai";
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Music } from "vargai/react"
+import { createVarg } from "@vargai/gateway"
 
-const character = Image({ prompt: "cute robot character" });
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-await render(
+const character = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "cute robot character",
+  aspectRatio: "9:16",
+})
+
+export default (
   <Render width={1080} height={1920}>
-    <Music prompt="upbeat electronic" model={elevenlabs.musicModel()} />
+    <Music prompt="upbeat electronic" model={varg.musicModel()} volume={0.3} duration={5} />
     <Clip duration={5}>
       <Video
         prompt={{ text: "robot waves hello", images: [character] }}
-        model={fal.videoModel("kling-v2.5")}
+        model={varg.videoModel("kling-v3")}
+      />
+    </Clip>
+  </Render>
+)
+```
+
+### 2. Direct Provider Mode (BYOK)
+
+Use individual provider keys directly. See [BYOK](/byok) for details.
+
+```tsx
+import { render, Render, Clip, Image, Video } from "vargai/react"
+import { fal, elevenlabs } from "vargai/ai"
+
+const character = Image({ prompt: "cute robot character" })
+
+await render(
+  <Render width={1080} height={1920}>
+    <Clip duration={5}>
+      <Video
+        prompt={{ text: "robot waves hello", images: [character] }}
+        model={fal.videoModel("kling-v3")}
       />
     </Clip>
   </Render>,
   { output: "robot.mp4" }
-);
+)
 ```
 
-### 2. AI SDK Mode
-
-Use familiar Vercel AI SDK patterns directly:
-
-```typescript
-import { generateImage, generateVideo, generateMusic } from "vargai/ai";
-import { fal, elevenlabs } from "vargai/ai";
-
-// Generate image
-const { image } = await generateImage({
-  model: fal.imageModel("flux-schnell"),
-  prompt: "cyberpunk cityscape at night",
-  aspectRatio: "16:9",
-});
-
-// Animate to video
-const { video } = await generateVideo({
-  model: fal.videoModel("kling-v2.5"),
-  prompt: {
-    images: [image.uint8Array],
-    text: "camera slowly pans across the city",
-  },
-  duration: 5,
-});
-
-// Generate music
-const { audio } = await generateMusic({
-  model: elevenlabs.musicModel(),
-  prompt: "cyberpunk ambient music, electronic",
-  duration: 10,
-});
-
-// Save output
-await Bun.write("city.mp4", video.uint8Array);
+Requires individual provider keys in `.env`:
+```bash
+FAL_KEY=fal_xxx
+ELEVENLABS_API_KEY=xxx
 ```
 
 ## Core Concepts
@@ -90,7 +100,7 @@ In varg, media generation happens via **element functions** that return referenc
 
 ```tsx
 // Element function - generates AI content, returns reference
-const image = Image({ prompt: "sunset" });  // Not rendered yet
+const image = Image({ prompt: "sunset" })  // Not rendered yet
 
 // Component - uses reference in composition
 <Clip duration={3}>
@@ -98,32 +108,32 @@ const image = Image({ prompt: "sunset" });  // Not rendered yet
 </Clip>
 ```
 
+**Critical**: `Image()`, `Video()`, `Speech()` are function calls. `<Music>`, `<Captions>`, `<Title>` are JSX components. Never write `<Image prompt="..." />`.
+
 ### Automatic Caching
 
-Same props = instant cache hit. varg computes a content hash of all generation parameters:
+Same props = instant cache hit at $0:
 
 ```tsx
 // First run: ~60 seconds (AI generation)
-const cat = Image({ prompt: "orange cat" });
+const cat = Image({ prompt: "orange cat" })
 
 // Second run: instant (cached)
-const cat = Image({ prompt: "orange cat" });
+const cat = Image({ prompt: "orange cat" })
 
 // Different prompt: regenerates
-const cat = Image({ prompt: "orange cat sitting" });
+const cat = Image({ prompt: "orange cat sitting" })
 ```
-
-Cache is stored locally in `.cache/` by default.
 
 ### Parallel Generation
 
-Independent elements generate in parallel automatically:
+Independent elements generate simultaneously:
 
 ```tsx
-// These generate simultaneously, not sequentially
-const scene1 = Image({ prompt: "forest" });
-const scene2 = Image({ prompt: "ocean" });
-const scene3 = Image({ prompt: "mountain" });
+// These generate in parallel, not sequentially
+const scene1 = Image({ prompt: "forest" })
+const scene2 = Image({ prompt: "ocean" })
+const scene3 = Image({ prompt: "mountain" })
 
 // Total time = longest single generation, not sum of all
 ```
@@ -131,30 +141,27 @@ const scene3 = Image({ prompt: "mountain" });
 ## Package Exports
 
 ```typescript
-// React/JSX components and render function
-import { render, Render, Clip, Image, Video, ... } from "vargai/react";
+// React/JSX components
+import { Render, Clip, Image, Video, Speech, Music, Captions, ... } from "vargai/react"
 
-// AI providers and generation functions
-import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai";
-import { generateImage, generateVideo, generateMusic } from "vargai/ai";
+// Gateway client (recommended)
+import { createVarg } from "@vargai/gateway"
 
-// File utilities
-import { File } from "vargai/ai";
+// Direct providers (BYOK)
+import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai"
 ```
 
 ## Environment Variables
 
 ```bash
 # Required
-FAL_KEY=fal_xxx                    # Fal.ai - images, video, lipsync
+VARG_API_KEY=varg_xxx              # Gateway key (one key for everything)
 
-# Optional
-ELEVENLABS_API_KEY=xxx             # Voice and music
-HIGGSFIELD_API_KEY=hf_xxx          # Character images
-HIGGSFIELD_SECRET=secret_xxx
-OPENAI_API_KEY=sk_xxx              # Sora video
-REPLICATE_API_TOKEN=r8_xxx         # Background removal, other models
-GROQ_API_KEY=gsk_xxx               # Fast transcription
+# Optional (BYOK — see /byok for details)
+FAL_KEY=fal_xxx                    # Direct Fal access
+ELEVENLABS_API_KEY=xxx             # Direct ElevenLabs access
+HIGGSFIELD_API_KEY=hf_xxx          # Direct Higgsfield access
+REPLICATE_API_TOKEN=r8_xxx         # Direct Replicate access
 ```
 
 ## Next Steps
@@ -164,7 +171,7 @@ GROQ_API_KEY=gsk_xxx               # Fast transcription
     All JSX components and their props
   </Card>
   <Card title="AI Models" icon="microchip" href="/sdk/models">
-    Supported image, video, and audio models
+    All supported models with pricing
   </Card>
   <Card title="CLI Reference" icon="terminal" href="/sdk/cli">
     Command-line interface
