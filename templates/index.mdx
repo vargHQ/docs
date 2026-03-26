@@ -30,7 +30,7 @@ The simplest possible video — single animated image:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -65,7 +65,7 @@ Cost: ~$1.55 (5 credits image + 150 credits video)
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -97,7 +97,7 @@ Cost: ~$0.45 (4 images + music)
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Music, Title, Packshot } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 

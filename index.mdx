@@ -1,74 +1,83 @@
 ---
 title: "varg"
-description: "JSX for AI videos. Write React-like code, get rendered videos."
+description: "AI video generation platform. Install the skill, prompt your agent, get videos."
 ---
 
 ## What is varg?
 
-varg is an AI video generation platform. Write declarative JSX code like React components, and varg handles AI generation, caching, and video rendering. One API key, one gateway, all providers.
+varg is an AI video generation platform. Install the skill, set your API key, and let your AI agent create videos — with images, voiceover, music, lipsync, and captions.
 
+```bash
+# 1. Install the varg skill
+npx -y skills add vargHQ/skills --all --copy -y
+
+# 2. Set your API key (get one free at app.varg.ai)
+export VARG_API_KEY=varg_live_xxx
+
+# 3. Create your first video
+claude "create a 10-second product video
+  for white sneakers, 9:16, UGC style,
+  with captions and background music"
+```
+
+Under the hood, the agent writes declarative JSX code like React components, and varg handles AI generation, caching, and video rendering. One API key, one gateway, all providers.
+
+<Accordion title="What the generated code looks like">
 ```tsx
 /** @jsxImportSource vargai */
-import { Render, Clip, Image, Video } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
-const cat = Image({
+const character = Image({
   model: varg.imageModel("nano-banana-pro"),
   prompt: "cute orange cat character, round body, big eyes, Pixar style",
   aspectRatio: "9:16",
 })
 
+const voiceover = Speech({
+  model: varg.speechModel("eleven_v3"),
+  voice: "josh",
+  children: "Hey everyone! Let me show you something cool.",
+})
+
 export default (
   <Render width={1080} height={1920}>
+    <Music prompt="upbeat electronic" model={varg.musicModel()} volume={0.1} />
     <Clip duration={5}>
       <Video
-        prompt={{ text: "cat waves hello, bounces happily", images: [cat] }}
+        prompt={{ text: "cat waves hello, bounces happily", images: [character] }}
         model={varg.videoModel("kling-v3")}
       />
     </Clip>
+    <Captions src={voiceover} style="tiktok" color="#ffffff" withAudio />
   </Render>
 )
 ```
-
-Render it:
-
-```bash
-bunx vargai render hello.tsx --verbose
-```
-
-Or submit via API (no local tools needed):
-
-```bash
-curl -X POST https://render.varg.ai/api/render \
-  -H "Authorization: Bearer $VARG_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"code": "..."}'
-```
+</Accordion>
 
 ## Quick Start
 
 <Steps>
   <Step title="Get your API key">
-    Sign up at [app.varg.ai](https://app.varg.ai) and copy your API key, or log in from the CLI:
-    ```bash
-    bunx vargai login
-    ```
+    Sign up at [app.varg.ai](https://app.varg.ai) and copy your API key.
   </Step>
-  <Step title="Install the skill (for AI agents)">
+  <Step title="Install the varg skill">
     ```bash
     npx -y skills add vargHQ/skills --all --copy -y
     ```
     This gives Claude Code, Cursor, Windsurf, and 40+ other agents full varg context.
   </Step>
-  <Step title="Create a video">
-    Ask your AI agent: *"Create a 10-second TikTok video of a cute robot waving hello"*
-
-    Or render directly:
+  <Step title="Set your API key">
     ```bash
-    bunx vargai render hello.tsx --verbose
+    export VARG_API_KEY=varg_live_xxx
     ```
+  </Step>
+  <Step title="Create a video">
+    Ask your AI agent:
+
+    *"Create a 10-second TikTok video of a cute robot waving hello with upbeat music and captions"*
   </Step>
 </Steps>
 
@@ -100,7 +109,7 @@ curl -X POST https://render.varg.ai/api/render \
 
 <CardGroup cols={2}>
   <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
-    Full setup in 5 minutes
+    Full setup in 2 minutes
   </Card>
   <Card title="Authentication" icon="key" href="/authentication">
     API keys, login, billing
@@ -108,15 +117,7 @@ curl -X POST https://render.varg.ai/api/render \
   <Card title="Templates" icon="clone" href="/templates">
     Copy-paste examples for common video types
   </Card>
-  <Card title="AI Agent Setup" icon="robot" href="/ai-agents/claude-code">
-    Set up Claude Code, Cursor, or any agent
+  <Card title="Cloud Render API" icon="cloud" href="/render-api">
+    Submit TSX via API — zero local dependencies
   </Card>
 </CardGroup>
-
-## For AI Agents
-
-If you're an AI assistant helping someone create videos with varg, see the [AI Agent Context](/ai-agents) page for complete reference, or install the skill:
-
-```bash
-npx -y skills add vargHQ/skills --all --copy -y
-```

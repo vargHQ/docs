@@ -10,7 +10,7 @@ Create beautiful image slideshows with AI-generated images, transitions, and bac
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -36,7 +36,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -64,7 +64,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Speech, Music, Captions } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 

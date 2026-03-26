@@ -1,67 +1,102 @@
 ---
 title: "Quickstart"
-description: "Get up and running with varg in 5 minutes"
+description: "Get up and running with varg in 2 minutes"
 ---
 
-## Prerequisites
+## The fastest path: AI agent + skill
 
-- A `VARG_API_KEY` — get one at [app.varg.ai](https://app.varg.ai)
-- [Bun](https://bun.sh) runtime + ffmpeg for local rendering (optional — you can use cloud rendering with just `curl`)
+The recommended way to use varg is through an AI coding agent (Claude Code, Cursor, Windsurf, etc.) with the varg skill installed. The skill gives your agent full context on components, models, prompting, and rendering.
 
-## Get your API key
+<Steps>
+  <Step title="Get your API key">
+    Sign up at [app.varg.ai](https://app.varg.ai) and copy your API key.
+  </Step>
+  <Step title="Install the varg skill">
+    ```bash
+    npx -y skills add vargHQ/skills --all --copy -y
+    ```
+    This installs the varg skill into Claude Code, Cursor, Windsurf, and 40+ other agents automatically.
+  </Step>
+  <Step title="Set your API key">
+    ```bash
+    export VARG_API_KEY=varg_live_xxx
+    ```
+  </Step>
+  <Step title="Create your first video">
+    ```bash
+    claude "create a 10-second product video for white sneakers, 9:16, UGC style, with captions and background music"
+    ```
 
-Sign up at [app.varg.ai](https://app.varg.ai) to get your API key. This single key gives you access to all AI providers (image, video, speech, music, lipsync) through the varg gateway.
+    Or with Cursor, Windsurf, or any other agent — just prompt it the same way:
 
-Or log in from the CLI:
+    *"Create a 10-second TikTok video of a cute robot waving hello with upbeat music and captions"*
+  </Step>
+</Steps>
 
-```bash
-bunx vargai login
-```
+That's it. The agent handles all the TSX code, rendering, and file management for you.
 
-See [Authentication](/authentication) for details on login methods, billing, and credentials.
+<Info>
+First render takes 1-2 minutes (AI generation). Subsequent runs with the same prompts are instant (cached at $0).
+</Info>
 
-## Choose your rendering mode
+## Pricing
 
-| You have | Mode | How |
-|----------|------|-----|
-| Just `curl` | **Cloud Render** | Submit TSX via API, poll for result |
-| `bun` + `ffmpeg` | **Local Render** (recommended) | Write TSX files, render locally |
+1 credit = 1 cent. Typical costs:
 
-## Cloud Render (zero dependencies)
+| Action | Model | Credits | Cost |
+|--------|-------|---------|------|
+| Image | nano-banana-pro | 5 | $0.05 |
+| Image | flux-pro | 25 | $0.25 |
+| Video (5s) | kling-v3 | 150 | $1.50 |
+| Speech | eleven_v3 | 25 | $0.25 |
+| Music | music_v1 | 25 | $0.25 |
+| Cache hit | any | 0 | $0.00 |
 
-No installation needed. Submit video code to the render service via `curl`:
+A typical 3-clip video costs $2-5. Cache hits are always free.
+
+---
+
+## Alternative: Cloud Render (curl only)
+
+No installation needed. Submit TSX code to the [Cloud Render API](/render-api) via curl:
 
 ```bash
 # Submit a render job
-curl -s -X POST https://render.varg.ai/api/render \
+JOB=$(curl -s -X POST https://render.varg.ai/api/render \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "code": "const img = Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"a cabin in mountains at sunset\", aspectRatio: \"16:9\" });\nexport default (<Render width={1920} height={1080}><Clip duration={3}>{img}</Clip></Render>);"
-  }'
+  }')
 
-# Poll for result (repeat until "completed")
-curl -s https://render.varg.ai/api/render/jobs/JOB_ID \
+JOB_ID=$(echo $JOB | jq -r '.job_id')
+
+# Poll for result
+curl -s "https://render.varg.ai/api/render/jobs/$JOB_ID" \
   -H "Authorization: Bearer $VARG_API_KEY"
 ```
 
 <Info>
-Cloud render uses `fal.*Model()` syntax (globals are auto-injected). See the [Gateway API](/api) for full details.
+Cloud render uses `fal.*Model()` syntax — provider globals are auto-injected server-side. See the [Cloud Render API](/render-api) reference for full details.
 </Info>
 
-## Local Render (bun + ffmpeg)
+---
+
+## Alternative: Local Render (bun + ffmpeg)
+
+For full control, render videos locally. Requires [Bun](https://bun.sh) and ffmpeg.
 
 ### Installation
 
 <Tabs>
   <Tab title="Bun (recommended)">
     ```bash
-    bun install vargai ai @vargai/gateway
+    bun install vargai ai
     ```
   </Tab>
   <Tab title="npm">
     ```bash
-    npm install vargai ai @vargai/gateway
+    npm install vargai ai
     ```
   </Tab>
 </Tabs>
@@ -85,7 +120,7 @@ Create `hello.tsx`:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -117,16 +152,12 @@ bunx vargai render hello.tsx --preview   # free preview (placeholders)
 bunx vargai render hello.tsx --verbose   # full render (costs credits)
 ```
 
-<Info>
-First run takes 1-2 minutes (AI generation). Subsequent runs with same prompts are instant (cached at $0).
-</Info>
-
 ### Add music
 
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -159,7 +190,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Captions } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -188,7 +219,7 @@ export default (
 )
 ```
 
-## Project structure
+### Project structure
 
 Recommended layout:
 
@@ -204,20 +235,7 @@ my-video-project/
     └── outro.tsx
 ```
 
-## Pricing
-
-1 credit = 1 cent. Typical costs:
-
-| Action | Model | Credits | Cost |
-|--------|-------|---------|------|
-| Image | nano-banana-pro | 5 | $0.05 |
-| Image | flux-pro | 25 | $0.25 |
-| Video (5s) | kling-v3 | 150 | $1.50 |
-| Speech | eleven_v3 | 25 | $0.25 |
-| Music | music_v1 | 25 | $0.25 |
-| Cache hit | any | 0 | $0.00 |
-
-A typical 3-clip video costs $2-5. Cache hits are always free.
+---
 
 ## Next steps
 
@@ -231,7 +249,7 @@ A typical 3-clip video costs $2-5. Cache hits are always free.
   <Card title="Templates" icon="clone" href="/templates">
     Copy-paste examples for common video types
   </Card>
-  <Card title="AI Agent Setup" icon="robot" href="/ai-agents/claude-code">
-    Set up Claude Code, Cursor, or any AI agent
+  <Card title="Cloud Render API" icon="cloud" href="/render-api">
+    Submit TSX via API — zero local dependencies
   </Card>
 </CardGroup>

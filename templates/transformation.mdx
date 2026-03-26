@@ -12,7 +12,7 @@ Side-by-side still images:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Split, Title } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -50,7 +50,7 @@ Before and after with motion:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Split, Title, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -99,7 +99,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Captions, Music, Title } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -144,7 +144,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Slider } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
