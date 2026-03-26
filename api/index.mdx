@@ -54,13 +54,29 @@ curl https://api.varg.ai/v1/jobs/job_a1b2c3d4 \
 
 ## TypeScript SDK
 
-The `@vargai/gateway` package wraps the REST API with full TypeScript types.
+The `vargai` package provides a high-level provider for AI SDK integration:
+
+```bash
+bun add vargai
+```
+
+```typescript
+import { createVarg } from "vargai/ai";
+
+const varg = createVarg({ apiKey: "varg_xxx" });
+
+// Use with AI SDK
+const { images } = await generateImage({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "sunset over mountains",
+});
+```
+
+For low-level REST API access, the `@vargai/gateway` package exposes `VargClient`:
 
 ```bash
 bun add @vargai/gateway
 ```
-
-### Create a client
 
 ```typescript
 import { VargClient } from "@vargai/gateway";
