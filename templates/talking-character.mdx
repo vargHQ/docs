@@ -12,7 +12,7 @@ Basic talking character without lipsync:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -51,7 +51,7 @@ Full pipeline: generate image, animate, then sync lips to audio:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -121,7 +121,7 @@ Cost: ~$3.20 (image + animation + lipsync + speech + music)
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 

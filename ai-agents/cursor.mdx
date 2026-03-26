@@ -68,7 +68,7 @@ Set up Cursor to create AI videos with varg.
 
   ## Import Pattern
   import { Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react"
-  import { createVarg } from "@vargai/gateway"
+  import { createVarg } from "vargai/ai"
   const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
   ## Common Models (via gateway)
@@ -132,14 +132,14 @@ Add TikTok-style captions and background music.
 
 Make sure you have the vargai package installed:
 ```bash
-bun install vargai ai @vargai/gateway
+bun install vargai ai
 ```
 
 ### Cursor suggests wrong imports
 
 The `.cursorrules` file should fix this. Make sure it specifies the gateway pattern:
 ```tsx
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 ```
 

@@ -42,7 +42,7 @@ If the user doesn't have a key, you can drive the OTP login flow with curl. See 
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -164,7 +164,7 @@ import {
   Speech, Music, Title, Captions,
   Overlay, Split, Grid, Slider, Swipe, Packshot
 } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 ```
@@ -227,7 +227,7 @@ const character = Image({
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -250,7 +250,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -291,7 +291,7 @@ export default (
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Split, Title } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 

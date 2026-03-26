@@ -1,0 +1,344 @@
+---
+title: "Cloud Render API"
+description: "Submit TSX code and get rendered videos — zero dependencies, just curl"
+---
+
+The Cloud Render API at `render.varg.ai` lets you submit varg TSX code and get back a rendered video (or image frames). No Bun, no ffmpeg, no local setup — just an API key and curl.
+
+This is separate from the [Gateway API](/api) (`api.varg.ai`) which generates individual assets (images, videos, speech). The Cloud Render API composes full videos from TSX — calling the Gateway internally for AI generation, then stitching everything together.
+
+## Base URL
+
+```
+https://render.varg.ai
+```
+
+## Authentication
+
+All requests require a varg API key in the `Authorization` header:
+
+```bash
+Authorization: Bearer varg_xxx
+```
+
+Get your API key at [app.varg.ai](https://app.varg.ai). See [Authentication](/authentication) for details.
+
+## Quick start
+
+Submit TSX code, poll for the result:
+
+```bash
+# 1. Submit a render job
+JOB=$(curl -s -X POST https://render.varg.ai/api/render \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "import { Render, Clip, Image, Video } from \"vargai/react\";\nimport { fal } from \"vargai/ai\";\nconst img = Image({ prompt: \"cute orange cat, Pixar style\", aspectRatio: \"9:16\" });\nexport default <Render width={1080} height={1920}><Clip duration={3}><Video prompt={{ text: \"cat waves hello\", images: [img] }} model={fal.videoModel(\"kling-v3\")} /></Clip></Render>;"
+  }')
+
+JOB_ID=$(echo $JOB | jq -r '.job_id')
+echo "Job: $JOB_ID"
+
+# 2. Poll until complete
+while true; do
+  RESULT=$(curl -s "https://render.varg.ai/api/render/jobs/$JOB_ID" \
+    -H "Authorization: Bearer $VARG_API_KEY")
+  STATUS=$(echo $RESULT | jq -r '.status')
+  echo "Status: $STATUS"
+  if [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ]; then
+    echo $RESULT | jq .
+    break
+  fi
+  sleep 5
+done
+```
+
+<Info>
+Cloud render uses `fal.*Model()` syntax in submitted code — provider globals are auto-injected server-side. You do not need to call `createVarg()`.
+</Info>
+
+## Endpoints
+
+### POST /api/render
+
+Submit TSX code for rendering. Returns `202 Accepted` immediately with a job ID.
+
+**Request body:**
+
+```json
+{
+  "code": "import { Render, Clip, Image } from \"vargai/react\";\nexport default <Render width={1080} height={1920}><Clip duration={3}><Image prompt=\"sunset\" /></Clip></Render>;",
+  "output": "video",
+  "mode": "strict",
+  "verbose": false,
+  "providerKeys": {
+    "fal": "fal_xxx",
+    "elevenlabs": "el_xxx"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `code` | string | Yes | TSX source code. Must export a default `<Render>` element. |
+| `output` | `"video"` or `"frames"` | No | Output format. Default: `"video"`. Use `"frames"` for image-only renders (skips video stitching). Auto-detected if all elements are images. |
+| `mode` | `"strict"` or `"preview"` | No | Render mode. `"strict"` (default) fails on errors. `"preview"` uses placeholders for failed generations. |
+| `verbose` | boolean | No | Enable detailed logging. Default: `false`. |
+| `providerKeys` | object | No | BYOK provider keys. See [BYOK](/byok). |
+
+**Response (202):**
+
+```json
+{
+  "job_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "rendering",
+  "estimated_duration_ms": 45000,
+  "queue": {
+    "active": 3,
+    "waiting": 1
+  }
+}
+```
+
+**Rate limit headers** are included on every response:
+
+```http
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 8
+X-RateLimit-Reset: 2026-03-25T12:01:00.000Z
+```
+
+---
+
+### GET /api/render/jobs/:id
+
+Poll a render job's status.
+
+**Response (completed):**
+
+```json
+{
+  "job_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "completed",
+  "output_url": "https://s3.varg.ai/media/abc123.mp4",
+  "thumbnail_url": "https://s3.varg.ai/media/abc123_thumb.jpg",
+  "files": [
+    {
+      "url": "https://s3.varg.ai/media/img_001.png",
+      "mediaType": "image/png",
+      "metadata": { "type": "image", "model": "fal:nano-banana-pro", "prompt": "cute orange cat" }
+    },
+    {
+      "url": "https://s3.varg.ai/media/vid_001.mp4",
+      "mediaType": "video/mp4",
+      "metadata": { "type": "video", "model": "fal:kling-v3", "prompt": "cat waves hello" }
+    }
+  ],
+  "duration_ms": 42150,
+  "estimated_duration_ms": 45000,
+  "created_at": "2026-03-25T12:00:00.000Z",
+  "started_at": "2026-03-25T12:00:01.000Z",
+  "completed_at": "2026-03-25T12:00:43.000Z"
+}
+```
+
+**Response (failed):**
+
+```json
+{
+  "job_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "failed",
+  "error": "Image generation returned no data for clip 0",
+  "error_category": "provider_error",
+  "created_at": "2026-03-25T12:00:00.000Z",
+  "completed_at": "2026-03-25T12:00:15.000Z"
+}
+```
+
+**Job statuses:**
+
+| Status | Description |
+|--------|-------------|
+| `rendering` | Job is queued or actively rendering |
+| `completed` | Video/frames are ready at `output_url` |
+| `failed` | Render failed — check `error` field |
+
+---
+
+### GET /api/render/jobs/:id/stream
+
+Stream render progress via Server-Sent Events (SSE). Preferred over polling for real-time updates.
+
+```bash
+curl -N "https://render.varg.ai/api/render/jobs/$JOB_ID/stream" \
+  -H "Authorization: Bearer $VARG_API_KEY"
+```
+
+**Event format:**
+
+```
+event: status
+data: {"job_id":"a1b2...","status":"rendering"}
+
+:keepalive
+
+event: status
+data: {"job_id":"a1b2...","status":"completed","output_url":"https://s3.varg.ai/media/abc.mp4","files":[...]}
+```
+
+| Event | Description |
+|-------|-------------|
+| `status` | Job status update. Data is the same JSON as the poll endpoint. |
+| `timeout` | Stream timed out (15 minutes). Reconnect or switch to polling. |
+| `:keepalive` | Heartbeat comment every 15 seconds. Not a real event — keeps the connection alive. |
+
+The stream closes automatically when the job reaches a terminal state (`completed` or `failed`).
+
+**If the job is already terminal** when you connect, you'll receive a single `status` event and the stream closes immediately.
+
+---
+
+### GET /api/jobs
+
+List recent render jobs for the authenticated user.
+
+**Query parameters:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 50 | Max jobs to return (max 200) |
+
+**Response:**
+
+```json
+{
+  "jobs": [
+    {
+      "id": "a1b2c3d4-...",
+      "status": "completed",
+      "outputUrl": "https://s3.varg.ai/media/abc.mp4",
+      "durationMs": 42150,
+      "createdAt": "2026-03-25T12:00:00.000Z",
+      "completedAt": "2026-03-25T12:00:43.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+## Output formats
+
+### Video (default)
+
+The standard output. Your TSX is rendered into a single `.mp4` file with all clips, transitions, audio, and captions composited together.
+
+```json
+{ "output": "video" }
+```
+
+The final video URL is in `output_url`. Individual generated assets (images, videos, audio) are listed in the `files` array.
+
+### Frames
+
+For image-only renders (no video/audio elements), the service can skip video stitching and return individual image frames. This is faster and useful for generating image sets.
+
+```json
+{ "output": "frames" }
+```
+
+If your TSX contains only `<Image>` elements (no `<Video>`, `<Speech>`, `<Music>`, `<Captions>`), frames mode is auto-detected even without specifying it.
+
+Frame results appear in the `files` array with `clipIndex` for ordering.
+
+## BYOK (Bring Your Own Keys)
+
+Pass your own provider API keys to bypass varg billing. The render service forwards them to the Gateway for AI generation:
+
+```json
+{
+  "code": "...",
+  "providerKeys": {
+    "fal": "fal_xxx",
+    "elevenlabs": "el_xxx",
+    "higgsfield": "hf_xxx",
+    "replicate": "r8_xxx",
+    "openai": "sk_xxx",
+    "google": "goog_xxx"
+  }
+}
+```
+
+See the [BYOK guide](/byok) for details.
+
+## TSX code requirements
+
+The submitted `code` must:
+
+1. **Import from `vargai/react`** — `Render`, `Clip`, `Image`, `Video`, `Speech`, `Music`, `Captions`, `Title`, etc.
+2. **Import providers from `vargai/ai`** — `fal`, `elevenlabs`, `higgsfield`, `replicate` (these are auto-injected as globals)
+3. **Export a default `<Render>` element** — this is the root of your video composition
+
+```tsx
+import { Render, Clip, Image, Video, Speech, Captions, Music } from "vargai/react";
+import { fal, elevenlabs } from "vargai/ai";
+
+const character = Image({
+  prompt: "friendly tech reviewer, casual style",
+  model: fal.imageModel("nano-banana-pro"),
+  aspectRatio: "9:16",
+});
+
+const voiceover = Speech({
+  model: elevenlabs.speechModel("eleven_v3"),
+  voice: "josh",
+  children: "Hey everyone! Let me show you something cool.",
+});
+
+export default (
+  <Render width={1080} height={1920}>
+    <Music prompt="upbeat tech vlog" model={elevenlabs.musicModel()} volume={0.1} />
+    <Clip duration={5}>
+      <Video
+        prompt={{ text: "person talking naturally", images: [character] }}
+        model={fal.videoModel("kling-v3")}
+      />
+    </Clip>
+    <Captions src={voiceover} style="tiktok" color="#ffffff" />
+  </Render>
+);
+```
+
+<Warning>
+Cloud render uses `fal.*Model()`, `elevenlabs.*Model()`, etc. — not `varg.*Model()`. Provider globals are injected server-side. The `createVarg()` pattern is for local rendering only.
+</Warning>
+
+## Rate limits
+
+| Limit | Value |
+|-------|-------|
+| Concurrent renders per user | 5 |
+| Requests per minute | 10 |
+| Stream timeout | 15 minutes |
+
+When rate limited, the response includes a `Retry-After: 30` header.
+
+## Error codes
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| 400 | `Invalid JSON body` | Request body is not valid JSON |
+| 400 | `Invalid render code` | TSX code has syntax errors or doesn't export a valid element |
+| 401 | `Unauthorized` | Missing or invalid API key |
+| 429 | Rate limit | Too many concurrent renders or requests per minute |
+| 503 | `Failed to enqueue render job` | Queue is unavailable |
+
+## Gateway API vs Cloud Render API
+
+| | Gateway API | Cloud Render API |
+|---|---|---|
+| **URL** | `api.varg.ai/v1` | `render.varg.ai` |
+| **Purpose** | Generate individual assets (image, video, speech, music) | Compose full videos from TSX code |
+| **Input** | JSON with prompt/model | TSX source code |
+| **Output** | Single asset URL | Rendered video + all intermediate assets |
+| **Auth** | `Authorization: Bearer varg_xxx` | Same |
+| **Use when** | You need one image or video clip | You need a complete, composed video with transitions, audio, captions |

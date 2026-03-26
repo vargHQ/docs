@@ -10,12 +10,12 @@ The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syn
 <Tabs>
   <Tab title="Bun (recommended)">
     ```bash
-    bun install vargai ai @vargai/gateway
+    bun install vargai ai
     ```
   </Tab>
   <Tab title="npm">
     ```bash
-    npm install vargai ai @vargai/gateway
+    npm install vargai ai
     ```
   </Tab>
 </Tabs>
@@ -40,7 +40,7 @@ Use `createVarg()` for one-key access to all providers:
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image, Video, Music } from "vargai/react"
-import { createVarg } from "@vargai/gateway"
+import { createVarg } from "vargai/ai"
 
 const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 
@@ -144,8 +144,8 @@ const scene3 = Image({ prompt: "mountain" })
 // React/JSX components
 import { Render, Clip, Image, Video, Speech, Music, Captions, ... } from "vargai/react"
 
-// Gateway client (recommended)
-import { createVarg } from "@vargai/gateway"
+// Gateway client (recommended — routes through api.varg.ai)
+import { createVarg } from "vargai/ai"
 
 // Direct providers (BYOK)
 import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai"
