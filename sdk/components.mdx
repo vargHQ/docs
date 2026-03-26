@@ -133,9 +133,9 @@ const cat = Image({
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `src` | `string \| ImageRef` | Required | Image source or reference |
-| `zoom` | `"in" \| "out" \| "left" \| "right"` | `undefined` | Ken Burns effect |
-| `resize` | `"cover" \| "contain"` | `"cover"` | Resize mode |
+| `src` | `string` or `ImageRef` | Required | Image source or reference |
+| `zoom` | `"in"` `"out"` `"left"` `"right"` | `undefined` | Ken Burns effect |
+| `resize` | `"cover"` or `"contain"` | `"cover"` | Resize mode |
 
 ### Video
 
@@ -177,7 +177,7 @@ const voiceover = Speech({ ... });
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `prompt` | `string \| object` | - | Generation prompt |
+| `prompt` | `string` or `object` | - | Generation prompt |
 | `src` | `string` | - | Source video path |
 | `model` | `VideoModel` | `varg.videoModel("kling-v3")` | AI model |
 | `volume` | `number` | `1` | Audio volume (0-1) |
@@ -266,7 +266,7 @@ Text overlay on video.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `children` | `string` | Required | Title text |
-| `position` | `"top" \| "center" \| "bottom"` | `"center"` | Position |
+| `position` | `"top"` `"center"` `"bottom"` | `"center"` | Position |
 | `color` | `string` | `"#ffffff"` | Text color |
 | `start` | `number` | `0` | Start time |
 | `end` | `number` | - | End time |
@@ -343,7 +343,7 @@ Side-by-side layout.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `direction` | `"horizontal" \| "vertical"` | `"horizontal"` | Split direction |
+| `direction` | `"horizontal"` or `"vertical"` | `"horizontal"` | Split direction |
 
 ### SplitLayout
 
@@ -407,7 +407,7 @@ Tinder-style card swipe.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `direction` | `"horizontal" \| "vertical"` | `"horizontal"` | Swipe direction |
+| `direction` | `"horizontal"` or `"vertical"` | `"horizontal"` | Swipe direction |
 | `interval` | `number` | `2` | Seconds per card |
 
 ---

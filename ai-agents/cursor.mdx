@@ -43,9 +43,9 @@ Set up Cursor to create AI videos with varg.
 </Step>
 
 <Step title="Create a .cursorrules file">
-  Add a `.cursorrules` file to your project root:
+  Add a `.cursorrules` file to your project root with the following content:
 
-  ```markdown
+  ```text
   # varg Video Generation Project
 
   ## About
@@ -54,38 +54,36 @@ Set up Cursor to create AI videos with varg.
 
   ## Setup
   - API key: VARG_API_KEY in .env
-  - Render: `bunx vargai render <file.tsx> --verbose`
-  - Preview: `bunx vargai render <file.tsx> --preview` (free)
+  - Render: bunx vargai render file.tsx --verbose
+  - Preview: bunx vargai render file.tsx --preview (free)
 
   ## Key Concepts
-  - `<Render>` - Root container (width, height, fps)
-  - `<Clip>` - Time segment (duration, transitions)
-  - `Image()` - Generate AI image (function call, not JSX)
-  - `Video()` - Generate AI video (function call, not JSX)
-  - `Speech()` - Text-to-speech (function call, not JSX)
-  - `<Music>` - Background music (JSX component)
-  - `<Captions>` - Subtitles synced to speech
+  - Render - Root container (width, height, fps)
+  - Clip - Time segment (duration, transitions)
+  - Image() - Generate AI image (function call, not JSX)
+  - Video() - Generate AI video (function call, not JSX)
+  - Speech() - Text-to-speech (function call, not JSX)
+  - Music - Background music (JSX component)
+  - Captions - Subtitles synced to speech
 
   ## Import Pattern
-  ```tsx
   import { Render, Clip, Image, Video, Speech, Music, Captions } from "vargai/react"
   import { createVarg } from "@vargai/gateway"
-
   const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
-  ```
 
   ## Common Models (via gateway)
-  - Images: `varg.imageModel("nano-banana-pro")` (versatile), `varg.imageModel("flux-pro")` (quality)
-  - Video: `varg.videoModel("kling-v3")` (best quality), `varg.videoModel("wan-2.5")` (characters)
-  - Speech: `varg.speechModel("eleven_v3")`
-  - Music: `varg.musicModel()`
-  - Lipsync: `varg.videoModel("sync-v2-pro")`
+  - Images: varg.imageModel("nano-banana-pro") or varg.imageModel("flux-pro")
+  - Video: varg.videoModel("kling-v3") or varg.videoModel("wan-2.5")
+  - Speech: varg.speechModel("eleven_v3")
+  - Music: varg.musicModel()
+  - Lipsync: varg.videoModel("sync-v2-pro")
+  - Characters: varg.imageModel("soul")
 
   ## Critical Rules
-  1. Use function calls for media: `Image({...})`, `Video({...})`, `Speech({...})`
-  2. Use JSX for composition: `<Clip>`, `<Render>`, `<Music>`
-  3. Never write `<Image prompt="..." />` — it's `Image({ prompt: "..." })`
-  4. One image per Video: `Video({ prompt: { images: [img] } })`
+  1. Use function calls for media: Image(), Video(), Speech()
+  2. Use JSX for composition: Clip, Render, Music
+  3. Never write Image as JSX -- use Image({ prompt: "..." })
+  4. One image per Video prompt
   5. kling-v3 duration: integer 3-15 seconds only
   6. Always set Music duration explicitly
   ```
