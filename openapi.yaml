@@ -28,7 +28,10 @@ paths:
       operationId: createVideo
       tags: [Generation]
       summary: Generate video
-      description: Generate video from text or image. Returns a job that you poll or stream for completion.
+      description: |
+        Generate video from text, image, or video input. Returns a job that you poll or stream for completion.
+
+        This endpoint also handles **lipsync** (provide audio + video/image via `files`), **video editing** (provide a video file), and **video upscaling** (provide a video file with an upscale model).
       requestBody:
         required: true
         content:
@@ -39,21 +42,39 @@ paths:
               properties:
                 model:
                   type: string
-                  description: Video model to use
+                  description: |
+                    Video model to use. Also accepts lipsync and video upscale models.
+
+                    **Video generation:** `kling-v3`, `kling-v3-standard`, `seedance-2-preview`, `seedance-2-fast-preview`, `sora-2`, `sora-2-pro`, `wan-2.5`, `wan-2.5-preview`, `minimax`, `ltx-2-19b-distilled`, `grok-imagine`
+
+                    **Video editing:** `grok-imagine-edit`, `sora-2-remix`, `seedance-2-preview`
+
+                    **Motion control:** `kling-v2.6-motion`
+
+                    **Lipsync:** `veed-fabric-1.0`, `sync-v2`, `sync-v2-pro`, `omnihuman-v1.5`
+
+                    **Video upscale:** `seedvr-video`, `topaz-video`, `bytedance-upscaler`, `sima-video-upscaler`
+
+                    **Legacy:** `kling-v2.6`, `kling-v2.5`, `kling-v2.1`, `kling-v2`
                   examples:
                     - kling-v3
                     - seedance-2-preview
                     - seedance-2-fast-preview
-                    - kling-v2.5
+                    - sora-2
                     - wan-2.5
                     - minimax
+                    - ltx-2-19b-distilled
+                    - grok-imagine
+                    - veed-fabric-1.0
+                    - sync-v2
+                    - seedvr-video
                 prompt:
                   type: string
-                  description: Text description of the video to generate
+                  description: Text description of the video to generate. For lipsync and upscale models, can be empty.
                   example: ocean waves crashing on a rocky beach at sunset
                 duration:
                   type: number
-                  description: Duration in seconds
+                  description: Duration in seconds. Seedance models only accept 5, 10, or 15. Kling V3 accepts integers 3-15.
                   default: 5
                   example: 5
                 aspect_ratio:
@@ -63,9 +84,17 @@ paths:
                     - "16:9"
                     - "9:16"
                     - "1:1"
+                    - "4:3"
+                    - "3:4"
                 files:
                   type: array
-                  description: Input images for image-to-video generation
+                  description: |
+                    Input files for image-to-video, video editing, lipsync, or upscale.
+
+                    - **Image-to-video:** 1 image URL (first frame). Some models support 2 images for first+last keyframe.
+                    - **Video editing:** 1 video URL (`.mp4`, `.webm`, `.mov`)
+                    - **Lipsync:** 1 video/image URL + 1 audio URL
+                    - **Video upscale:** 1 video URL
                   items:
                     type: object
                     required: [url]
@@ -73,27 +102,160 @@ paths:
                       url:
                         type: string
                         format: uri
-                        description: URL of the input image
+                        description: URL of the input file
                 provider_options:
                   type: object
                   description: Additional options passed directly to the provider
                   additionalProperties: true
             examples:
-              text-to-video:
-                summary: Text to video
+              kling-v3-text-to-video:
+                summary: "Kling V3 \u2014 text-to-video"
                 value:
-                  model: kling-v2.5
-                  prompt: cat jumping over a fence in slow motion
+                  model: kling-v3
+                  prompt: cinematic shot of ocean waves crashing on rocky cliffs at golden hour
                   duration: 5
                   aspect_ratio: "16:9"
-              image-to-video:
-                summary: Image to video
+              kling-v3-image-to-video:
+                summary: "Kling V3 \u2014 image-to-video"
                 value:
-                  model: kling-v2.5
-                  prompt: cat turns and looks at camera
+                  model: kling-v3
+                  prompt: slow camera push-in, the subject blinks and smiles
                   duration: 5
                   files:
-                    - url: https://example.com/cat.jpg
+                    - url: https://example.com/portrait.jpg
+              kling-v3-keyframe:
+                summary: "Kling V3 \u2014 first + last frame keyframe"
+                value:
+                  model: kling-v3
+                  prompt: smooth transition from day to night
+                  duration: 5
+                  files:
+                    - url: https://example.com/day-scene.jpg
+                    - url: https://example.com/night-scene.jpg
+              kling-v3-standard:
+                summary: "Kling V3 Standard \u2014 budget text-to-video"
+                value:
+                  model: kling-v3-standard
+                  prompt: a paper airplane floating through a sunlit classroom
+                  duration: 8
+                  aspect_ratio: "16:9"
+              seedance-2-text-to-video:
+                summary: "Seedance 2 \u2014 text-to-video"
+                value:
+                  model: seedance-2-preview
+                  prompt: a golden retriever running through autumn leaves in slow motion
+                  duration: 5
+                  aspect_ratio: "16:9"
+              seedance-2-image-to-video:
+                summary: "Seedance 2 \u2014 image-to-video"
+                value:
+                  model: seedance-2-preview
+                  prompt: "@image1 the woman turns to face the camera and smiles"
+                  duration: 5
+                  files:
+                    - url: https://example.com/portrait.jpg
+              seedance-2-fast:
+                summary: "Seedance 2 Fast \u2014 quick iteration"
+                value:
+                  model: seedance-2-fast-preview
+                  prompt: aerial drone shot over a tropical island with turquoise water
+                  duration: 10
+                  aspect_ratio: "16:9"
+              sora-2-text-to-video:
+                summary: "Sora 2 \u2014 text-to-video"
+                value:
+                  model: sora-2
+                  prompt: a chef preparing sushi in a high-end restaurant, cinematic lighting
+                  duration: 5
+                  aspect_ratio: "16:9"
+              sora-2-image-to-video:
+                summary: "Sora 2 \u2014 image-to-video"
+                value:
+                  model: sora-2
+                  prompt: the scene slowly comes to life with gentle wind and moving clouds
+                  duration: 5
+                  files:
+                    - url: https://example.com/landscape.jpg
+              sora-2-remix:
+                summary: "Sora 2 Remix \u2014 video-to-video"
+                value:
+                  model: sora-2-remix
+                  prompt: transform into an anime art style with vibrant colors
+                  files:
+                    - url: https://example.com/original.mp4
+              wan-25:
+                summary: "Wan 2.5 \u2014 text-to-video"
+                value:
+                  model: wan-2.5
+                  prompt: a dancer performing contemporary dance in an empty warehouse, dramatic shadows
+                  duration: 5
+                  aspect_ratio: "9:16"
+              minimax:
+                summary: "MiniMax \u2014 text-to-video"
+                value:
+                  model: minimax
+                  prompt: a cat sitting on a windowsill watching rain fall outside
+                  duration: 5
+                  aspect_ratio: "16:9"
+              ltx:
+                summary: "LTX \u2014 fast text-to-video"
+                value:
+                  model: ltx-2-19b-distilled
+                  prompt: abstract colorful particles flowing through space
+                  duration: 5
+                  aspect_ratio: "16:9"
+              grok-imagine-video:
+                summary: "Grok Imagine \u2014 text-to-video"
+                value:
+                  model: grok-imagine
+                  prompt: a steam train crossing a stone bridge over a misty valley
+                  duration: 5
+                  aspect_ratio: "16:9"
+              grok-imagine-edit:
+                summary: "Grok Imagine Edit \u2014 video editing"
+                value:
+                  model: grok-imagine-edit
+                  prompt: change the background to a tropical beach at sunset
+                  files:
+                    - url: https://example.com/original.mp4
+              lipsync-veed:
+                summary: "VEED Fabric 1.0 \u2014 lipsync"
+                value:
+                  model: veed-fabric-1.0
+                  prompt: ""
+                  files:
+                    - url: https://example.com/talking-head.mp4
+                    - url: https://example.com/narration.mp3
+              lipsync-sync:
+                summary: "Sync V2 \u2014 lipsync"
+                value:
+                  model: sync-v2
+                  prompt: ""
+                  files:
+                    - url: https://example.com/talking-head.mp4
+                    - url: https://example.com/narration.mp3
+              lipsync-omnihuman:
+                summary: "OmniHuman 1.5 \u2014 lipsync"
+                value:
+                  model: omnihuman-v1.5
+                  prompt: ""
+                  files:
+                    - url: https://example.com/portrait.jpg
+                    - url: https://example.com/speech.mp3
+              upscale-seedvr-video:
+                summary: "SeedVR \u2014 video upscale"
+                value:
+                  model: seedvr-video
+                  prompt: ""
+                  files:
+                    - url: https://example.com/low-res-video.mp4
+              upscale-topaz-video:
+                summary: "Topaz \u2014 video upscale"
+                value:
+                  model: topaz-video
+                  prompt: ""
+                  files:
+                    - url: https://example.com/low-res-video.mp4
       responses:
         "202":
           description: Job created
@@ -119,7 +281,10 @@ paths:
       operationId: createImage
       tags: [Generation]
       summary: Generate image
-      description: Generate an image from a text prompt. Returns a job that you poll or stream for completion.
+      description: |
+        Generate an image from a text prompt, or edit/upscale an existing image. Returns a job that you poll or stream for completion.
+
+        This endpoint also handles **image editing** (provide a source image via `files`) and **image upscaling** (provide an image with an upscale model).
       requestBody:
         required: true
         content:
@@ -130,14 +295,28 @@ paths:
               properties:
                 model:
                   type: string
-                  description: Image model to use
+                  description: |
+                    Image model to use. Also accepts image editing and upscale models.
+
+                    **Text-to-image:** `flux-pro`, `flux-dev`, `flux-schnell`, `nano-banana-pro`, `recraft-v3`, `phota`, `grok-imagine-image`, `soul`
+
+                    **Image editing:** `nano-banana-pro/edit`, `nano-banana-2/edit`, `phota/edit`, `phota/enhance`, `grok-imagine-image/edit`, `seedream-v4.5/edit`, `qwen-angles`
+
+                    **Image upscale:** `seedvr`, `recraft-clarity`, `clarity-upscaler`, `topaz`, `ccsr`, `aura-sr`
                   examples:
-                    - flux-schnell
                     - flux-pro
+                    - flux-schnell
+                    - nano-banana-pro
+                    - recraft-v3
+                    - phota
+                    - grok-imagine-image
                     - soul
+                    - nano-banana-pro/edit
+                    - seedvr
+                    - topaz
                 prompt:
                   type: string
-                  description: Text description of the image to generate
+                  description: Text description of the image to generate. For editing models, describe the desired change. For upscale models, can be empty.
                   example: sunset over mountains, dramatic lighting, photorealistic
                 aspect_ratio:
                   type: string
@@ -147,9 +326,16 @@ paths:
                     - "1:1"
                     - "16:9"
                     - "9:16"
+                    - "4:3"
+                    - "3:4"
                 files:
                   type: array
-                  description: Input images for image-to-image generation
+                  description: |
+                    Input images for editing, style transfer, or upscaling.
+
+                    - **Image editing:** 1 source image URL
+                    - **Image upscale:** 1 image URL
+                    - **Multi-angle (qwen-angles):** 1 source image
                   items:
                     type: object
                     required: [url]
@@ -157,17 +343,89 @@ paths:
                       url:
                         type: string
                         format: uri
+                        description: URL of the input image
                 provider_options:
                   type: object
                   description: Additional options passed directly to the provider
                   additionalProperties: true
             examples:
-              basic:
-                summary: Text to image
+              flux-pro:
+                summary: "Flux Pro \u2014 text-to-image"
+                value:
+                  model: flux-pro
+                  prompt: a minimalist logo design, geometric shapes, blue and white gradient
+                  aspect_ratio: "1:1"
+              flux-schnell:
+                summary: "Flux Schnell \u2014 fast text-to-image"
                 value:
                   model: flux-schnell
-                  prompt: sunset over mountains, dramatic lighting
+                  prompt: sunset over mountains, dramatic lighting, photorealistic
                   aspect_ratio: "16:9"
+              nano-banana-pro:
+                summary: "Nano Banana Pro \u2014 photorealistic"
+                value:
+                  model: nano-banana-pro
+                  prompt: professional headshot of a woman in a modern office, natural lighting, shallow depth of field
+                  aspect_ratio: "1:1"
+              nano-banana-edit:
+                summary: "Nano Banana Pro \u2014 image editing"
+                value:
+                  model: nano-banana-pro/edit
+                  prompt: change the shirt color to bright red
+                  files:
+                    - url: https://example.com/portrait.jpg
+              recraft-v3:
+                summary: "Recraft V3 \u2014 design and illustration"
+                value:
+                  model: recraft-v3
+                  prompt: flat vector illustration of a coffee shop storefront, warm colors, clean lines
+                  aspect_ratio: "1:1"
+              phota:
+                summary: "Phota \u2014 text-to-image"
+                value:
+                  model: phota
+                  prompt: product photo of a ceramic mug on a wooden table, morning light, steam rising
+                  aspect_ratio: "4:3"
+              phota-edit:
+                summary: "Phota Edit \u2014 image editing"
+                value:
+                  model: phota/edit
+                  prompt: remove the background and replace with a clean white studio
+                  files:
+                    - url: https://example.com/product.jpg
+              grok-imagine-image:
+                summary: "Grok Imagine \u2014 text-to-image"
+                value:
+                  model: grok-imagine-image
+                  prompt: a medieval castle perched on a cliff overlooking a stormy sea
+                  aspect_ratio: "16:9"
+              qwen-angles:
+                summary: "Qwen Angles \u2014 multi-angle views"
+                value:
+                  model: qwen-angles
+                  prompt: generate multiple angles of this product
+                  files:
+                    - url: https://example.com/product.jpg
+              soul:
+                summary: "Soul \u2014 text-to-image (Higgsfield)"
+                value:
+                  model: soul
+                  prompt: a cyberpunk street scene at night, neon reflections on wet pavement
+                  aspect_ratio: "16:9"
+              upscale-seedvr:
+                summary: "SeedVR \u2014 image upscale"
+                value:
+                  model: seedvr
+                  prompt: ""
+                  files:
+                    - url: https://example.com/low-res-photo.jpg
+              upscale-topaz:
+                summary: "Topaz \u2014 image upscale"
+                value:
+                  model: topaz
+                  prompt: ""
+                  files:
+                    - url: https://example.com/low-res-photo.jpg
       responses:
         "202":
           description: Job created
@@ -193,7 +451,10 @@ paths:
       operationId: createSpeech
       tags: [Generation]
       summary: Generate speech
-      description: Convert text to speech using ElevenLabs voices. Returns a job that you poll or stream for completion.
+      description: |
+        Convert text to speech using ElevenLabs voices. Returns a job that you poll or stream for completion.
+
+        Use `GET /voices` to browse all available voices with previews.
       requestBody:
         required: true
         content:
@@ -204,17 +465,29 @@ paths:
               properties:
                 model:
                   type: string
-                  description: Speech model to use
+                  description: |
+                    Speech model to use.
+
+                    **Latest:** `eleven_v3` (best quality, multilingual)
+
+                    **Fast:** `eleven_flash_v2_5`, `eleven_flash_v2` (lowest latency)
+
+                    **Turbo:** `eleven_turbo_v2_5`, `eleven_turbo_v2`, `turbo` (balanced)
+
+                    **Multilingual:** `eleven_multilingual_v2` (29 languages)
                   examples:
+                    - eleven_v3
+                    - eleven_flash_v2_5
                     - eleven_multilingual_v2
-                    - eleven_turbo_v2
+                    - eleven_turbo_v2_5
+                    - turbo
                 text:
                   type: string
                   description: Text to convert to speech
                   example: Hello everyone! Welcome to my channel.
                 voice:
                   type: string
-                  description: Voice to use for synthesis
+                  description: Voice name or ElevenLabs voice_id. Use `GET /voices` to browse available voices.
                   default: rachel
                   enum:
                     - rachel
@@ -228,15 +501,33 @@ paths:
                     - sam
                 provider_options:
                   type: object
-                  description: Additional options passed directly to the provider
+                  description: Additional options passed directly to the provider (e.g. stability, similarity_boost, style)
                   additionalProperties: true
             examples:
-              basic:
-                summary: Basic speech
+              eleven-v3:
+                summary: "ElevenLabs V3 \u2014 best quality"
+                value:
+                  model: eleven_v3
+                  text: "Welcome to today's episode. We'll be exploring the fascinating world of deep sea creatures."
+                  voice: rachel
+              eleven-multilingual:
+                summary: "ElevenLabs Multilingual \u2014 29 languages"
                 value:
                   model: eleven_multilingual_v2
-                  text: Hello everyone! Welcome to my channel.
-                  voice: rachel
+                  text: "Bonjour tout le monde! Bienvenue sur ma cha\u00eene."
+                  voice: sarah
+              eleven-flash:
+                summary: "ElevenLabs Flash \u2014 low latency"
+                value:
+                  model: eleven_flash_v2_5
+                  text: "Breaking news: scientists have discovered a new species of deep-sea fish."
+                  voice: josh
+              turbo:
+                summary: "Turbo \u2014 balanced speed and quality"
+                value:
+                  model: turbo
+                  text: "Hey there! Just wanted to share a quick update on the project."
+                  voice: adam
       responses:
         "202":
           description: Job created
@@ -262,7 +553,10 @@ paths:
       operationId: createMusic
       tags: [Generation]
       summary: Generate music
-      description: Generate background music from a text description. Returns a job that you poll or stream for completion.
+      description: |
+        Generate background music from a text description using ElevenLabs. Returns a job that you poll or stream for completion.
+
+        Describe genre, mood, tempo, and instruments for best results.
       requestBody:
         required: true
         content:
@@ -273,11 +567,11 @@ paths:
               properties:
                 model:
                   type: string
-                  description: Music model to use
+                  description: Music model to use. Currently `music_v1` is the only available model.
                   example: music_v1
                 prompt:
                   type: string
-                  description: Description of the music to generate
+                  description: Description of the music to generate. Include genre, mood, tempo, and instruments.
                   example: upbeat electronic pop, energetic, 120bpm
                 duration:
                   type: number
@@ -288,12 +582,24 @@ paths:
                   description: Additional options passed directly to the provider
                   additionalProperties: true
             examples:
-              basic:
-                summary: Background music
+              cinematic:
+                summary: "Music V1 \u2014 cinematic score"
                 value:
                   model: music_v1
-                  prompt: upbeat electronic pop, energetic
+                  prompt: epic cinematic orchestral score, building tension, dramatic strings, brass crescendo
                   duration: 30
+              electronic:
+                summary: "Music V1 \u2014 electronic pop"
+                value:
+                  model: music_v1
+                  prompt: upbeat electronic pop, energetic, 120bpm, synth arpeggios
+                  duration: 15
+              ambient:
+                summary: "Music V1 \u2014 ambient background"
+                value:
+                  model: music_v1
+                  prompt: calm ambient lo-fi, soft piano, gentle rain sounds, relaxing study music
+                  duration: 60
       responses:
         "202":
           description: Job created
@@ -319,7 +625,10 @@ paths:
       operationId: createTranscription
       tags: [Generation]
       summary: Transcribe audio
-      description: Transcribe audio to text using Whisper. Returns a job that you poll or stream for completion.
+      description: |
+        Transcribe audio to text using Whisper. Returns a job that you poll or stream for completion.
+
+        Supports both Fal-hosted Whisper and Groq-hosted Whisper (faster, cheaper).
       requestBody:
         required: true
         content:
@@ -330,27 +639,53 @@ paths:
               properties:
                 model:
                   type: string
-                  description: Transcription model to use
-                  example: whisper
+                  description: |
+                    Transcription model to use.
+
+                    **Fal (standard):** `whisper`, `whisper-large-v3`
+
+                    **Groq (faster, cheaper):** `groq-whisper`, `groq-whisper-large-v3`, `groq-whisper-large-v3-turbo`
+                  examples:
+                    - whisper
+                    - whisper-large-v3
+                    - groq-whisper
+                    - groq-whisper-large-v3-turbo
                 audio_url:
                   type: string
                   format: uri
-                  description: URL of the audio file to transcribe
+                  description: URL of the audio file to transcribe (mp3, wav, m4a, webm, etc.)
                   example: https://example.com/audio.mp3
                 language:
                   type: string
-                  description: Language code (e.g. "en", "es"). Auto-detected if omitted.
+                  description: Language code (e.g. "en", "es", "fr", "ja"). Auto-detected if omitted.
                   example: en
                 provider_options:
                   type: object
                   description: Additional options passed directly to the provider
                   additionalProperties: true
             examples:
-              basic:
-                summary: Transcribe audio
+              whisper:
+                summary: "Whisper \u2014 standard transcription"
                 value:
                   model: whisper
-                  audio_url: https://example.com/audio.mp3
+                  audio_url: https://example.com/podcast-episode.mp3
+              whisper-large:
+                summary: "Whisper Large V3 \u2014 highest accuracy"
+                value:
+                  model: whisper-large-v3
+                  audio_url: https://example.com/interview.wav
+                  language: en
+              groq-whisper:
+                summary: "Groq Whisper \u2014 fast and cheap"
+                value:
+                  model: groq-whisper
+                  audio_url: https://example.com/meeting-recording.mp3
+              groq-whisper-turbo:
+                summary: "Groq Whisper Turbo \u2014 fastest"
+                value:
+                  model: groq-whisper-large-v3-turbo
+                  audio_url: https://example.com/voice-memo.m4a
+                  language: en
       responses:
         "202":
           description: Job created
