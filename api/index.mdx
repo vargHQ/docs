@@ -3,7 +3,7 @@ title: "Gateway API"
 description: "Unified REST API for AI generation at api.varg.ai"
 ---
 
-The varg Gateway provides a single REST API for AI generation across multiple providers (Fal, ElevenLabs, Higgsfield, Replicate). One API key, server-side caching, and stable output URLs at `s3.varg.ai`.
+The varg Gateway provides a single REST API for AI generation across multiple providers (Fal, ElevenLabs, Higgsfield, Replicate, PiAPI). One API key, server-side caching, and stable output URLs at `s3.varg.ai`.
 
 ## Base URL
 
@@ -162,6 +162,7 @@ Models can be specified as `provider:model` or just the model name. The gateway 
 | Model | Provider |
 |-------|----------|
 | `kling-v3`, `kling-v2.6`, `kling-v2.5` | Fal |
+| `seedance-2-preview`, `seedance-2-fast-preview` | PiAPI |
 | `wan-2.5`, `minimax`, `ltx` | Fal |
 | `nano-banana-pro`, `flux-schnell`, `flux-pro` | Fal |
 | `sync-v2`, `sync-v2-pro`, `omnihuman` | Fal |

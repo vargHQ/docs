@@ -121,6 +121,8 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 | Model | Code (gateway) | Duration | Best For | Credits |
 |-------|---------------|----------|----------|---------|
 | Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | 150 |
+| Seedance 2 | `varg.videoModel("seedance-2-preview")` | 5 or 10s | Excellent quality (ByteDance) | 250 |
+| Seedance 2 Fast | `varg.videoModel("seedance-2-fast-preview")` | 5 or 10s | Fast (ByteDance) | 150 |
 | Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
 | Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters | 75 |
 | Minimax | `varg.videoModel("minimax")` | 5-10s | Alternative | 75 |
@@ -367,6 +369,8 @@ bunx vargai render video.tsx --no-cache     # Skip cache
 | Image | nano-banana-pro | 5 |
 | Image | flux-pro | 25 |
 | Video 5s | kling-v3 | 150 |
+| Video 5s | seedance-2-preview | 250 |
+| Video 5s | seedance-2-fast-preview | 150 |
 | Video 5s | wan-2.5 | 75 |
 | Speech | eleven_v3 | 25 |
 | Music | music_v1 | 25 |
@@ -394,4 +398,4 @@ project/
 4. **Lipsync**: Works best with frontal face, clear audio, 5-10 second clips
 5. **Caching**: Same props = instant $0. Even slightly different prompt = full regeneration
 6. **Music volume**: Keep at 0.1-0.3 for background, voices at 1.0
-7. **Duration**: kling-v3 needs integer 3-15s. kling-v2.5 needs exactly 5 or 10.
+7. **Duration**: kling-v3 needs integer 3-15s. kling-v2.5 needs exactly 5 or 10. seedance-2-preview / seedance-2-fast-preview need exactly 5 or 10.
