@@ -41,11 +41,12 @@ paths:
                   type: string
                   description: Video model to use
                   examples:
+                    - kling-v3
+                    - seedance-2-preview
+                    - seedance-2-fast-preview
                     - kling-v2.5
-                    - kling-v2.1
                     - wan-2.5
                     - minimax
-                    - soul
                 prompt:
                   type: string
                   description: Text description of the video to generate

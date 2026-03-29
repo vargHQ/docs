@@ -92,6 +92,8 @@ Soul is ideal for creating a character once and reusing it across multiple video
 | Model | Code | Duration | Best For | Credits |
 |-------|------|----------|----------|---------|
 | Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (integer only) | Best quality | 150 |
+| Seedance 2 | `varg.videoModel("seedance-2-preview")` | 5 or 10s only | Excellent quality (ByteDance) | 250 |
+| Seedance 2 Fast | `varg.videoModel("seedance-2-fast-preview")` | 5 or 10s only | Fast generation (ByteDance) | 150 |
 | Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
 | Kling V2.5 | `varg.videoModel("kling-v2.5")` | 5 or 10s only | Previous gen | 100 |
 | Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters, motion | 75 |
@@ -101,6 +103,7 @@ Soul is ideal for creating a character once and reusing it across multiple video
 <Warning>
 **Duration constraints are strict:**
 - `kling-v3`: integer seconds only (3, 4, 5, ... 15). No decimals.
+- `seedance-2-preview` / `seedance-2-fast-preview`: exactly 5 or 10 seconds. Nothing else.
 - `kling-v2.5` / `kling-v2.6`: exactly 5 or 10 seconds. Nothing else.
 - `wan-2.5`: 3-10 seconds.
 </Warning>
@@ -202,7 +205,7 @@ One model: `music_v1` (25 credits). Always set `duration` explicitly.
 |--------|-------|-------|---------------|
 | Cheap | nano-banana-pro (5) | wan-2.5 (75) | ~$0.80 |
 | Standard | nano-banana-pro (5) | kling-v3 (150) | ~$1.55 |
-| Premium | flux-pro (25) | kling-v3 (150) | ~$1.75 |
+| Premium | nano-banana-pro (5) | seedance-2-preview (250) | ~$2.55 |
 
 ## BYOK (Direct Provider Access)
 
