@@ -1,0 +1,74 @@
+---
+title: "Seedream"
+sidebarTitle: "Seedream"
+description: "ByteDance's image editing model for precise visual modifications"
+icon: "pen-to-square"
+---
+
+## Overview
+
+Seedream V4.5 is ByteDance's image editing model, designed for precise visual modifications to existing images.
+
+| Model ID | Mode | Credits | ~Cost |
+|----------|------|---------|-------|
+| `seedream-v4.5/edit` | Image editing | 10 | $0.10 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("seedream-v4.5/edit").generate({
+  prompt: "change the sky to a dramatic sunset with orange and purple clouds",
+  imageUrl: "https://example.com/landscape.jpg",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedream-v4.5/edit",
+    "prompt": "change the sky to a dramatic sunset with orange and purple clouds",
+    "files": [{ "url": "https://example.com/landscape.jpg" }]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the edit to apply to the input image.
+</ResponseField>
+
+<ResponseField name="files" type="array" required>
+  Array with the source image: `[{ url: "image.jpg" }]`.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `seedream-v4.5/edit` | 10 | $0.10 |
+
+## Tips
+
+- **Best for targeted edits** — sky replacement, color changes, adding/removing elements.
+- **Pair with Seedance 2** for a full ByteDance pipeline: edit images with Seedream, animate with Seedance.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Nano Banana Edit" icon="image" href="/models/image/nano-banana">
+    More versatile editing at half the cost (5 credits).
+  </Card>
+  <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
+    ByteDance's video model — animate your edited images.
+  </Card>
+</CardGroup>

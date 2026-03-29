@@ -1,0 +1,102 @@
+---
+title: "Recraft"
+sidebarTitle: "Recraft"
+description: "Purpose-built for graphic design — icons, illustrations, brand assets with precise color control"
+icon: "palette"
+---
+
+## Overview
+
+Recraft is a design-focused image generation model built specifically for graphic design, icons, and brand assets. It offers precise color control and professional output quality.
+
+| Model ID | Tier | Credits | ~Cost |
+|----------|------|---------|-------|
+| `recraft-v3` | Standard | 10 | $0.10 |
+| `recraft-v4-pro` | Professional | 10 | $0.10 |
+
+Recraft V4 Pro adds support for brand color palettes and background color control.
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("recraft-v3").generate({
+  prompt: "a flat icon set for a weather app, sun, cloud, rain, snow, minimalist",
+  aspectRatio: "1:1",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "recraft-v3",
+    "prompt": "a flat icon set for a weather app, sun, cloud, rain, snow, minimalist",
+    "aspect_ratio": "1:1"
+  }'
+```
+</CodeGroup>
+
+## Recraft V4 Pro — brand colors
+
+Control exact colors in the output for brand consistency:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "recraft-v4-pro",
+    "prompt": "a modern logo for a tech startup called Nebula",
+    "provider_options": {
+      "colors": [{ "r": 99, "g": 102, "b": 241 }, { "r": 255, "g": 255, "b": 255 }],
+      "background_color": { "r": 15, "g": 15, "b": 15 }
+    }
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the image or design to generate.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  V4 Pro supports: `colors` (array of `{r,g,b}` objects for brand palette), `background_color` (`{r,g,b}`), `image_size` (enum or `{width, height}`), `output_format` (`"png"`, `"jpeg"`, `"webp"`).
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `recraft-v3` | 10 | $0.10 |
+| `recraft-v4-pro` | 10 | $0.10 |
+
+## Tips
+
+- **Use Recraft for design work** — icons, logos, illustrations, UI elements. It understands design concepts better than general-purpose models.
+- **V4 Pro's color control** is invaluable for brand consistency. Provide your exact brand colors as RGB values.
+- **PNG output** is recommended for icons and logos (supports transparency).
+- **For photographs or realistic images**, use Nano Banana or Flux instead.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    Better for photorealistic content and editing.
+  </Card>
+  <Card title="Flux Pro" icon="bolt" href="/models/image/flux">
+    Higher quality general-purpose generation.
+  </Card>
+</CardGroup>

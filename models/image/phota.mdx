@@ -1,0 +1,134 @@
+---
+title: "Phota"
+sidebarTitle: "Phota"
+description: "Identity-preserving image generation with profile-based character control"
+icon: "camera"
+---
+
+## Overview
+
+Phota specializes in personalized photo generation with profile-based identity control. Create consistent character images by referencing profiles, and enhance/upscale existing images while preserving identity.
+
+| Model ID | Mode | Credits | ~Cost |
+|----------|------|---------|-------|
+| `phota` | Text-to-image with profiles | 9 | $0.09 |
+| `phota/edit` | Image editing with profiles | 9 | $0.09 |
+| `phota/enhance` | Image enhancement/upscale | 13 | $0.13 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("phota").generate({
+  prompt: "@Profile1 walking through a sunlit garden, golden hour",
+  aspectRatio: "9:16",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "phota",
+    "prompt": "@Profile1 walking through a sunlit garden, golden hour",
+    "aspect_ratio": "9:16"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Profile-based generation
+
+Reference profiles in your prompt with `@Profile1`, `@Profile2`, etc. for consistent character identity:
+
+```typescript
+const result = await varg.imageModel("phota").generate({
+  prompt: "@Profile1 and @Profile2 sitting at a cafe table, laughing",
+  providerOptions: {
+    varg: { profile_ids: ["profile-abc", "profile-xyz"] },
+  },
+})
+```
+
+### Image editing
+
+Edit images while preserving character identity:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "phota/edit",
+    "prompt": "change the background to a beach sunset",
+    "files": [{ "url": "https://example.com/portrait.jpg" }]
+  }'
+```
+
+### Image enhancement
+
+Upscale and enhance images while preserving identity features:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "phota/enhance",
+    "files": [{ "url": "https://example.com/low-res-portrait.jpg" }]
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description. Use `@Profile1`, `@Profile2` etc. to reference character profiles.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Supported: `auto`, `1:1`, `16:9`, `4:3`, `3:4`, `9:16`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Reference images for editing. Up to 10 images for `phota/edit`. Single image for `phota/enhance`.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Supports `profile_ids` (array of profile IDs), `resolution` (`"1K"` or `"4K"`).
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `phota` | 9 | $0.09 |
+| `phota/edit` | 9 | $0.09 |
+| `phota/enhance` | 13 | $0.13 |
+
+## Tips
+
+- **Profile-based generation** is ideal for creating consistent character imagery across multiple scenes and poses.
+- **Enhance mode** is a cost-effective way to upscale images while maintaining facial features and identity.
+- **Combine with video models** — generate consistent character shots with Phota, then animate with Seedance or Kling.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Soul" icon="user" href="/models/image/soul">
+    Alternative for character generation with 80+ style presets.
+  </Card>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    General-purpose editing without identity profiles.
+  </Card>
+  <Card title="Image Upscale" icon="expand" href="/models/upscale/image-upscale">
+    Dedicated upscale models for maximum resolution.
+  </Card>
+</CardGroup>

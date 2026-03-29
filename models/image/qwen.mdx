@@ -1,0 +1,112 @@
+---
+title: "Qwen Image"
+sidebarTitle: "Qwen Image"
+description: "Alibaba's image models — multi-angle generation and unified image generation/editing"
+icon: "rotate"
+---
+
+## Overview
+
+Qwen Image is Alibaba's image generation family. It includes a multi-angle model for generating different viewpoints of an object, and a general-purpose generation/editing model.
+
+| Model ID | Capability | Credits | ~Cost |
+|----------|-----------|---------|-------|
+| `qwen-angles` | Multi-angle from reference | 8 | $0.08 |
+| `qwen-image-2` | Text-to-image + editing | 8 | $0.08 |
+
+## Quick start
+
+### Multi-angle generation
+
+Generate multiple camera angles from a single reference image:
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("qwen-angles").generate({
+  prompt: "product shot from a 45-degree elevated angle",
+  imageUrl: "https://example.com/product.jpg",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen-angles",
+    "prompt": "product shot from a 45-degree elevated angle",
+    "files": [{ "url": "https://example.com/product.jpg" }]
+  }'
+```
+</CodeGroup>
+
+### Unified generation/editing
+
+Qwen Image 2 auto-routes between generation and editing based on whether images are provided:
+
+```bash cURL
+# Text-to-image (no files)
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen-image-2",
+    "prompt": "a serene Japanese garden with cherry blossoms"
+  }'
+
+# Image editing (with files)
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen-image-2",
+    "prompt": "add autumn colors to the trees",
+    "files": [{ "url": "https://example.com/garden.jpg" }]
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description. Supports both Chinese and English prompts.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Reference images. `qwen-angles` uses this for the source viewpoint. `qwen-image-2` triggers editing mode when images are present. Up to 6 images.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  `qwen-angles` supports azimuth/elevation camera adjustments. `qwen-image-2` supports `prompt_expansion` and image dimensions (512-2048px).
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `qwen-angles` | 8 | $0.08 |
+| `qwen-image-2` | 8 | $0.08 |
+
+## Tips
+
+- **Multi-angle is great for product photography** — generate multiple viewpoints from a single product photo.
+- **Qwen Image 2** supports bilingual prompts (Chinese + English), useful for localized content.
+- **Camera angle parameters** (azimuth, elevation) give precise control over the viewing angle.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    More versatile for general editing. Same price range.
+  </Card>
+  <Card title="Phota" icon="camera" href="/models/image/phota">
+    Identity-preserving generation with profile support.
+  </Card>
+</CardGroup>

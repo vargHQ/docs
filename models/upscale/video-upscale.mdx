@@ -1,0 +1,78 @@
+---
+title: "Video Upscale"
+sidebarTitle: "Video Upscale"
+description: "Enhance video resolution with 4 models from budget to premium quality"
+icon: "expand"
+---
+
+## Overview
+
+Upscale video resolution with four models at different quality-cost tradeoffs.
+
+| Model ID | Quality | Credits | ~Cost | Provider |
+|----------|---------|---------|-------|----------|
+| `topaz-video` | Best | 50 | $0.50 | fal (Topaz Labs) |
+| `seedvr-video` | Very good | 30 | $0.30 | fal (ByteDance SeedVR) |
+| `bytedance-upscaler` | Good | 25 | $0.25 | fal (ByteDance) |
+| `sima-video-upscaler` | Budget | 15 | $0.15 | fal (Sima Labs) |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("seedvr-video").generate({
+  videoUrl: "https://example.com/low-res-video.mp4",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedvr-video",
+    "prompt": "",
+    "files": [{ "url": "https://example.com/low-res-video.mp4" }]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="files" type="array" required>
+  Single video file to upscale: `[{ url: "video.mp4" }]`.
+</ResponseField>
+
+<Note>
+Video upscale models don't use prompt, duration, or aspect_ratio. They take a video file and return it at higher resolution.
+</Note>
+
+## Model comparison
+
+| Model | Best for | Pricing model |
+|-------|----------|---------------|
+| `topaz-video` | Maximum quality, professional output | $0.01-$0.08/second |
+| `seedvr-video` | Good quality at moderate cost | $0.001/megapixel * frames |
+| `bytedance-upscaler` | Balance of quality and speed | $0.007-$0.029/second |
+| `sima-video-upscaler` | Budget/bulk upscaling | $0.00025/megapixel * frames |
+
+## Tips
+
+- **Sima is the cheapest** — good for batch upscaling where top quality isn't critical.
+- **Topaz produces the best results** but costs 3x more than the cheapest option.
+- **Post-process your AI videos** — upscale after generation to improve the perceived quality of any video model's output.
+- **Watch file sizes** — upscaled video files can be significantly larger. Consider your storage and bandwidth.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Image Upscale" icon="expand" href="/models/upscale/image-upscale">
+    Upscale image files instead of video.
+  </Card>
+</CardGroup>

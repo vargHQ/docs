@@ -23,6 +23,66 @@
             ]
           },
           {
+            "group": "Models",
+            "pages": [
+              "models/index",
+              {
+                "group": "Video",
+                "icon": "video",
+                "pages": [
+                  "models/video/seedance-2",
+                  "models/video/kling-v3",
+                  "models/video/sora-2",
+                  "models/video/wan-2",
+                  "models/video/minimax",
+                  "models/video/ltx",
+                  "models/video/grok-imagine-video",
+                  "models/video/kling-legacy"
+                ]
+              },
+              {
+                "group": "Image",
+                "icon": "image",
+                "pages": [
+                  "models/image/nano-banana",
+                  "models/image/flux",
+                  "models/image/phota",
+                  "models/image/grok-imagine-image",
+                  "models/image/recraft",
+                  "models/image/qwen",
+                  "models/image/seedream",
+                  "models/image/soul"
+                ]
+              },
+              {
+                "group": "Lipsync",
+                "icon": "lips",
+                "pages": [
+                  "models/lipsync/veed-fabric",
+                  "models/lipsync/sync",
+                  "models/lipsync/omnihuman"
+                ]
+              },
+              {
+                "group": "Upscale",
+                "icon": "expand",
+                "pages": [
+                  "models/upscale/image-upscale",
+                  "models/upscale/video-upscale"
+                ]
+              },
+              {
+                "group": "Audio",
+                "icon": "microphone",
+                "pages": [
+                  "models/speech/elevenlabs",
+                  "models/music/music",
+                  "models/transcription/whisper"
+                ]
+              }
+            ]
+          },
+          {
             "group": "SDK",
             "pages": [
               "sdk/index",

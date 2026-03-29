@@ -1,0 +1,122 @@
+---
+title: "Wan 2.5"
+sidebarTitle: "Wan 2.5"
+description: "Budget-friendly video generation with strong character motion and audio support"
+icon: "wand-magic-sparkles"
+---
+
+## Overview
+
+Wan 2.5 (by Alibaba) is a cost-effective video model with good motion quality, especially for character animation. It supports text-to-video, image-to-video, and optional audio input.
+
+| Model ID | Quality | Credits | ~Cost |
+|----------|---------|---------|-------|
+| `wan-2.5` | Standard | 80 | $0.80 |
+| `wan-2.5-preview` | Preview | 60 | $0.60 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("wan-2.5").generate({
+  prompt: "a cartoon character dancing energetically in a colorful studio",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "wan-2.5",
+    "prompt": "a cartoon character dancing energetically in a colorful studio",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Text-to-video
+
+```typescript
+const result = await varg.videoModel("wan-2.5").generate({
+  prompt: "a woman walking through a busy market, vibrant colors, cinematic",
+  duration: 8,
+})
+```
+
+### Image-to-video
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "wan-2.5",
+    "prompt": "the character starts walking forward slowly",
+    "duration": 5,
+    "files": [{ "url": "https://example.com/character.jpg" }]
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate.
+</ResponseField>
+
+<ResponseField name="duration" type="string" default="5">
+  Video duration in seconds. Range: 3-10 seconds.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects for image-to-video.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Pass-through options. Supports `resolution` (default `"480p"`), `negative_prompt`, and `audio_url` for audio-driven generation.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `wan-2.5` | 80 | $0.80 |
+| `wan-2.5-preview` | 60 | $0.60 |
+
+One of the most affordable video models available.
+
+## Tips
+
+- **Best value for character animation.** Wan handles human and cartoon motion well at a fraction of Kling/Seedance cost.
+- **Preview variant** is good for quick iteration at even lower cost.
+- **Combine with Soul** for consistent character generation — use Soul to create the character image, then Wan to animate.
+- **Audio input** can drive motion — provide an `audio_url` in provider options for music-driven animation.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Higher quality, more expensive. Best for hero content.
+  </Card>
+  <Card title="Minimax" icon="minimize" href="/models/video/minimax">
+    Similar price point, different motion characteristics.
+  </Card>
+  <Card title="LTX" icon="bolt" href="/models/video/ltx">
+    Even cheaper at 50 credits. Fastest generation.
+  </Card>
+</CardGroup>

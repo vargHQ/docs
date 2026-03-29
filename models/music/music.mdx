@@ -1,0 +1,108 @@
+---
+title: "Music Generation"
+sidebarTitle: "Music"
+description: "AI music generation for video soundtracks, background music, and jingles"
+icon: "music"
+---
+
+## Overview
+
+Generate music from text descriptions. Currently one model is available via ElevenLabs.
+
+| Model ID | Credits | ~Cost |
+|----------|---------|-------|
+| `music_v1` | 30 | $0.30 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.musicModel().generate({
+  prompt: "upbeat electronic music, cheerful vibes, 120 bpm",
+  duration: 15,
+})
+
+console.log(result.audio.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/music \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "music_v1",
+    "prompt": "upbeat electronic music, cheerful vibes, 120 bpm",
+    "duration": 15
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the music. Include genre, mood, tempo, and instruments for best results.
+</ResponseField>
+
+<ResponseField name="duration" type="number">
+  Music duration in seconds. **Always set this explicitly** — without it, the model defaults to ~60 seconds which may be more than needed.
+</ResponseField>
+
+<Warning>
+**Always set `duration` explicitly.** Without it, the model generates ~60 seconds of music, which costs the same but may be more than you need.
+</Warning>
+
+## Prompt examples
+
+| Prompt | Good for |
+|--------|----------|
+| `"chill lofi hip hop, relaxing study vibes"` | Background music, ambient |
+| `"epic orchestral cinematic trailer music"` | Product launches, drama |
+| `"upbeat pop, energetic, catchy melody"` | Social media, TikTok |
+| `"acoustic guitar, gentle fingerpicking, warm"` | Narration background |
+| `"dark ambient electronic, mysterious atmosphere"` | Thriller/tech content |
+| `"jazz piano trio, smooth and sophisticated"` | Interviews, podcasts |
+
+## Composition example
+
+Add music as a background track in a video:
+
+```tsx
+<Render width={1080} height={1920} fps={30}>
+  <Music
+    prompt="upbeat electronic music, cheerful vibes"
+    model={varg.musicModel()}
+    volume={0.3}
+    duration={15}
+  />
+  <Clip duration={5}>
+    <Video model={varg.videoModel("kling-v3")} prompt="sunset timelapse" duration={5} />
+  </Clip>
+  <Clip duration={10}>
+    <Video model={varg.videoModel("kling-v3")} prompt="city nightscape" duration={10} />
+  </Clip>
+</Render>
+```
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `music_v1` | 30 | $0.30 |
+
+## Tips
+
+- **Include genre, mood, tempo, and instruments** in your prompt for the best results.
+- **BPM matters** — specify it if you need the music to match a specific pacing (e.g., `"120 bpm"` for upbeat, `"70 bpm"` for relaxed).
+- **Set volume to 0.2-0.4** when using as background under narration — it shouldn't compete with speech.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="ElevenLabs Speech" icon="microphone" href="/models/speech/elevenlabs">
+    Add narration over your music track.
+  </Card>
+</CardGroup>

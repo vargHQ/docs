@@ -1,0 +1,103 @@
+---
+title: "Grok Imagine Image"
+sidebarTitle: "Grok Imagine Image"
+description: "xAI's cheapest image generation and editing model"
+icon: "bolt"
+---
+
+## Overview
+
+Grok Imagine Image is xAI's image generation model — the cheapest image model available on varg at just 3 credits per generation.
+
+| Model ID | Mode | Credits | ~Cost |
+|----------|------|---------|-------|
+| `grok-imagine-image` | Text-to-image | 3 | $0.03 |
+| `grok-imagine-image/edit` | Image editing | 3 | $0.03 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("grok-imagine-image").generate({
+  prompt: "a cartoon robot holding a cup of coffee, flat illustration style",
+  aspectRatio: "1:1",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-image",
+    "prompt": "a cartoon robot holding a cup of coffee, flat illustration style",
+    "aspect_ratio": "1:1"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Image editing
+
+Edit existing images with text prompts:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-image/edit",
+    "prompt": "add sunglasses to the person",
+    "files": [{ "url": "https://example.com/portrait.jpg" }]
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the image to generate or edit to apply.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects for image editing mode.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `grok-imagine-image` | 3 | $0.03 |
+| `grok-imagine-image/edit` | 3 | $0.03 |
+
+The absolute cheapest image model. At 3 credits, you can generate 333 images with a $10 signup credit.
+
+## Tips
+
+- **Best for high-volume, cost-sensitive use cases** where quality is secondary to throughput.
+- **Good for prototyping** — quickly test prompt ideas before switching to Nano Banana or Flux for final output.
+- **Quality is lower** than Nano Banana Pro or Flux. Use those for production content.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    Better quality at 5 credits. Recommended default.
+  </Card>
+  <Card title="Flux Schnell" icon="bolt" href="/models/image/flux">
+    Same speed, better quality at 5 credits.
+  </Card>
+  <Card title="Grok Imagine Video" icon="video" href="/models/video/grok-imagine-video">
+    The video counterpart from xAI.
+  </Card>
+</CardGroup>

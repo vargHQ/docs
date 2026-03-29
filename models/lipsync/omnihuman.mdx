@@ -1,0 +1,79 @@
+---
+title: "OmniHuman"
+sidebarTitle: "OmniHuman"
+description: "ByteDance's full-body human animation from a single image and audio"
+icon: "person"
+---
+
+## Overview
+
+OmniHuman V1.5 (by ByteDance) generates full-body human animation videos from a single image and audio file. Unlike lipsync models that only animate the mouth, OmniHuman animates the entire body including gestures and posture.
+
+| Model ID | Input | Resolution | Credits | ~Cost |
+|----------|-------|-----------|---------|-------|
+| `omnihuman-v1.5` | Image + audio | 720p or 1080p | 100 | $1.00 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("omnihuman-v1.5").generate({
+  imageUrl: "https://example.com/full-body-portrait.jpg",
+  audioUrl: "https://example.com/speech.mp3",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "omnihuman-v1.5",
+    "prompt": "",
+    "files": [
+      { "url": "https://example.com/full-body-portrait.jpg" },
+      { "url": "https://example.com/speech.mp3" }
+    ]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="files" type="array" required>
+  Two files: one image (full body preferred) and one audio.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  `resolution` — `"720p"` or `"1080p"` (default `"1080p"`). `turbo_mode` — boolean for faster generation at slightly lower quality.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `omnihuman-v1.5` | 100 | $1.00 |
+
+## Tips
+
+- **Full-body images work best.** OmniHuman animates hands, arms, and posture — use images showing the full or upper body.
+- **Turbo mode** trades quality for speed. Good for previewing before final renders.
+- **1080p resolution** is recommended for production content. 720p for faster iteration.
+- **Quality is variable** — results depend heavily on the input image pose and composition.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="VEED Fabric" icon="comment" href="/models/lipsync/veed-fabric">
+    Faster and simpler. Face-only animation.
+  </Card>
+  <Card title="Sync V2 Pro" icon="lips" href="/models/lipsync/sync">
+    Higher quality lip sync on existing video.
+  </Card>
+</CardGroup>

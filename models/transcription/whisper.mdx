@@ -1,0 +1,104 @@
+---
+title: "Whisper Transcription"
+sidebarTitle: "Whisper"
+description: "Audio-to-text transcription with OpenAI Whisper — fal and Groq variants"
+icon: "ear-listen"
+---
+
+## Overview
+
+Transcribe audio to text using OpenAI's Whisper model, available through two providers with different speed/cost profiles.
+
+| Model ID | Provider | Speed | Credits | ~Cost |
+|----------|---------|-------|---------|-------|
+| `whisper` | fal | Standard | 10 | $0.10 |
+| `whisper-large-v3` | fal | Standard | 10 | $0.10 |
+| `groq-whisper` | Groq | Fast | 5 | $0.05 |
+| `groq-whisper-large-v3` | Groq | Fast | 5 | $0.05 |
+| `groq-whisper-large-v3-turbo` | Groq | Fastest | 3 | $0.03 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.transcriptionModel("whisper").generate({
+  file: "https://example.com/audio.mp3",
+})
+
+console.log(result.text)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/transcription \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "whisper",
+    "file": "https://example.com/audio.mp3"
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="file" type="string" required>
+  URL or local path to the audio file. Supports mp3, wav, m4a, ogg, flac, webm.
+</ResponseField>
+
+<ResponseField name="language" type="string">
+  Language code (e.g., `"en"`, `"es"`, `"fr"`). Auto-detected if not specified.
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Optional context to guide transcription. Useful for domain-specific terms or names.
+</ResponseField>
+
+<ResponseField name="temperature" type="number" default="0">
+  Sampling temperature. 0 = deterministic, higher = more creative (not usually needed for transcription).
+</ResponseField>
+
+## Choosing a model
+
+| Scenario | Recommended | Why |
+|----------|-------------|-----|
+| Cheapest | `groq-whisper-large-v3-turbo` (3 credits) | 70% cheaper than fal Whisper |
+| Best quality | `whisper-large-v3` (10 credits) | Full Large V3 model on fal |
+| Fast + cheap | `groq-whisper` (5 credits) | Good balance |
+| Default | `whisper` (10 credits) | Reliable, well-tested |
+
+## Use with captions
+
+Transcription is commonly used to generate captions for videos:
+
+```tsx
+const narration = Speech({
+  model: varg.speechModel("eleven_v3"),
+  text: "Welcome to the future of video creation.",
+})
+
+<Clip duration={5}>
+  <Video model={varg.videoModel("kling-v3")} prompt="futuristic city" duration={5} />
+  {narration}
+  <Captions source={narration} />
+</Clip>
+```
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `whisper` / `whisper-large-v3` | 10 | $0.10 |
+| `groq-whisper` / `groq-whisper-large-v3` | 5 | $0.05 |
+| `groq-whisper-large-v3-turbo` | 3 | $0.03 |
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="ElevenLabs Speech" icon="microphone" href="/models/speech/elevenlabs">
+    Generate speech from text (the reverse operation).
+  </Card>
+</CardGroup>

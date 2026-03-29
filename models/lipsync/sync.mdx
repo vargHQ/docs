@@ -1,0 +1,115 @@
+---
+title: "Sync Lipsync"
+sidebarTitle: "Sync Lipsync"
+description: "High-quality lip synchronization — apply speech audio to existing video"
+icon: "lips"
+---
+
+## Overview
+
+Sync (by Synchronize Labs) applies lip synchronization to existing videos. Provide a video and an audio file, and the model will make the person in the video appear to speak the audio. Two quality tiers are available.
+
+| Model ID | Quality | Speed | Credits | ~Cost |
+|----------|---------|-------|---------|-------|
+| `sync-v2-pro` | Best | ~60-90s | 80 | $0.80 |
+| `sync-v2` | Good | ~45-60s | 50 | $0.50 |
+| `lipsync` | Basic | varies | 50 | $0.50 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("sync-v2-pro").generate({
+  videoUrl: "https://example.com/talking-head.mp4",
+  audioUrl: "https://example.com/speech.mp3",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "sync-v2-pro",
+    "prompt": "",
+    "files": [
+      { "url": "https://example.com/talking-head.mp4" },
+      { "url": "https://example.com/speech.mp3" }
+    ]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="files" type="array" required>
+  Two files: one video and one audio. The gateway auto-detects file types by extension.
+</ResponseField>
+
+<Note>
+Sync models don't use prompt, duration, or aspect_ratio parameters. The output matches the input video dimensions and the audio duration.
+</Note>
+
+## Full talking head pipeline
+
+The typical workflow: generate character image, create video, generate speech, apply lipsync.
+
+```tsx
+// 1. Generate character
+const character = Image({
+  model: varg.imageModel("soul"),
+  prompt: "professional presenter, neutral expression",
+  aspectRatio: "9:16",
+})
+
+// 2. Generate base video
+const baseVideo = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "subtle head movement, blinking", images: [character] },
+  duration: 10,
+})
+
+// 3. Generate speech
+const speech = Speech({ model: varg.speechModel("eleven_v3"), text: "Welcome to our product demo..." })
+
+// 4. Apply lipsync
+const talkingHead = Video({
+  model: varg.videoModel("sync-v2-pro"),
+  prompt: { video: baseVideo, audio: speech },
+})
+```
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `sync-v2-pro` | 80 | $0.80 |
+| `sync-v2` | 50 | $0.50 |
+| `lipsync` | 50 | $0.50 |
+
+## Tips
+
+- **Pro is recommended** for production content. The quality difference is noticeable, especially around mouth movements.
+- **Input video should have a clear face** — front-facing, well-lit, with the face occupying a good portion of the frame.
+- **Audio quality matters** — clean speech audio produces much better lipsync results.
+- **Combine with ElevenLabs** for the full pipeline: TTS -> Sync V2 Pro.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="VEED Fabric" icon="comment" href="/models/lipsync/veed-fabric">
+    Simpler pipeline — image + audio, no video needed.
+  </Card>
+  <Card title="OmniHuman" icon="person" href="/models/lipsync/omnihuman">
+    Full-body animation, not just lips.
+  </Card>
+  <Card title="ElevenLabs" icon="microphone" href="/models/speech/elevenlabs">
+    Generate speech audio for lipsync.
+  </Card>
+</CardGroup>

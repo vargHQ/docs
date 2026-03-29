@@ -1,0 +1,161 @@
+---
+title: "Kling V3"
+sidebarTitle: "Kling V3"
+description: "Best overall video generation model — flexible duration, high quality text-to-video and image-to-video"
+icon: "film"
+---
+
+## Overview
+
+Kling V3 is the recommended default video model. Made by Kuaishou, it offers the best balance of quality, flexibility, and cost. It supports continuous duration from 3-15 seconds (integer only) and both text-to-video and image-to-video generation.
+
+| Model ID | Tier | Credits | Duration |
+|----------|------|---------|----------|
+| `kling-v3` | Pro | 150 | 3-15s |
+| `kling-v3-standard` | Standard | 100 | 3-15s |
+
+Both variants support first-frame and last-frame keyframe control via `end_image_url`.
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("kling-v3").generate({
+  prompt: "cinematic shot of ocean waves crashing on rocky cliffs at golden hour",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v3",
+    "prompt": "cinematic shot of ocean waves crashing on rocky cliffs at golden hour",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Text-to-video
+
+```typescript
+const result = await varg.videoModel("kling-v3").generate({
+  prompt: "a cat leaping gracefully from one rooftop to another, city skyline behind",
+  duration: 8,
+})
+```
+
+### Image-to-video
+
+Animate a still image with a motion prompt:
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("kling-v3").generate({
+  prompt: "slow camera push-in, the subject blinks and smiles",
+  imageUrl: "https://example.com/portrait.jpg",
+  duration: 5,
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v3",
+    "prompt": "slow camera push-in, the subject blinks and smiles",
+    "duration": 5,
+    "files": [{ "url": "https://example.com/portrait.jpg" }]
+  }'
+```
+</CodeGroup>
+
+### Keyframe control (first + last frame)
+
+Provide two images to control the start and end frames of the video. The model interpolates the motion between them.
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v3",
+    "prompt": "smooth transition from day to night",
+    "duration": 5,
+    "files": [
+      { "url": "https://example.com/day-scene.jpg" },
+      { "url": "https://example.com/night-scene.jpg" }
+    ]
+  }'
+```
+
+The first file becomes `image_url` (start frame) and the second becomes `end_image_url` (end frame).
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate. For image-to-video, describe the desired motion.
+</ResponseField>
+
+<ResponseField name="duration" type="number" default="5">
+  Video duration in seconds. Integer values from 3 to 15. No decimals — `5.5` will fail.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio. Common values: `16:9`, `9:16`, `1:1`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects. One image for image-to-video. Two images for first+last frame keyframe control.
+</ResponseField>
+
+<Warning>
+**Duration must be an integer.** `kling-v3` accepts 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, or 15. Decimal values like `5.5` or out-of-range values will fail.
+</Warning>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `kling-v3` | 150 | $1.50 |
+| `kling-v3-standard` | 100 | $1.00 |
+
+Standard tier is 33% cheaper with slightly lower quality. Good for drafts and iteration.
+
+## Tips
+
+- **Image-to-video is significantly better** than text-to-video. Always generate a reference image first when possible.
+- **Keyframe control** is powerful for transitions — provide a start and end frame, and Kling interpolates the motion between them.
+- **Keep prompts concise and motion-focused.** Describe what moves and how, not static scene details (those belong in the reference image).
+- **Standard tier** (`kling-v3-standard`) is recommended for iteration and testing. Switch to pro for final renders.
+- **Flexible duration** is Kling V3's advantage over other models that only support 5 or 10 seconds.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
+    ByteDance's premium model. Excellent quality, supports video editing.
+  </Card>
+  <Card title="Sora 2" icon="video" href="/models/video/sora-2">
+    OpenAI's video model with remix capability.
+  </Card>
+  <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
+    Budget alternative at 80 credits. Good motion quality.
+  </Card>
+  <Card title="Kling Legacy" icon="clock-rotate-left" href="/models/video/kling-legacy">
+    Previous Kling versions (V2.6, V2.5, V2.1, V2).
+  </Card>
+</CardGroup>

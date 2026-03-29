@@ -1,0 +1,117 @@
+---
+title: "Kling Legacy"
+sidebarTitle: "Kling Legacy"
+description: "Previous generation Kling video models — V2.6, V2.5, V2.1, V2"
+icon: "clock-rotate-left"
+---
+
+## Overview
+
+These are previous-generation Kling models. While still functional, **Kling V3 is recommended** for new projects. Legacy models may be useful if you need specific features like native audio (V2.6) or motion control.
+
+| Model ID | Special Features | Duration | Credits |
+|----------|-----------------|----------|---------|
+| `kling-v2.6` | Native audio, keyframe control | 3-15s | 150 |
+| `kling-v2.6-motion` | Camera trajectory control | varies | 150 |
+| `kling-v2.5` | — | 5 or 10s only | 100 |
+| `kling-v2.1` | — | 5 or 10s | 100 |
+| `kling-v2` | — | 5 or 10s | 100 |
+
+## Kling V2.6
+
+The most feature-rich legacy model. Supports native audio generation and first+last frame keyframe control.
+
+### Native audio
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v2.6",
+    "prompt": "a thunderstorm over a city skyline, lightning flashes",
+    "duration": 10,
+    "provider_options": { "varg": { "generate_audio": true } }
+  }'
+```
+
+### Keyframe control
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v2.6",
+    "prompt": "smooth transition between scenes",
+    "duration": 5,
+    "files": [
+      { "url": "https://example.com/frame-a.jpg" },
+      { "url": "https://example.com/frame-b.jpg" }
+    ]
+  }'
+```
+
+### Motion control
+
+Camera trajectory control for precise camera movements:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v2.6-motion",
+    "prompt": "a park scene with trees and a fountain",
+    "duration": 5
+  }'
+```
+
+## Kling V2.5
+
+<Warning>
+**Duration must be exactly 5 or 10 seconds.** Other values will cause a 422 error.
+</Warning>
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("kling-v2.5").generate({
+  prompt: "a sunset over the ocean, waves gently rolling",
+  duration: 5,
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kling-v2.5",
+    "prompt": "a sunset over the ocean, waves gently rolling",
+    "duration": 5
+  }'
+```
+</CodeGroup>
+
+## Migration to Kling V3
+
+If you're using any legacy Kling model, upgrading to Kling V3 is straightforward:
+
+```diff
+- const result = await varg.videoModel("kling-v2.6").generate({ ... })
++ const result = await varg.videoModel("kling-v3").generate({ ... })
+```
+
+Key differences:
+- **V3 supports 3-15s** (integer) vs V2.5/V2's 5 or 10s only
+- **V3 has better quality** across the board
+- **V3 Pro is the same price** as V2.6 (150 credits)
+- **V3 Standard** (100 credits) offers similar quality to V2.6 at lower cost
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Recommended upgrade. Better quality, flexible duration.
+  </Card>
+</CardGroup>

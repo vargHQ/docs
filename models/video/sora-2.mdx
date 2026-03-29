@@ -1,0 +1,144 @@
+---
+title: "Sora 2"
+sidebarTitle: "Sora 2"
+description: "OpenAI's video generation model — cinematic quality with text-to-video, image-to-video, and video remix"
+icon: "video"
+---
+
+## Overview
+
+Sora 2 is OpenAI's video generation model, available through varg via fal. It excels at cinematic, photorealistic shots and offers a unique remix capability for transforming existing videos.
+
+| Model ID | Mode | Credits | ~Cost |
+|----------|------|---------|-------|
+| `sora-2` | Text/Image-to-video | 100 | $1.00 |
+| `sora-2-pro` | Text/Image-to-video (premium) | 300 | $3.00 |
+| `sora-2-remix` | Video-to-video remix | 100 | $1.00 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("sora-2").generate({
+  prompt: "a time-lapse of a flower blooming in a sunlit garden, cinematic depth of field",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "sora-2",
+    "prompt": "a time-lapse of a flower blooming in a sunlit garden, cinematic depth of field",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Text-to-video
+
+```typescript
+const result = await varg.videoModel("sora-2").generate({
+  prompt: "drone shot flying through a misty forest at dawn, rays of sunlight filtering through trees",
+  duration: 10,
+})
+```
+
+### Image-to-video
+
+Animate a still image:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "sora-2",
+    "prompt": "gentle breeze moves through the scene, leaves flutter",
+    "duration": 5,
+    "files": [{ "url": "https://example.com/landscape.jpg" }]
+  }'
+```
+
+### Video remix
+
+Transform an existing video with a new prompt. Unique to Sora 2.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("sora-2-remix").generate({
+  prompt: "transform this into a watercolor painting style",
+  videoUrl: "https://example.com/original.mp4",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "sora-2-remix",
+    "prompt": "transform this into a watercolor painting style",
+    "files": [{ "url": "https://example.com/original.mp4" }]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video or transformation to apply.
+</ResponseField>
+
+<ResponseField name="duration" type="number" default="5">
+  Video duration in seconds.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  For image-to-video: `[{ url: "image.jpg" }]`. For remix: `[{ url: "video.mp4" }]`.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD | Best for |
+|-------|---------|-----|----------|
+| `sora-2` | 100 | $1.00 | General use |
+| `sora-2-pro` | 300 | $3.00 | Maximum quality |
+| `sora-2-remix` | 100 | $1.00 | Video transformation |
+
+## Tips
+
+- **Sora excels at cinematic, photorealistic content.** It handles lighting, depth of field, and natural motion well.
+- **Use remix** for style transfer, seasonal changes, or transforming the mood of existing footage.
+- **Pro tier** is only worth it for hero shots. The standard model is usually sufficient.
+- **Combine with image generation** — create a reference frame with Flux Pro or Nano Banana, then animate with Sora.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
+    ByteDance's premium model with video editing and extension.
+  </Card>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Best overall model. Flexible 3-15s duration.
+  </Card>
+  <Card title="Grok Imagine Video" icon="bolt" href="/models/video/grok-imagine-video">
+    xAI's model with native audio and video editing.
+  </Card>
+</CardGroup>

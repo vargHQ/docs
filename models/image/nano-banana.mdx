@@ -1,0 +1,175 @@
+---
+title: "Nano Banana (Gemini)"
+sidebarTitle: "Nano Banana"
+description: "Google Gemini-powered image generation and editing — best default image model with reference-based editing"
+icon: "image"
+---
+
+## Overview
+
+Nano Banana is varg's recommended default image model, powered by Google Gemini. It excels at both text-to-image generation and reference-based image editing. Two generations are available:
+
+| Model ID | Generation | Mode | Credits | ~Cost |
+|----------|-----------|------|---------|-------|
+| `nano-banana-pro` | Gen 1 | Text-to-image | 5 | $0.05 |
+| `nano-banana-pro/edit` | Gen 1 | Image editing (requires input) | 5 | $0.05 |
+| `nano-banana-2` | Gen 2 | Text-to-image + editing | 5 | $0.05 |
+| `nano-banana-2/edit` | Gen 2 | Image editing (explicit) | 5 | $0.05 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("nano-banana-pro").generate({
+  prompt: "a cozy coffee shop interior, warm lighting, plants on shelves",
+  aspectRatio: "16:9",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nano-banana-pro",
+    "prompt": "a cozy coffee shop interior, warm lighting, plants on shelves",
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Text-to-image
+
+Generate images from text descriptions:
+
+```typescript
+const result = await varg.imageModel("nano-banana-pro").generate({
+  prompt: "professional headshot, woman in business attire, studio lighting",
+  aspectRatio: "1:1",
+})
+```
+
+### Image editing
+
+Edit an existing image using a text prompt and reference image:
+
+<CodeGroup>
+```typescript SDK
+const original = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "woman in casual clothes standing in a park",
+  aspectRatio: "9:16",
+})
+
+const edited = Image({
+  model: varg.imageModel("nano-banana-pro/edit"),
+  prompt: { text: "same woman wearing an elegant red dress", images: [original] },
+  aspectRatio: "9:16",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nano-banana-pro/edit",
+    "prompt": "same woman wearing an elegant red dress",
+    "files": [{ "url": "https://example.com/original.jpg" }]
+  }'
+```
+</CodeGroup>
+
+<Warning>
+`nano-banana-pro/edit` **requires** an input image. Plain text prompts without a reference image will fail.
+</Warning>
+
+### Multi-image reference
+
+Provide up to 14 reference images for complex editing:
+
+```typescript
+const edited = Image({
+  model: varg.imageModel("nano-banana-pro/edit"),
+  prompt: {
+    text: "combine these two characters into one scene",
+    images: [characterA, characterB],
+  },
+})
+```
+
+### Nano Banana 2 (next-gen)
+
+The Gen 2 model supports auto aspect ratio and web search capabilities:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "nano-banana-2",
+    "prompt": "a photorealistic mountain landscape at sunset"
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string | { text: string, images: Image[] }" required>
+  Text prompt for generation. For editing, provide `{ text, images }` with reference images.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Output aspect ratio. Supported: `21:9`, `16:9`, `3:2`, `4:3`, `5:4`, `1:1`, `4:5`, `3:4`, `2:3`, `9:16`. Nano Banana 2 also supports `"auto"`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects for reference images (API). Up to 14 images for pro, up to 6 for Nano Banana 2.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Supports `resolution` (`"1K"`, `"2K"`, `"4K"` — default varies by model), `safety_filter_level`, `web_search` (Nano Banana 2 only).
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `nano-banana-pro` | 5 | $0.05 |
+| `nano-banana-pro/edit` | 5 | $0.05 |
+| `nano-banana-2` | 5 | $0.05 |
+| `nano-banana-2/edit` | 5 | $0.05 |
+
+The cheapest image generation with the best quality-to-cost ratio.
+
+## Tips
+
+- **Use Nano Banana as your default image model.** At 5 credits, it's the best value for text-to-image.
+- **Image editing is the killer feature.** Generate a base image, then iteratively refine with `/edit`.
+- **Perfect for video reference frames.** Generate an image with Nano Banana, then animate with Kling V3 or Seedance 2.
+- **Multi-image prompts** let you combine characters, transfer styles, or composite scenes.
+- **4K resolution** is available via provider options for hero images that need maximum detail.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Flux" icon="bolt" href="/models/image/flux">
+    Alternative image generation. Flux Pro for highest quality.
+  </Card>
+  <Card title="Phota" icon="camera" href="/models/image/phota">
+    Identity-preserving generation with profile-based control.
+  </Card>
+  <Card title="Grok Imagine Image" icon="bolt" href="/models/image/grok-imagine-image">
+    Cheapest image model at 3 credits.
+  </Card>
+  <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
+    Animate your Nano Banana images with Seedance image-to-video.
+  </Card>
+</CardGroup>

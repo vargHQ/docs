@@ -1,0 +1,137 @@
+---
+title: "ElevenLabs Speech"
+sidebarTitle: "ElevenLabs"
+description: "Industry-leading text-to-speech with 21+ voices, multiple languages, and 7 model variants"
+icon: "microphone"
+---
+
+## Overview
+
+ElevenLabs provides the text-to-speech models in varg. Multiple model variants are available balancing quality, speed, and language support.
+
+| Model ID | Quality | Speed | Languages | Credits | ~Cost |
+|----------|---------|-------|-----------|---------|-------|
+| `eleven_v3` | Best | Standard | Multi | 25 | $0.25 |
+| `eleven_multilingual_v2` | Great | Standard | 29 languages | 25 | $0.25 |
+| `turbo` | Good | Fastest | English | 20 | $0.20 |
+| `eleven_turbo_v2` | Good | Fast | English | 20 | $0.20 |
+| `eleven_turbo_v2_5` | Good | Fast | Multi | 20 | $0.20 |
+| `eleven_flash_v2` | Good | Ultra-fast | English | 20 | $0.20 |
+| `eleven_flash_v2_5` | Good | Ultra-fast | Multi | 20 | $0.20 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.speechModel("eleven_v3").generate({
+  text: "Welcome to varg, the AI video generation platform.",
+  voice: "rachel",
+})
+
+console.log(result.audio.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/speech \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "eleven_v3",
+    "text": "Welcome to varg, the AI video generation platform.",
+    "voice": "rachel"
+  }'
+```
+</CodeGroup>
+
+## Available voices
+
+| Voice | Gender | Style | Best for |
+|-------|--------|-------|----------|
+| `rachel` | Female | Calm, warm | Narration |
+| `bella` | Female | Soft, gentle | Storytelling |
+| `domi` | Female | Confident | Presentations |
+| `elli` | Female | Young, cheerful | Social media |
+| `adam` | Male | Deep, warm | Narration |
+| `josh` | Male | Young, energetic | Social media |
+| `sam` | Male | Raspy | Character voices |
+| `antoni` | Male | Calm | Podcasts |
+| `arnold` | Male | Authoritative | Announcements |
+
+<Tip>
+Any valid ElevenLabs `voice_id` works. The names above are convenience aliases for built-in voices. Browse more at [ElevenLabs Voice Library](https://elevenlabs.io/voice-library).
+</Tip>
+
+## Parameters
+
+<ResponseField name="text" type="string" required>
+  The text to convert to speech.
+</ResponseField>
+
+<ResponseField name="voice" type="string" default="rachel">
+  Voice name or ElevenLabs voice ID.
+</ResponseField>
+
+<ResponseField name="model" type="string" default="eleven_multilingual_v2">
+  Speech model variant (see table above).
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  `stability` — 0 to 1 (default 0.5). Higher = more consistent, lower = more expressive.
+  `similarity_boost` — 0 to 1 (default 0.75). How closely to match the voice.
+</ResponseField>
+
+## Choosing a model
+
+| Scenario | Recommended model |
+|----------|------------------|
+| Best quality English | `eleven_v3` |
+| Multiple languages | `eleven_multilingual_v2` |
+| Fast English narration | `turbo` or `eleven_turbo_v2` |
+| Real-time / interactive | `eleven_flash_v2_5` |
+| Budget | `turbo` (20 credits) |
+
+## Composition example
+
+Use speech in a video composition with captions:
+
+```tsx
+const narration = Speech({
+  model: varg.speechModel("eleven_v3"),
+  text: "This product will transform your workflow.",
+  voice: "adam",
+})
+
+<Clip duration={5}>
+  <Video model={varg.videoModel("kling-v3")} prompt="product showcase" duration={5} />
+  {narration}
+  <Captions source={narration} />
+</Clip>
+```
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `eleven_v3` | 25 | $0.25 |
+| `eleven_multilingual_v2` | 25 | $0.25 |
+| `turbo` / `eleven_turbo_v2` | 20 | $0.20 |
+| `eleven_turbo_v2_5` | 20 | $0.20 |
+| `eleven_flash_v2` / `v2_5` | 20 | $0.20 |
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="VEED Fabric" icon="comment" href="/models/lipsync/veed-fabric">
+    Animate a portrait with generated speech.
+  </Card>
+  <Card title="Sync Lipsync" icon="lips" href="/models/lipsync/sync">
+    Apply speech to existing video.
+  </Card>
+  <Card title="Whisper" icon="ear-listen" href="/models/transcription/whisper">
+    Transcribe audio back to text.
+  </Card>
+</CardGroup>

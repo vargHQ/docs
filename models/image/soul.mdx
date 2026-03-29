@@ -1,0 +1,121 @@
+---
+title: "Soul"
+sidebarTitle: "Soul"
+description: "Character-focused image generation with 80+ style presets — ideal for consistent characters across scenes"
+icon: "user"
+---
+
+## Overview
+
+Soul (by Higgsfield) is a character-focused image generation model with 80+ style presets. It's designed for creating consistent, stylized character images that can be reused across video scenes.
+
+| Model ID | Credits | ~Cost |
+|----------|---------|-------|
+| `soul` | 15 | $0.15 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("soul").generate({
+  prompt: "friendly tech influencer, casual hoodie, ring light, warm smile",
+  aspectRatio: "9:16",
+  providerOptions: {
+    varg: { styleId: "REALISTIC" },
+  },
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "soul",
+    "prompt": "friendly tech influencer, casual hoodie, ring light, warm smile",
+    "aspect_ratio": "9:16",
+    "provider_options": { "styleId": "REALISTIC" }
+  }'
+```
+</CodeGroup>
+
+## Style presets
+
+Soul supports 80+ style presets. Common ones:
+
+| Style ID | Description |
+|----------|-------------|
+| `REALISTIC` | Photorealistic rendering |
+| `ANIME` | Anime/manga style |
+| `EDITORIAL_90S` | 90s editorial photography |
+| `Y2K` | Y2K aesthetic |
+| `GRUNGE` | Grunge style |
+
+Explore all styles through the Higgsfield API — each produces distinctly different character aesthetics.
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Character description. Focus on appearance, clothing, expression, and setting.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Supported: `9:16` (PORTRAIT_1152x2048), `1:1` (SQUARE_1024x1024), `16:9` (LANDSCAPE_2048x1152).
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  `styleId` — style preset string (e.g., `"REALISTIC"`, `"ANIME"`). `enhance_prompt` — boolean to auto-enhance the prompt. `quality` — `"HD"` for high definition. `batch_size` — `1`, `2`, or `4` images per request.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `soul` | 15 | $0.15 |
+
+## Tips
+
+- **Create a character once, reuse everywhere.** Generate a Soul character image, then use it as a reference for video models (image-to-video) across multiple scenes.
+- **Style presets are powerful.** Each preset dramatically changes the aesthetic. Experiment with different styles for the same character.
+- **Batch generation** (2 or 4 images) gives you options to pick the best result at the same per-image cost.
+- **Portrait (9:16)** is ideal for talking head videos and social media content.
+
+## Composition example
+
+Create a character and animate them across scenes:
+
+```tsx
+const character = Image({
+  model: varg.imageModel("soul"),
+  prompt: "young woman, professional, confident, modern office background",
+  aspectRatio: "9:16",
+  providerOptions: { varg: { styleId: "REALISTIC" } },
+})
+
+// Animate the character
+const video = Video({
+  model: varg.videoModel("kling-v3"),
+  prompt: { text: "she turns and walks toward the camera", images: [character] },
+  duration: 5,
+})
+```
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Phota" icon="camera" href="/models/image/phota">
+    Profile-based identity control. Better for consistent faces across many images.
+  </Card>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    More versatile generation and editing at lower cost.
+  </Card>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Animate Soul characters with image-to-video.
+  </Card>
+</CardGroup>

@@ -1,0 +1,86 @@
+---
+title: "VEED Fabric"
+sidebarTitle: "VEED Fabric"
+description: "Fast talking head generation from a single image and audio — simplest lipsync pipeline"
+icon: "comment"
+---
+
+## Overview
+
+VEED Fabric 1.0 generates talking head videos from a single portrait image and an audio file. It's the simplest lipsync pipeline — no video input needed, just image + audio.
+
+| Model ID | Input | Speed | Credits | ~Cost |
+|----------|-------|-------|---------|-------|
+| `veed-fabric-1.0` | Image + audio | ~30-50s | 100 | $1.00 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("veed-fabric-1.0").generate({
+  imageUrl: "https://example.com/portrait.jpg",
+  audioUrl: "https://example.com/speech.mp3",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "veed-fabric-1.0",
+    "prompt": "",
+    "files": [
+      { "url": "https://example.com/portrait.jpg" },
+      { "url": "https://example.com/speech.mp3" }
+    ]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="files" type="array" required>
+  Two files: one image (portrait) and one audio (speech). The gateway auto-detects file types by extension.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  `resolution` — `"480p"` or `"720p"` (defaults to `"720p"`).
+</ResponseField>
+
+<Note>
+VEED Fabric doesn't use a prompt or duration parameter. The video length matches the audio duration.
+</Note>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `veed-fabric-1.0` | 100 | $1.00 |
+
+## Tips
+
+- **Simplest pipeline for talking heads.** Image + audio = talking video. No intermediate video step needed.
+- **Use with ElevenLabs speech** — generate narration with `eleven_v3`, then animate with VEED Fabric.
+- **720p recommended** for quality. 480p is faster but noticeably lower resolution.
+- **Portrait images work best.** Front-facing, well-lit, neutral expression for cleanest results.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Sync V2 Pro" icon="lips" href="/models/lipsync/sync">
+    Higher quality lipsync. Requires video input instead of image.
+  </Card>
+  <Card title="OmniHuman" icon="person" href="/models/lipsync/omnihuman">
+    Full-body animation from image + audio.
+  </Card>
+  <Card title="ElevenLabs" icon="microphone" href="/models/speech/elevenlabs">
+    Generate the speech audio to pair with VEED Fabric.
+  </Card>
+</CardGroup>

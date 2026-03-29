@@ -1,0 +1,234 @@
+---
+title: "Seedance 2"
+sidebarTitle: "Seedance 2"
+description: "ByteDance's flagship video generation model — excellent quality with text-to-video, image-to-video, video editing, and video extension"
+icon: "seedling"
+---
+
+## Overview
+
+Seedance 2 is ByteDance's latest video generation model, available through varg via PiAPI. It produces high-fidelity videos with strong motion coherence and prompt adherence. Two variants are available:
+
+| Model ID | Quality | Speed | Credits | ~Cost |
+|----------|---------|-------|---------|-------|
+| `seedance-2-preview` | Best | ~4 min + watermark removal | 250 | $2.50 |
+| `seedance-2-fast-preview` | Good | ~3 min | 150 | $1.50 |
+
+Watermark removal is automatic for all Seedance models — the gateway handles it transparently.
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("seedance-2-preview").generate({
+  prompt: "a golden retriever running through autumn leaves in slow motion",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+# Submit generation
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance-2-preview",
+    "prompt": "a golden retriever running through autumn leaves in slow motion",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+
+# Poll for result (use job_id from response)
+curl https://api.varg.ai/v1/jobs/JOB_ID \
+  -H "Authorization: Bearer $VARG_API_KEY"
+```
+</CodeGroup>
+
+## Capabilities
+
+Seedance 2 supports four generation modes:
+
+### Text-to-video
+
+Generate video from a text prompt alone.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("seedance-2-preview").generate({
+  prompt: "aerial shot of a futuristic city at sunset, flying cars, neon lights",
+  duration: 10,
+  aspectRatio: "16:9",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance-2-preview",
+    "prompt": "aerial shot of a futuristic city at sunset, flying cars, neon lights",
+    "duration": 10,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+### Image-to-video
+
+Animate a still image. Supports up to 9 reference images — use `@image1`, `@image2`, etc. in your prompt to reference them.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("seedance-2-preview").generate({
+  prompt: "@image1 the woman turns to face the camera and smiles",
+  imageUrls: ["https://example.com/portrait.jpg"],
+  duration: 5,
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance-2-preview",
+    "prompt": "@image1 the woman turns to face the camera and smiles",
+    "duration": 5,
+    "files": [{ "url": "https://example.com/portrait.jpg" }]
+  }'
+```
+</CodeGroup>
+
+### Video editing
+
+Edit an existing video based on a text prompt. When a video URL is provided, the `duration` parameter is ignored.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("seedance-2-preview").generate({
+  prompt: "change the background to a tropical beach",
+  videoUrls: ["https://example.com/original.mp4"],
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance-2-preview",
+    "prompt": "change the background to a tropical beach",
+    "files": [{ "url": "https://example.com/original.mp4" }]
+  }'
+```
+</CodeGroup>
+
+### Video extension
+
+Extend a previously generated video by providing its task ID.
+
+```typescript SDK
+const result = await varg.videoModel("seedance-2-preview").generate({
+  prompt: "the camera continues to pull back revealing the full landscape",
+  parentTaskId: "previous-task-id",
+  duration: 5,
+})
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate. For image-to-video, reference images with `@image1`, `@image2`, etc.
+</ResponseField>
+
+<ResponseField name="duration" type="5 | 10 | 15" default="5">
+  Video duration in seconds. Only 5, 10, or 15 are accepted — any other value will cause an error. Ignored in video edit mode.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio. Supported values: `16:9`, `9:16`, `4:3`, `3:4`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects. Images trigger image-to-video mode. A video file (`.mp4`, `.webm`, `.mov`) triggers video edit mode. Maximum 9 images.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Pass-through options for the PiAPI provider. Rarely needed.
+</ResponseField>
+
+<Warning>
+**Duration must be exactly 5, 10, or 15 seconds.** Values like 3, 7, or 12 will fail. This is a hard constraint from the Seedance model.
+</Warning>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `seedance-2-preview` | 250 | $2.50 |
+| `seedance-2-fast-preview` | 150 | $1.50 |
+
+Pricing is flat per generation regardless of duration. Watermark removal is included at no extra cost.
+
+## Tips
+
+- **Image-to-video produces better results** than text-to-video. Generate a reference image first with `nano-banana-pro`, then animate it.
+- **Use `@imageN` syntax** to reference specific images in multi-image prompts. This gives you control over which image maps to which element.
+- **Be specific about motion** — describe camera movements ("slow pan left", "zoom in") and subject actions ("walks toward camera", "turns around") explicitly.
+- **Fast preview** is a good starting point for iteration. Switch to the full preview model for final renders.
+- **Aspect ratios matter** — `9:16` for TikTok/Reels/Shorts, `16:9` for YouTube/landscape, `4:3` for social posts.
+
+## Composition example
+
+Use Seedance in a full video composition with the SDK:
+
+```tsx
+/** @jsxImportSource vargai */
+import { Render, Clip, Image, Video, Speech, Captions } from "vargai"
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const scene = Image({
+  model: varg.imageModel("nano-banana-pro"),
+  prompt: "professional woman in modern office, confident pose",
+  aspectRatio: "9:16",
+})
+
+export default (
+  <Render width={1080} height={1920} fps={30}>
+    <Clip duration={5}>
+      <Video
+        model={varg.videoModel("seedance-2-preview")}
+        prompt={{ text: "@image1 she turns and smiles at the camera", images: [scene] }}
+        duration={5}
+      />
+    </Clip>
+  </Render>
+)
+```
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Best overall video model. Supports 3-15s flexible duration.
+  </Card>
+  <Card title="Sora 2" icon="video" href="/models/video/sora-2">
+    OpenAI's video model. Good for cinematic shots.
+  </Card>
+  <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
+    Budget-friendly video generation with good character motion.
+  </Card>
+  <Card title="Nano Banana Pro" icon="image" href="/models/image/nano-banana">
+    Generate reference images to use with Seedance image-to-video.
+  </Card>
+</CardGroup>

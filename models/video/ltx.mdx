@@ -1,0 +1,137 @@
+---
+title: "LTX"
+sidebarTitle: "LTX"
+description: "Fastest and cheapest video generation model — supports native audio and keyframe control"
+icon: "bolt"
+---
+
+## Overview
+
+LTX (Lightricks) is the most affordable video model available, and also one of the fastest. It supports unique features like native audio generation and first+last frame keyframe control.
+
+| Model ID | Credits | ~Cost |
+|----------|---------|-------|
+| `ltx-2-19b-distilled` | 50 | $0.50 |
+
+<Note>
+The gateway model ID is `ltx-2-19b-distilled`. This is the distilled 19B parameter variant optimized for speed.
+</Note>
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("ltx-2-19b-distilled").generate({
+  prompt: "a paper airplane flying through a sunlit room, slow motion",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "ltx-2-19b-distilled",
+    "prompt": "a paper airplane flying through a sunlit room, slow motion",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Special features
+
+### Native audio generation
+
+LTX can generate audio alongside the video. Enable it with provider options:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "ltx-2-19b-distilled",
+    "prompt": "rain falling on a tin roof, close up of droplets splashing",
+    "duration": 5,
+    "provider_options": { "varg": { "generate_audio": true } }
+  }'
+```
+
+### Keyframe control (first + last frame)
+
+Provide two images to control start and end frames:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "ltx-2-19b-distilled",
+    "prompt": "smooth morphing transition",
+    "duration": 5,
+    "files": [
+      { "url": "https://example.com/start.jpg" },
+      { "url": "https://example.com/end.jpg" }
+    ]
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate.
+</ResponseField>
+
+<ResponseField name="duration" type="number" default="5">
+  Video duration in seconds.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  One image for image-to-video. Two images for first+last frame keyframe control.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Set `{ "varg": { "generate_audio": true } }` to enable native audio generation.
+</ResponseField>
+
+<Note>
+LTX internally uses `num_frames` instead of `duration` and `video_size` instead of `aspect_ratio`. The gateway handles the conversion automatically.
+</Note>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `ltx-2-19b-distilled` | 50 | $0.50 |
+
+The cheapest video model available. Ideal for prototyping and high-volume generation.
+
+## Tips
+
+- **Best for rapid iteration** — fast and cheap, great for testing prompts before upgrading to Kling or Seedance.
+- **Native audio** is unique to LTX (and Grok Imagine / Kling V2.6). Useful for ambient sound effects.
+- **Keyframe control** lets you define start and end frames for precise transitions.
+- **Quality is lower** than Kling V3 or Seedance 2, but acceptable for social media and prototypes.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
+    Slightly more expensive but better quality. Good upgrade path.
+  </Card>
+  <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
+    Premium quality. 3x the cost but significantly better output.
+  </Card>
+</CardGroup>

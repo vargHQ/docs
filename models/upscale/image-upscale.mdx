@@ -1,0 +1,85 @@
+---
+title: "Image Upscale"
+sidebarTitle: "Image Upscale"
+description: "Enhance and upscale images with 6 models at different quality-cost tradeoffs"
+icon: "expand"
+---
+
+## Overview
+
+varg offers 6 image upscale models ranging from free-tier to premium. All take an image URL and return a higher-resolution version.
+
+| Model ID | Quality | Credits | ~Cost | Provider |
+|----------|---------|---------|-------|----------|
+| `topaz` | Best | 15 | $0.15 | fal (Topaz Labs) |
+| `seedvr` | Very good | 10 | $0.10 | fal (ByteDance SeedVR) |
+| `recraft-clarity` | Good | 8 | $0.08 | fal (Recraft) |
+| `clarity-upscaler` | Good | 8 | $0.08 | fal |
+| `ccsr` | Basic | 5 | $0.05 | fal (free tier) |
+| `aura-sr` | Basic | 5 | $0.05 | fal (free tier) |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("seedvr").generate({
+  imageUrl: "https://example.com/low-res-photo.jpg",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedvr",
+    "prompt": "",
+    "files": [{ "url": "https://example.com/low-res-photo.jpg" }]
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="files" type="array" required>
+  Single image to upscale: `[{ url: "image.jpg" }]`.
+</ResponseField>
+
+<Note>
+Upscale models don't use prompt or aspect_ratio. They take a single input image and return it at higher resolution.
+</Note>
+
+## Model comparison
+
+| Model | Best for | Pricing model |
+|-------|----------|---------------|
+| `topaz` | Professional / maximum quality | $0.08-$0.16 per image |
+| `seedvr` | Good quality at moderate cost | $0.001 per megapixel (~$0.10 for 4K) |
+| `recraft-clarity` | Design assets, illustrations | $0.04 per image |
+| `clarity-upscaler` | General purpose | $0.03 per megapixel |
+| `ccsr` | Free/cheap bulk upscaling | Free on fal |
+| `aura-sr` | Free/cheap bulk upscaling | Free on fal |
+
+## Tips
+
+- **Topaz** produces the best results but is the most expensive. Use for hero images and final deliverables.
+- **SeedVR** is the best value — excellent quality at a fraction of Topaz's cost.
+- **CCSR and Aura-SR** are effectively free on fal (varg charges 5 credits for the API overhead). Good for batch processing.
+- **Combine with Phota Enhance** if you need identity-preserving upscaling for faces.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Video Upscale" icon="expand" href="/models/upscale/video-upscale">
+    Upscale video files instead of images.
+  </Card>
+  <Card title="Phota Enhance" icon="camera" href="/models/image/phota">
+    Identity-preserving enhancement (faces + features).
+  </Card>
+</CardGroup>

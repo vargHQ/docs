@@ -1,0 +1,83 @@
+---
+title: "Flux"
+sidebarTitle: "Flux"
+description: "Black Forest Labs image generation — three tiers from fast to premium quality"
+icon: "bolt"
+---
+
+## Overview
+
+Flux (by Black Forest Labs) is a popular image generation model family with three tiers balancing speed and quality.
+
+| Model ID | Tier | Speed | Credits | ~Cost |
+|----------|------|-------|---------|-------|
+| `flux-schnell` | Fast | ~2s | 5 | $0.05 |
+| `flux-dev` | Development | ~5s | 8 | $0.08 |
+| `flux-pro` | Professional | ~8s | 10 | $0.10 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("flux-pro").generate({
+  prompt: "a minimalist logo design, geometric shapes, blue and white",
+  aspectRatio: "1:1",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "flux-pro",
+    "prompt": "a minimalist logo design, geometric shapes, blue and white",
+    "aspect_ratio": "1:1"
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the image to generate.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Output aspect ratio. Supports standard ratios like `16:9`, `9:16`, `1:1`, `4:3`, `3:4`.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Supports `image_size` (enum: `square_hd`, `square`, `portrait_4_3`, `portrait_16_9`, `landscape_4_3`, `landscape_16_9`), `num_inference_steps` (default 28 for pro), `guidance_scale` (default 3.5).
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD | Best for |
+|-------|---------|-----|----------|
+| `flux-schnell` | 5 | $0.05 | Quick iteration, prototyping |
+| `flux-dev` | 8 | $0.08 | Development and testing |
+| `flux-pro` | 10 | $0.10 | Final renders, high quality |
+
+## Tips
+
+- **Flux Schnell** is as cheap as Nano Banana (5 credits) and faster. Good for quick drafts.
+- **Flux Pro** excels at **design and graphic content** — logos, icons, illustrations. Nano Banana is better for photos.
+- **Inference steps** can be tuned via provider options. Higher values = better quality, slower generation.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    Better for photorealistic images and editing. Same price as Schnell.
+  </Card>
+  <Card title="Recraft" icon="palette" href="/models/image/recraft">
+    Purpose-built for graphic design and illustrations.
+  </Card>
+</CardGroup>

@@ -1,0 +1,84 @@
+---
+title: "Minimax"
+sidebarTitle: "Minimax"
+description: "Versatile video generation with good motion quality at moderate cost"
+icon: "minimize"
+---
+
+## Overview
+
+Minimax is an alternative video generation model offering solid quality at a moderate price point. It supports both text-to-video and image-to-video generation.
+
+| Model ID | Credits | ~Cost |
+|----------|---------|-------|
+| `minimax` | 80 | $0.80 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("minimax").generate({
+  prompt: "a butterfly landing on a flower, macro shot, soft focus background",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "minimax",
+    "prompt": "a butterfly landing on a flower, macro shot, soft focus background",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate.
+</ResponseField>
+
+<ResponseField name="duration" type="number" default="5">
+  Video duration in seconds. Typical range: 5-10 seconds.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects for image-to-video.
+</ResponseField>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `minimax` | 80 | $0.80 |
+
+## Tips
+
+- **Good middle ground** between quality and cost — cheaper than Kling V3 but higher quality than LTX.
+- **Works well for nature and product shots** where smooth, gentle motion is needed.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
+    Similar price. Better for character animation.
+  </Card>
+  <Card title="LTX" icon="bolt" href="/models/video/ltx">
+    Cheapest option at 50 credits. Fastest generation.
+  </Card>
+</CardGroup>

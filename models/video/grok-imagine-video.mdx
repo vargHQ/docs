@@ -1,0 +1,140 @@
+---
+title: "Grok Imagine Video"
+sidebarTitle: "Grok Imagine Video"
+description: "xAI's video generation model with native audio, video editing, and multiple resolutions"
+icon: "bolt"
+---
+
+## Overview
+
+Grok Imagine is xAI's video generation model family. It supports text-to-video, image-to-video, and video editing with native audio generation. Available at 480p and 720p resolutions.
+
+| Model ID | Mode | Credits | ~Cost |
+|----------|------|---------|-------|
+| `grok-imagine` | Text/Image-to-video | 100 | $1.00 |
+| `grok-imagine-edit` | Video-to-video editing | 100 | $1.00 |
+
+## Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.videoModel("grok-imagine").generate({
+  prompt: "a coffee cup steaming on a desk, morning light, cozy atmosphere",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+
+console.log(result.video.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine",
+    "prompt": "a coffee cup steaming on a desk, morning light, cozy atmosphere",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+## Capabilities
+
+### Video editing
+
+Edit an existing video with a text prompt. Input video is resized to max 854x480 and truncated to 8 seconds.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("grok-imagine-edit").generate({
+  prompt: "add falling snow to the scene",
+  videoUrl: "https://example.com/outdoor-scene.mp4",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine-edit",
+    "prompt": "add falling snow to the scene",
+    "files": [{ "url": "https://example.com/outdoor-scene.mp4" }]
+  }'
+```
+</CodeGroup>
+
+### Native audio generation
+
+Generate synchronized audio alongside the video:
+
+```bash cURL
+curl -X POST https://api.varg.ai/v1/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-imagine",
+    "prompt": "a crackling campfire under the stars, ambient forest sounds",
+    "duration": 5,
+    "provider_options": { "varg": { "generate_audio": true } }
+  }'
+```
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video or edit to apply.
+</ResponseField>
+
+<ResponseField name="duration" type="number" default="5">
+  Video duration in seconds. Range: 1-15 seconds.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  For image-to-video: `[{ url: "image.jpg" }]`. For video editing: `[{ url: "video.mp4" }]`.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Set `{ "varg": { "generate_audio": true } }` to enable native audio. Supports `resolution`: `"480p"` or `"720p"`.
+</ResponseField>
+
+<Warning>
+**Video editing limits:** Input video for `grok-imagine-edit` is resized to max 854x480 and truncated to 8 seconds. Plan accordingly.
+</Warning>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `grok-imagine` | 100 | $1.00 |
+| `grok-imagine-edit` | 100 | $1.00 |
+
+## Tips
+
+- **Native audio** makes this model useful for ambient and atmospheric videos where sound matters.
+- **Video editing** is good for adding effects (weather, lighting changes) to existing footage.
+- **Resolution** defaults to 480p for speed. Set `resolution: "720p"` in provider options for higher quality.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Sora 2" icon="video" href="/models/video/sora-2">
+    Also supports video transformation via remix mode.
+  </Card>
+  <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
+    Higher quality video editing with ByteDance's model.
+  </Card>
+  <Card title="Grok Imagine Image" icon="image" href="/models/image/grok-imagine-image">
+    The image generation counterpart — cheapest image model.
+  </Card>
+</CardGroup>
