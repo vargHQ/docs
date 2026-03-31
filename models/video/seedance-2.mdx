@@ -11,10 +11,8 @@ Seedance 2 is ByteDance's latest video generation model, available through varg 
 
 | Model ID | Quality | Speed | Credits | ~Cost |
 |----------|---------|-------|---------|-------|
-| `seedance-2-preview` | Best | ~4 min + watermark removal | 250 | $2.50 |
+| `seedance-2-preview` | Best | ~4 min | 250 | $2.50 |
 | `seedance-2-fast-preview` | Good | ~3 min | 150 | $1.50 |
-
-Watermark removal is automatic for all Seedance models — the gateway handles it transparently.
 
 ## Quick start
 
@@ -176,7 +174,7 @@ const result = await varg.videoModel("seedance-2-preview").generate({
 | `seedance-2-preview` | 250 | $2.50 |
 | `seedance-2-fast-preview` | 150 | $1.50 |
 
-Pricing is flat per generation regardless of duration. Watermark removal is included at no extra cost.
+Pricing is flat per generation regardless of duration.
 
 ## Tips
 
