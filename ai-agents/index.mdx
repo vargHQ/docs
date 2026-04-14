@@ -100,7 +100,7 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 | `<TalkingHead>` | JSX | Animated character | `character`, `voice`, `model` |
 | `<Packshot>` | JSX | End card with CTA | `background`, `logo`, `cta` |
 
-**Critical**: `Image()`, `Video()`, `Speech()` are **function calls** that return references. `<Music>`, `<Captions>`, `<Title>` are **JSX components**. Never write `<Image prompt="..." />`.
+All components use JSX syntax: `<Image prompt="..." />`, `<Video prompt="..." />`, `<Speech voice="..." />`.
 
 ## All AI Models
 
@@ -120,7 +120,7 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 
 | Model | Code (gateway) | Duration | Best For | Credits |
 |-------|---------------|----------|----------|---------|
-| Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | 150 |
+| Kling V3 | `varg.videoModel("kling-v3")` | 5 or 10s | Best quality | 100 |
 | Seedance 2 | `varg.videoModel("seedance-2-preview")` | 5 or 10s | Excellent quality (ByteDance) | 250 |
 | Seedance 2 Fast | `varg.videoModel("seedance-2-fast-preview")` | 5 or 10s | Fast (ByteDance) | 150 |
 | Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
