@@ -1,6 +1,6 @@
 ---
 title: "MCP Server"
-description: "Connect Claude, VS Code, Cursor, and other AI tools to varg.ai"
+description: "Connect Claude, ChatGPT, VS Code, Cursor, and other AI tools to varg.ai"
 icon: "plug"
 ---
 
@@ -50,6 +50,58 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
 
     <Info>
       On macOS, the config file is at `~/Library/Application Support/Claude/claude_desktop_config.json`.
+    </Info>
+  </Tab>
+
+  <Tab title="ChatGPT">
+    Connect via Custom Connectors on [chatgpt.com](https://chatgpt.com).
+
+    <Steps>
+      <Step title="Open connectors">
+        Go to [Settings → Connectors](https://chatgpt.com/settings/connectors) in ChatGPT.
+      </Step>
+      <Step title="Add custom connector">
+        Click **Add custom connector**, then enter the server URL:
+
+        ```
+        https://mcp.varg.ai/mcp
+        ```
+
+        For **Registration method**, select **DCR** (Dynamic Client Registration). Leave Client ID and Client Secret blank.
+      </Step>
+      <Step title="Authorize">
+        Click **Add**. A browser window opens — log in to your varg.ai account and click **Approve**. You're connected.
+      </Step>
+    </Steps>
+
+    <Tip>
+      Available on Free, Plus, Pro, and Team plans. You can also use varg via the [OpenAI Responses API](https://platform.openai.com/docs/guides/tools-connectors-mcp) by passing `server_url` directly.
+    </Tip>
+  </Tab>
+
+  <Tab title="Claude Code">
+    Add the remote MCP server to your project's `.mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "varg": {
+          "url": "https://mcp.varg.ai/mcp"
+        }
+      }
+    }
+    ```
+
+    Or add via the CLI:
+
+    ```bash
+    claude mcp add varg --url https://mcp.varg.ai/mcp
+    ```
+
+    Claude Code will prompt you to authorize on first use.
+
+    <Info>
+      For local mode without OAuth, use `npx @vargai/mcp` with stdio transport instead. See the [Claude Code setup guide](/ai-agents/claude-code) for the full skill installation.
     </Info>
   </Tab>
 
@@ -131,7 +183,7 @@ Plus tools for lipsync, upscaling, transcription, and file uploads.
 ## How it works
 
 ```
-Your AI tool (Claude, VS Code, Cursor)
+Your AI tool (Claude, ChatGPT, VS Code, Cursor)
     │
     │  OAuth 2.1 (automatic)
     ▼
