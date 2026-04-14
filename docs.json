@@ -103,7 +103,7 @@
           {
             "group": "MCP",
             "pages": [
-              "mcp/index"
+              "mcp-server"
             ]
           },
           {
