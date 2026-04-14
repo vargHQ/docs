@@ -101,6 +101,12 @@
             ]
           },
           {
+            "group": "MCP",
+            "pages": [
+              "mcp/index"
+            ]
+          },
+          {
             "group": "AI Agents",
             "pages": [
               "ai-agents/index",

@@ -1,0 +1,193 @@
+---
+title: "MCP Server"
+description: "Connect Claude, VS Code, Cursor, and other AI tools to varg.ai"
+icon: "plug"
+---
+
+Connect your AI tools to varg.ai for image, video, speech, and music generation — no code required. The varg MCP server gives any MCP-compatible client access to 19 tools with inline media previews.
+
+## Connect
+
+<Tabs>
+  <Tab title="Claude.ai">
+    Connect via Custom Connectors on [claude.ai](https://claude.ai).
+
+    <Steps>
+      <Step title="Open connectors">
+        Go to [Settings → Connectors](https://claude.ai/customize/connectors) in Claude.
+      </Step>
+      <Step title="Add custom connector">
+        Click **+** → **Add custom connector**, then paste:
+
+        ```
+        https://mcp.varg.ai/mcp
+        ```
+      </Step>
+      <Step title="Authorize">
+        Click **Add**. A browser window opens — log in to your varg.ai account and click **Approve**. You're connected.
+      </Step>
+    </Steps>
+
+    <Tip>
+      Available on Free, Pro, Max, Team, and Enterprise plans. Free users are limited to one custom connector.
+    </Tip>
+  </Tab>
+
+  <Tab title="Claude Desktop">
+    Add to your `claude_desktop_config.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "varg": {
+          "url": "https://mcp.varg.ai/mcp"
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop. A browser window opens — log in and click **Approve**.
+
+    <Info>
+      On macOS, the config file is at `~/Library/Application Support/Claude/claude_desktop_config.json`.
+    </Info>
+  </Tab>
+
+  <Tab title="VS Code">
+    Add to `.vscode/mcp.json` in your project:
+
+    ```json
+    {
+      "servers": {
+        "varg": {
+          "url": "https://mcp.varg.ai/mcp"
+        }
+      }
+    }
+    ```
+
+    Or add globally via command line:
+
+    ```bash
+    code --add-mcp '{"name":"varg","url":"https://mcp.varg.ai/mcp"}'
+    ```
+
+    VS Code will prompt you to authorize on first use.
+  </Tab>
+
+  <Tab title="Cursor">
+    Add to `.cursor/mcp.json` in your project:
+
+    ```json
+    {
+      "mcpServers": {
+        "varg": {
+          "url": "https://mcp.varg.ai/mcp"
+        }
+      }
+    }
+    ```
+
+    Cursor will prompt you to authorize on first use.
+  </Tab>
+
+  <Tab title="npx (local)">
+    Run the MCP server locally via stdio — no remote connection needed:
+
+    ```bash
+    npx @vargai/mcp
+    ```
+
+    Uses your API key from `~/.varg/credentials` or `VARG_API_KEY` env var.
+
+    Log in first if you haven't:
+
+    ```bash
+    bunx vargai login
+    ```
+  </Tab>
+</Tabs>
+
+## Available tools
+
+The MCP server exposes 19 tools:
+
+| Tool | Description |
+|------|-------------|
+| `generate_image` | Generate images with FLUX, Recraft, Seedream, Nano Banana, and more |
+| `generate_video` | Generate videos with Kling v3, Minimax, Seedance, Sora, and more |
+| `generate_speech` | Text-to-speech with ElevenLabs (50+ voices) |
+| `generate_music` | Generate background music with MiniMax Music |
+| `list_models` | List all available AI models with pricing |
+| `check_balance` | Check your credit balance |
+| `list_templates` | Browse video templates |
+| `get_template` | Get template details and variables |
+| `render_template` | Render a video from a template |
+| `get_job` | Check generation job status |
+| `list_voices` | List available TTS voices |
+
+Plus tools for lipsync, upscaling, transcription, and file uploads.
+
+## How it works
+
+```
+Your AI tool (Claude, VS Code, Cursor)
+    │
+    │  OAuth 2.1 (automatic)
+    ▼
+mcp.varg.ai (MCP server)
+    │
+    │  API key (managed for you)
+    ▼
+api.varg.ai (Gateway)
+    │
+    ▼
+AI providers (fal, ElevenLabs, Replicate, etc.)
+```
+
+When you connect for the first time, the MCP server walks you through an OAuth flow:
+
+1. You log in to your varg.ai account (or create one)
+2. You approve the connection
+3. An API key is created automatically and stored securely on the server
+4. All subsequent requests use this key — no manual key management needed
+
+## Inline media previews
+
+Tools that generate media return inline previews directly in your chat:
+
+- **Images** — displayed inline with click-to-open fullscreen
+- **Videos** — embedded player with play/pause controls
+- **Audio** — compact player with progress bar and seek
+
+These work in Claude Desktop, claude.ai, and VS Code (via MCP Apps).
+
+## Pricing
+
+varg uses a credit system. 1 credit = $0.01 USD.
+
+| Generation | Cost |
+|-----------|------|
+| Image (FLUX) | ~5 credits ($0.05) |
+| Image (Recraft) | ~4 credits ($0.04) |
+| Video (Kling v3, 5s) | ~35 credits ($0.35) |
+| Video (Minimax, 5s) | ~25 credits ($0.25) |
+| Speech (ElevenLabs) | ~3 credits ($0.03) |
+| Music (MiniMax) | ~5 credits ($0.05) |
+
+Cached results are free. Use `check_balance` to see your remaining credits.
+
+<CardGroup cols={2}>
+  <Card title="Get API Key" icon="key" href="https://app.varg.ai">
+    Sign up and get your API key
+  </Card>
+  <Card title="AI Models" icon="sparkles" href="/models">
+    Browse all available models with pricing
+  </Card>
+  <Card title="Templates" icon="film" href="/templates">
+    Pre-built video templates
+  </Card>
+  <Card title="API Reference" icon="code" href="/api">
+    Full REST API documentation
+  </Card>
+</CardGroup>
