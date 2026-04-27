@@ -58,7 +58,10 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Grok Imagine Edit | `varg.videoModel("grok-imagine-edit")` | varies | 100 | [Details](/models/video/grok-imagine-video) |
 | Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | 80 | [Details](/models/video/wan-2) |
 | Minimax | `varg.videoModel("minimax")` | 5-10s | 80 | [Details](/models/video/minimax) |
+| Wan 2.5 Preview | `varg.videoModel("wan-2.5-preview")` | 3-10s | 60 | [Details](/models/video/wan-2) |
 | LTX | `varg.videoModel("ltx-2-19b-distilled")` | varies | 50 | [Details](/models/video/ltx) |
+| HeyGen Avatar | `varg.videoModel("heygen-avatar")` | varies | 300 | — |
+| HeyGen Avatar IV | `varg.videoModel("heygen-avatar-iv")` | varies | 300 | — |
 
 ### Image Models
 
@@ -67,6 +70,7 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | 5 | [Details](/models/image/nano-banana) |
 | Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | 5 | [Details](/models/image/nano-banana) |
 | Nano Banana 2 | `varg.imageModel("nano-banana-2")` | 5 | [Details](/models/image/nano-banana) |
+| Nano Banana 2 Edit | `varg.imageModel("nano-banana-2/edit")` | 5 | [Details](/models/image/nano-banana) |
 | Flux Pro | `varg.imageModel("flux-pro")` | 10 | [Details](/models/image/flux) |
 | Flux Dev | `varg.imageModel("flux-dev")` | 8 | [Details](/models/image/flux) |
 | Flux Schnell | `varg.imageModel("flux-schnell")` | 5 | [Details](/models/image/flux) |
@@ -74,9 +78,12 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Phota Edit | `varg.imageModel("phota/edit")` | 9 | [Details](/models/image/phota) |
 | Phota Enhance | `varg.imageModel("phota/enhance")` | 13 | [Details](/models/image/phota) |
 | Grok Imagine Image | `varg.imageModel("grok-imagine-image")` | 3 | [Details](/models/image/grok-imagine-image) |
+| Grok Imagine Image Edit | `varg.imageModel("grok-imagine-image/edit")` | 3 | [Details](/models/image/grok-imagine-image) |
 | Recraft V3 | `varg.imageModel("recraft-v3")` | 10 | [Details](/models/image/recraft) |
-| Recraft V4 Pro | `varg.imageModel("recraft-v4-pro")` | 10 | [Details](/models/image/recraft) |
+| Recraft V4 Pro | `varg.imageModel("recraft-v4-pro")` | 30 | [Details](/models/image/recraft) |
 | Qwen Angles | `varg.imageModel("qwen-angles")` | 8 | [Details](/models/image/qwen) |
+| Qwen Image 2 | `varg.imageModel("qwen-image-2")` | 8 | [Details](/models/image/qwen) |
+| Reve | `varg.imageModel("reve")` | 5 | — |
 | Seedream V4.5 Edit | `varg.imageModel("seedream-v4.5/edit")` | 10 | [Details](/models/image/seedream) |
 | Soul | `varg.imageModel("soul")` | 15 | [Details](/models/image/soul) |
 
@@ -88,6 +95,9 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | 80 | [Details](/models/lipsync/sync) |
 | Sync V2 | `varg.videoModel("sync-v2")` | 50 | [Details](/models/lipsync/sync) |
 | OmniHuman V1.5 | `varg.videoModel("omnihuman-v1.5")` | 100 | [Details](/models/lipsync/omnihuman) |
+| Sync V3 | `varg.videoModel("sync-v3")` | 100 | [Details](/models/lipsync/sync) |
+| Lipsync | `varg.videoModel("lipsync")` | 50 | [Details](/models/lipsync/sync) |
+| LTX-2 A2V | `varg.videoModel("ltx-2-a2v")` | 50 | — |
 
 ### Upscale Models
 
@@ -95,8 +105,13 @@ For detailed documentation, parameters, and examples for each model, see the **[
 |-------|------|---------|------|
 | SeedVR (image) | `varg.imageModel("seedvr")` | 10 | [Details](/models/upscale/image-upscale) |
 | Topaz (image) | `varg.imageModel("topaz")` | 15 | [Details](/models/upscale/image-upscale) |
+| Recraft Clarity (image) | `varg.imageModel("recraft-clarity")` | 8 | [Details](/models/upscale/image-upscale) |
+| Clarity Upscaler (image) | `varg.imageModel("clarity-upscaler")` | 8 | [Details](/models/upscale/image-upscale) |
+| CCSR (image) | `varg.imageModel("ccsr")` | 5 | [Details](/models/upscale/image-upscale) |
+| Aura SR (image) | `varg.imageModel("aura-sr")` | 5 | [Details](/models/upscale/image-upscale) |
 | SeedVR (video) | `varg.videoModel("seedvr-video")` | 30 | [Details](/models/upscale/video-upscale) |
 | Topaz (video) | `varg.videoModel("topaz-video")` | 50 | [Details](/models/upscale/video-upscale) |
+| ByteDance (video) | `varg.videoModel("bytedance-upscaler")` | 25 | [Details](/models/upscale/video-upscale) |
 | Sima (video) | `varg.videoModel("sima-video-upscaler")` | 15 | [Details](/models/upscale/video-upscale) |
 
 ### Speech Models
@@ -106,6 +121,10 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Eleven V3 | `varg.speechModel("eleven_v3")` | 25 | [Details](/models/speech/elevenlabs) |
 | Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | 25 | [Details](/models/speech/elevenlabs) |
 | Turbo | `varg.speechModel("turbo")` | 20 | [Details](/models/speech/elevenlabs) |
+| Eleven Turbo V2 | `varg.speechModel("eleven_turbo_v2")` | 20 | [Details](/models/speech/elevenlabs) |
+| Eleven Turbo V2.5 | `varg.speechModel("eleven_turbo_v2_5")` | 20 | [Details](/models/speech/elevenlabs) |
+| Eleven Flash V2 | `varg.speechModel("eleven_flash_v2")` | 20 | [Details](/models/speech/elevenlabs) |
+| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | 20 | [Details](/models/speech/elevenlabs) |
 
 ### Music
 
@@ -118,6 +137,9 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Model | Code | Credits | Docs |
 |-------|------|---------|------|
 | Whisper | `varg.transcriptionModel("whisper")` | 10 | [Details](/models/transcription/whisper) |
+| Whisper Large V3 | `varg.transcriptionModel("whisper-large-v3")` | 10 | [Details](/models/transcription/whisper) |
+| Groq Whisper | `varg.transcriptionModel("groq-whisper")` | 5 | [Details](/models/transcription/whisper) |
+| Groq Whisper Large V3 | `varg.transcriptionModel("groq-whisper-large-v3")` | 5 | [Details](/models/transcription/whisper) |
 | Groq Whisper Turbo | `varg.transcriptionModel("groq-whisper-large-v3-turbo")` | 3 | [Details](/models/transcription/whisper) |
 
 ---
