@@ -19,6 +19,8 @@ tags:
     description: Upload files for use in generation
   - name: Reference
     description: Available models and voices
+  - name: Media Processing
+    description: FFmpeg-powered video utilities (trim, resize, probe, custom commands)
   - name: Account
     description: Account info, balance, and usage
 
@@ -706,6 +708,290 @@ paths:
         "502":
           $ref: "#/components/responses/ProviderError"
 
+  /ffmpeg/probe:
+    post:
+      operationId: probeMedia
+      tags: [Media Processing]
+      summary: Probe media file
+      description: |
+        Inspect a video or audio file to retrieve metadata: duration, dimensions, codec, fps, bitrate, and file size. Returns results synchronously.
+
+        Use this before trim or resize to understand the media you're working with.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL of the video or audio file to inspect
+                  example: https://s3.varg.ai/o/my-video.mp4
+            examples:
+              probe-video:
+                summary: "Probe a video file"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+      responses:
+        "200":
+          description: Media metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProbeResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /ffmpeg/trim:
+    post:
+      operationId: trimVideo
+      tags: [Media Processing]
+      summary: Trim video
+      description: |
+        Cut a segment from a video by specifying start time and either end time or duration. Returns a job that you poll for completion.
+
+        Set `precise: true` for frame-accurate cuts (re-encodes, slower). Default is fast keyframe-aligned cutting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, start]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL of the source video
+                  example: https://s3.varg.ai/o/my-video.mp4
+                start:
+                  type: number
+                  minimum: 0
+                  description: Start time in seconds
+                  example: 5
+                end:
+                  type: number
+                  minimum: 0
+                  description: End time in seconds (mutually exclusive with `duration`)
+                  example: 15
+                duration:
+                  type: number
+                  minimum: 0
+                  description: Duration in seconds (mutually exclusive with `end`)
+                precise:
+                  type: boolean
+                  default: false
+                  description: Frame-accurate cuts (re-encodes) vs fast keyframe-aligned
+            examples:
+              trim-with-end:
+                summary: "Trim 5s to 15s"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  start: 5
+                  end: 15
+              trim-with-duration:
+                summary: "Trim 10s starting at 5s"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  start: 5
+                  duration: 10
+              trim-precise:
+                summary: "Frame-accurate trim"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  start: 2.5
+                  end: 8.3
+                  precise: true
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /ffmpeg/resize:
+    post:
+      operationId: resizeVideo
+      tags: [Media Processing]
+      summary: Resize video
+      description: |
+        Scale a video to new dimensions. At least one of `width` or `height` must be provided; the other is calculated to maintain aspect ratio.
+
+        Three fit modes:
+        - `cover` (default) — fill the target size, cropping overflow
+        - `contain` — fit within the target size, adding black bars if needed
+        - `stretch` — distort to exact dimensions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL of the source video
+                  example: https://s3.varg.ai/o/my-video.mp4
+                width:
+                  type: integer
+                  minimum: 1
+                  description: Target width in pixels
+                  example: 1080
+                height:
+                  type: integer
+                  minimum: 1
+                  description: Target height in pixels
+                  example: 1920
+                fit:
+                  type: string
+                  enum: [contain, cover, stretch]
+                  default: cover
+                  description: How to fit the video into the target dimensions
+            examples:
+              resize-portrait:
+                summary: "Resize to 1080x1920 (portrait)"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  width: 1080
+                  height: 1920
+              resize-width-only:
+                summary: "Resize to 720p width (auto height)"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  width: 1280
+              resize-contain:
+                summary: "Letterbox to 1080x1080"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  width: 1080
+                  height: 1080
+                  fit: contain
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /ffmpeg:
+    post:
+      operationId: runFfmpeg
+      tags: [Media Processing]
+      summary: Run FFmpeg command
+      description: |
+        Run an arbitrary FFmpeg command in the cloud. Use `{{in_1}}`, `{{in_2}}` as input file placeholders and `{{out_1}}` as the output placeholder.
+
+        For single-input convenience, pass `url` and your command will be automatically wrapped: `-i {{in_1}} <your command> {{out_1}}`.
+
+        For multi-input workflows (concat, overlay, etc.), use `input_files` to map labels to URLs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Primary input file URL (shorthand — becomes `{{in_1}}`). Mutually exclusive with providing `in_1` in `input_files`.
+                  example: https://s3.varg.ai/o/my-video.mp4
+                command:
+                  type: string
+                  description: FFmpeg command arguments. Use `{{in_1}}`, `{{out_1}}` placeholders.
+                  example: "-vf eq=brightness=0.1 -c:a copy"
+                input_files:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: Map of input labels to URLs (e.g. `{"in_1": "url1", "in_2": "url2"}`)
+                output_files:
+                  oneOf:
+                    - type: object
+                      additionalProperties:
+                        type: string
+                    - type: string
+                      enum: ["OUTPUT_FOLDER"]
+                  description: Output file map or `"OUTPUT_FOLDER"`. Defaults to `{"out_1": "output.mp4"}`.
+                  default:
+                    out_1: output.mp4
+            examples:
+              brightness:
+                summary: "Adjust brightness"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  command: "-vf eq=brightness=0.1 -c:a copy"
+              extract-audio:
+                summary: "Extract audio to MP3"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  command: "-vn -acodec libmp3lame"
+                  output_files:
+                    out_1: audio.mp3
+              speed-up:
+                summary: "2x speed"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  command: "-filter:v setpts=0.5*PTS -filter:a atempo=2.0"
+              to-gif:
+                summary: "Convert to GIF"
+                value:
+                  url: https://s3.varg.ai/o/my-video.mp4
+                  command: "-vf fps=10,scale=480:-1:flags=lanczos -loop 0"
+                  output_files:
+                    out_1: output.gif
+      responses:
+        "202":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /jobs/{job_id}:
     get:
       operationId: getJob
@@ -1042,6 +1328,46 @@ components:
           type: string
           description: Error message, present when status is failed
           example: Provider returned an error
+
+    ProbeResponse:
+      type: object
+      properties:
+        duration:
+          type: number
+          description: Duration in seconds
+          example: 12.5
+        width:
+          type: integer
+          description: Video width in pixels
+          example: 1920
+        height:
+          type: integer
+          description: Video height in pixels
+          example: 1080
+        codec:
+          type: string
+          description: Video codec
+          example: h264
+        audio_codec:
+          type: string
+          description: Audio codec
+          example: aac
+        format:
+          type: string
+          description: Container format
+          example: mov,mp4,m4a,3gp,3g2,mj2
+        bitrate:
+          type: number
+          description: Overall bitrate in bits/second
+          example: 5200000
+        fps:
+          type: number
+          description: Frames per second
+          example: 30
+        size_bytes:
+          type: number
+          description: File size in bytes
+          example: 8125000
 
     FileUploadResponse:
       type: object

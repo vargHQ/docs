@@ -135,6 +135,15 @@
           ]
         },
         {
+          "group": "Media Processing",
+          "pages": [
+            "POST /ffmpeg/probe",
+            "POST /ffmpeg/trim",
+            "POST /ffmpeg/resize",
+            "POST /ffmpeg"
+          ]
+        },
+        {
           "group": "Jobs",
           "pages": [
             "GET /jobs/{job_id}",

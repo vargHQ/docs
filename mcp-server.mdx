@@ -162,7 +162,7 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
 
 ## Available tools
 
-The MCP server exposes 19 tools:
+The MCP server exposes 23 tools:
 
 | Tool | Description |
 |------|-------------|
@@ -170,6 +170,10 @@ The MCP server exposes 19 tools:
 | `generate_video` | Generate videos with Kling v3, Minimax, Seedance, Sora, and more |
 | `generate_speech` | Text-to-speech with ElevenLabs (50+ voices) |
 | `generate_music` | Generate background music with MiniMax Music |
+| `probe_media` | Inspect a video/audio file — duration, dimensions, codec, fps, bitrate |
+| `trim_video` | Cut a segment from a video by start/end time or start/duration |
+| `resize_video` | Scale a video to new dimensions (contain, cover, or stretch) |
+| `run_ffmpeg` | Run any FFmpeg command in the cloud (arbitrary filters, concat, extract audio, etc.) |
 | `list_models` | List all available AI models with pricing |
 | `check_balance` | Check your credit balance |
 | `list_templates` | Browse video templates |
@@ -239,6 +243,10 @@ varg uses a credit system. 1 credit = $0.01 USD.
 | Lipsync (OmniHuman) | 100 | $1.00 |
 | Transcription (Whisper) | 10 | $0.10 |
 | Transcription (Groq Whisper Turbo) | 3 | $0.03 |
+| FFmpeg Trim | 5 | $0.05 |
+| FFmpeg Resize | 5 | $0.05 |
+| FFmpeg (custom command) | 5 | $0.05 |
+| Probe Media | 5 | $0.05 |
 
 Cached results are free. Use `check_balance` to see your remaining credits.
 

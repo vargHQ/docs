@@ -336,6 +336,62 @@ export default (
 )
 ```
 
+## Media Processing (FFmpeg)
+
+The gateway provides cloud-hosted FFmpeg tools for video manipulation. No local FFmpeg install needed.
+
+### Probe
+
+Inspect a video or audio file — returns metadata synchronously.
+
+```bash
+curl -s -X POST https://api.varg.ai/v1/ffmpeg/probe \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://s3.varg.ai/o/my-video.mp4"}'
+```
+
+Returns: `{ duration, width, height, codec, audio_codec, format, bitrate, fps, size_bytes }`
+
+### Trim
+
+Cut a segment from a video. Provide `start` + either `end` or `duration`.
+
+```bash
+curl -s -X POST https://api.varg.ai/v1/ffmpeg/trim \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://s3.varg.ai/o/my-video.mp4", "start": 5, "end": 15}'
+```
+
+Returns a job (poll with `GET /v1/jobs/{job_id}`). Set `precise: true` for frame-accurate cuts.
+
+### Resize
+
+Scale a video to new dimensions. At least one of `width`/`height` required.
+
+```bash
+curl -s -X POST https://api.varg.ai/v1/ffmpeg/resize \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://s3.varg.ai/o/my-video.mp4", "width": 1080, "height": 1920, "fit": "cover"}'
+```
+
+Fit modes: `cover` (default, crop overflow), `contain` (letterbox), `stretch`.
+
+### Custom FFmpeg Command
+
+Run any FFmpeg command in the cloud. Use `{{in_1}}`/`{{out_1}}` placeholders.
+
+```bash
+curl -s -X POST https://api.varg.ai/v1/ffmpeg \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://s3.varg.ai/o/my-video.mp4", "command": "-vf eq=brightness=0.1 -c:a copy"}'
+```
+
+All FFmpeg tools cost 5 credits ($0.05) per call.
+
 ## Common Errors and Solutions
 
 | Error | Cause | Solution |
@@ -375,6 +431,10 @@ bunx vargai render video.tsx --no-cache     # Skip cache
 | Speech | eleven_v3 | 25 |
 | Music | music_v1 | 30 |
 | Lipsync | sync-v2-pro | 80 |
+| Probe | ffmpeg/probe | 5 |
+| Trim | ffmpeg/trim | 5 |
+| Resize | ffmpeg/resize | 5 |
+| FFmpeg | ffmpeg (custom) | 5 |
 
 Typical 3-clip video: $2-5.
 
