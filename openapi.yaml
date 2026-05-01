@@ -906,6 +906,122 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /ffmpeg/slice:
+    post:
+      operationId: sliceVideo
+      tags: [Media Processing]
+      summary: Slice video into segments
+      description: |
+        Split a video into time-based segments. Each segment includes a video file, a full-resolution first frame (JPEG), and a 480px thumbnail (WebP).
+
+        Exactly one of `every`, `at`, `count`, or `ranges` must be provided.
+
+        - `every` — split at regular intervals (e.g. every 15 seconds)
+        - `at` — split at specific timestamps
+        - `count` — split into N equal parts
+        - `ranges` — split at explicit time ranges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [video_url]
+              properties:
+                video_url:
+                  type: string
+                  format: uri
+                  description: URL of the source video
+                  example: https://s3.varg.ai/o/my-video.mp4
+                codec:
+                  type: string
+                  enum: [copy, reencode]
+                  default: copy
+                  description: "`copy` for fast keyframe-aligned cuts, `reencode` for frame-accurate"
+                every:
+                  type: number
+                  minimum: 0.1
+                  maximum: 3600
+                  description: Split every N seconds
+                  example: 15
+                at:
+                  type: array
+                  items:
+                    type: number
+                    minimum: 0
+                  description: Split at specific timestamps (seconds)
+                  example: [5, 15, 30]
+                count:
+                  type: integer
+                  minimum: 2
+                  maximum: 1000
+                  description: Split into N equal parts
+                  example: 4
+                ranges:
+                  type: array
+                  items:
+                    type: object
+                    required: [start, end]
+                    properties:
+                      start:
+                        type: number
+                        minimum: 0
+                      end:
+                        type: number
+                        minimum: 0
+                  description: Explicit time ranges to extract
+                thumbnails:
+                  type: boolean
+                  default: true
+                  description: Extract first_frame (full-res JPEG) and thumbnail (480px WebP) for each segment
+            examples:
+              every-15s:
+                summary: "Split every 15 seconds"
+                value:
+                  video_url: https://s3.varg.ai/o/my-video.mp4
+                  every: 15
+              count-4:
+                summary: "Split into 4 equal parts"
+                value:
+                  video_url: https://s3.varg.ai/o/my-video.mp4
+                  count: 4
+              at-timestamps:
+                summary: "Split at specific timestamps"
+                value:
+                  video_url: https://s3.varg.ai/o/my-video.mp4
+                  at: [5, 15, 30]
+              no-thumbnails:
+                summary: "Split without thumbnails"
+                value:
+                  video_url: https://s3.varg.ai/o/my-video.mp4
+                  every: 10
+                  thumbnails: false
+      responses:
+        "202":
+          description: Job created. Poll with `GET /jobs/{job_id}`. Completed job metadata contains `segments` array.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+              example:
+                job_id: job_abc123
+                status: queued
+                cache:
+                  hit: false
+                pricing:
+                  estimated: 5
+                  billing: metered
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/AuthError"
+        "402":
+          $ref: "#/components/responses/InsufficientBalanceError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /ffmpeg:
     post:
       operationId: runFfmpeg

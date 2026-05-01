@@ -140,6 +140,7 @@
             "POST /ffmpeg/probe",
             "POST /ffmpeg/trim",
             "POST /ffmpeg/resize",
+            "POST /ffmpeg/slice",
             "POST /ffmpeg"
           ]
         },
