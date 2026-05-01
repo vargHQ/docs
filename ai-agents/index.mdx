@@ -379,6 +379,19 @@ curl -s -X POST https://api.varg.ai/v1/ffmpeg/resize \
 
 Fit modes: `cover` (default, crop overflow), `contain` (letterbox), `stretch`.
 
+### Slice
+
+Split a video into segments. Returns segment URLs with first-frame images and thumbnails.
+
+```bash
+curl -s -X POST https://api.varg.ai/v1/ffmpeg/slice \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"video_url": "https://s3.varg.ai/o/my-video.mp4", "every": 15, "thumbnails": true}'
+```
+
+Modes: `every` (interval), `at` (timestamps), `count` (equal parts), `ranges` (explicit ranges). Returns a job — poll with `GET /v1/jobs/{job_id}`. Each segment includes `url`, `first_frame` (full-res JPEG), and `thumbnail` (480px WebP).
+
 ### Custom FFmpeg Command
 
 Run any FFmpeg command in the cloud. Use `{{in_1}}`/`{{out_1}}` placeholders.
@@ -434,6 +447,7 @@ bunx vargai render video.tsx --no-cache     # Skip cache
 | Probe | ffmpeg/probe | 5 |
 | Trim | ffmpeg/trim | 5 |
 | Resize | ffmpeg/resize | 5 |
+| Slice | ffmpeg/slice | 5 |
 | FFmpeg | ffmpeg (custom) | 5 |
 
 Typical 3-clip video: $2-5.

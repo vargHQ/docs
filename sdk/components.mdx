@@ -462,3 +462,70 @@ End card with call-to-action.
 | `logo` | `string` | - | Logo image path |
 | `cta` | `string` | - | Call-to-action text |
 | `blinkCta` | `boolean` | `false` | Animate CTA |
+
+## FFmpeg processing
+
+### Slice
+
+Split a video into segments with automatic first-frame extraction. Returns an array of segments, each with a video URL, full-resolution first frame (JPEG), and 480px thumbnail (WebP).
+
+```tsx
+import { Slice } from "vargai/react";
+import { createVarg } from "@vargai/gateway";
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! });
+
+// Split every 15 seconds
+const { segments } = await Slice({ src: "https://example.com/video.mp4", every: 15 });
+
+for (const seg of segments) {
+  console.log(seg.url);         // segment video URL
+  console.log(seg.first_frame); // full-res JPEG of first frame
+  console.log(seg.thumbnail);   // 480px WebP thumbnail
+  console.log(seg.start, seg.end, seg.duration);
+}
+```
+
+Four split modes are available:
+
+```tsx
+// Split every N seconds
+await Slice({ src: video, every: 10 });
+
+// Split at specific timestamps
+await Slice({ src: video, at: [5, 15, 30] });
+
+// Split into N equal parts
+await Slice({ src: video, count: 4 });
+
+// Split at explicit ranges
+await Slice({ src: video, ranges: [{ start: 0, end: 10 }, { start: 20, end: 30 }] });
+```
+
+**Element function props**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `src` | `string \| File \| VargElement` | - | Source video (URL, File, or element) |
+| `codec` | `"copy" \| "reencode"` | `"copy"` | `copy` for fast keyframe-aligned cuts, `reencode` for frame-accurate |
+| `every` | `number` | - | Split every N seconds |
+| `at` | `number[]` | - | Split at specific timestamps |
+| `count` | `number` | - | Split into N equal parts |
+| `ranges` | `Array<{start, end}>` | - | Explicit time ranges |
+
+Exactly one of `every`, `at`, `count`, or `ranges` must be provided.
+
+**Segment properties**
+
+Each segment in the returned array has:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `url` | `string` | CDN URL of the segment video |
+| `file` | `File` | File object for the segment |
+| `duration` | `number` | Segment duration in seconds |
+| `index` | `number` | 0-based segment index |
+| `start` | `number` | Start time in the source video (seconds) |
+| `end` | `number` | End time in the source video (seconds) |
+| `first_frame` | `string` | Full-resolution first frame (JPEG) |
+| `thumbnail` | `string` | 480px-wide thumbnail (WebP) |
