@@ -1,0 +1,258 @@
+---
+title: "varg vs Remotion vs Hyperframes"
+description: "How varg, Remotion, and Hyperframes compare for programmatic video — and why they solve different problems."
+---
+
+## TL;DR
+
+All three frameworks output real MP4s from code, and all three lean on JSX-ish syntax — but they sit at different layers of the stack.
+
+- **Remotion** is a React-based renderer. You author motion graphics as React components and headless Chrome paints them frame-by-frame.
+- **Hyperframes** is an HTML-based renderer. You author compositions as HTML+CSS+GSAP and headless Chrome captures them deterministically via `beginFrame`.
+- **varg** is an AI media generation and composition platform. You describe high-level clips (`<TalkingHead>`, `<Speech>`, `<Image>`, `<Video>`) and varg calls AI providers (fal, ElevenLabs, Replicate, Higgsfield, HeyGen) to produce the underlying media, then composes everything via ffmpeg.
+
+The first two are renderers competing on authoring surface. varg is the layer that produces what those renderers would otherwise consume — so for AI-native video, varg owns a category of its own.
+
+## Why this comparison exists
+
+Hyperframes published [its own comparison with Remotion](https://hyperframes.mintlify.app/guides/hyperframes-vs-remotion), which is honest and well-written. It argues that HTML is a better authoring surface than React for AI agents, and lays out the technical reasons. Both sides have merit, and the doc is worth reading.
+
+But that comparison only covers half the picture. Once you ask "what should produce the talking head, the voiceover, the b-roll, the lip-sync, the captions, the music?" — neither Remotion nor Hyperframes have an answer. That's varg.
+
+This page covers all three, with attention to where each one shines.
+
+## Remotion
+
+### Overview
+
+Remotion's premise: videos are React components. You write JSX and CSS, access the current frame via `useCurrentFrame()` and `useVideoConfig()` hooks, and Remotion renders the resulting DOM frame-by-frame into MP4. Created by Jonny Burger in 2021, it brings web-development practices — hot reload, version control, component reuse, serverless rendering — to video production.
+
+A Remotion project resembles a React app. You define reusable components, import assets, and register compositions with props. Under the hood, Remotion uses Webpack for bundling, Babel for transpilation, headless Chrome for rendering, and FFmpeg for encoding. Around 48k GitHub stars, ~3M npm installs, ~8000 Discord members.
+
+### Strengths
+
+| Strength | Notes |
+|---|---|
+| React ecosystem | Reuse existing design systems, get IDE completion and TypeScript checks, pull in any npm package. |
+| Automation at scale | Generate variations from data, version-control compositions, build CI pipelines — the same practices used for web apps. |
+| Precise per-frame animation | Frame-driven hooks plus React state make detailed motion graphics and data visualizations tractable. |
+| Mature distributed rendering | Remotion Lambda splits long renders across hundreds of AWS Lambda functions; production-tested for years. |
+| Broad product surface | Studio, Player, Editor Starter, Recorder, Timeline — a full toolkit for building video apps. |
+
+### Limitations
+
+| Limitation | Notes |
+|---|---|
+| React adds friction for AI agents | LLMs are trained more heavily on HTML/CSS than on React. Hyperframes' team reports that LLMs writing Remotion code need more guardrails and produce less creative output than the same LLMs writing HTML + GSAP. |
+| Library-clock animations misfire | Libraries like GSAP and Anime.js drive their timelines via `performance.now()`, which ticks at wall-clock speed during render. A 4-second GSAP timeline plays in roughly the first second of captured frames, leaving the rest empty. Wrapping these libraries is possible but awkward. |
+| HTML/CSS translation barrier | Existing landing pages, design-system components, and CodePen demos must be rewritten as JSX. Every translation step is a chance to lose fidelity. |
+| Commercial license above thresholds | Source-available, not OSI open source. Commercial use beyond small teams requires a paid license and per-render fees ($0.01/render with a $100/mo minimum on the Automator plan). |
+| Not a replacement for AI generation | Remotion renders what you give it. It does not generate talking heads, voiceovers, or AI b-roll. |
+
+### Best for
+
+Developer-controlled motion graphics, data-driven videos (dashboards, year-in-review apps, audiograms), embedded video editors via `<Player>`, and any workflow where your team already lives in React.
+
+## Hyperframes
+
+### Overview
+
+Hyperframes is an open-source HTML-to-video framework recently released by HeyGen under the Apache 2.0 license. Instead of writing React, you write plain HTML, CSS, and JavaScript. Compositions are HTML documents with data attributes for timing (`data-start`, `data-duration`) and layout (`data-track-index`).
+
+The HeyGen team built Hyperframes after using Remotion in production and hitting limits with the React-first model for AI-generated content. Two motivations: LLMs write HTML better than React, and HTML is both the render layer and the editable source — which makes a real-time visual editor much more natural to build.
+
+### Architecture
+
+- **Authoring** — HTML + CSS + JavaScript. No build step. `index.html` plays as-is. You can paste an existing web page or CodePen demo and animate it.
+- **Renderer** — headless Chrome with two capture modes:
+  - **BeginFrame mode** (Linux + `chrome-headless-shell`) drives Chrome's compositor atomically via `HeadlessExperimental.beginFrame`. Byte-for-byte reproducible across machines.
+  - **Screenshot mode** (macOS, Windows, auto-fallback) takes ordinary screenshots when BeginFrame can't handle a primitive (`<iframe>`, raw `requestAnimationFrame`). A virtual-time shim keeps animations frame-driven.
+- **Library-clock determinism** — Hyperframes pauses GSAP, Anime.js, and Motion One timelines and seeks them to `frame / fps` before each capture. Animations stay in lockstep with the output, fixing the misfire that bites Remotion.
+- **Distributed rendering** — AWS Lambda path with Step Functions and chunk workers. Newer than Remotion Lambda, so the tradeoff is maturity versus HTML-native authoring.
+- **HDR output** — Two-pass compositing combines a DOM layer with native HLG/PQ video. Remotion documents HDR as unsupported.
+
+### Strengths
+
+| Strength | Notes |
+|---|---|
+| Agent-native authoring | LLMs are trained heavily on HTML/CSS/JS. Agents produce more creative output and need fewer guardrails than with React. |
+| Library-clock animations work correctly | GSAP, Anime.js, Lottie, Three.js, and Web Animations API all seek deterministically. |
+| No build step | Plain HTML plays as-is. No Webpack, no bundler config, no `package.json` required for a composition. |
+| Visual editor over the same DOM | The DOM you render is the DOM you edit. Round-tripping a visual edit doesn't need a recompile. |
+| Apache 2.0 | OSI-approved open source. Free commercial use at any scale, no per-render fees, redistribution permitted. |
+| HDR support | First-class, unlike Remotion. |
+
+### Limitations
+
+| Limitation | Notes |
+|---|---|
+| Browser-bound | Excellent for anything the DOM can render, but not a replacement for professional NLEs, color grading, or audio mixing. |
+| Newer distributed rendering | Lambda path is real but less battle-tested than Remotion Lambda. |
+| Smaller community | Recently open-sourced. Fewer templates, examples, and Stack Overflow answers than Remotion. |
+| Not an AI media generator | Like Remotion, Hyperframes renders what you give it. Talking heads, voiceovers, and AI b-roll are out of scope. |
+
+### Best for
+
+AI-generated motion graphics where an agent writes the composition, website-to-video conversions, design-system demos, and visual-editor UX where users directly manipulate the rendered DOM.
+
+## Varg
+
+### Overview
+
+varg is the only one of the three frameworks that actually *generates* the media. Remotion and Hyperframes are renderers that need source material — varg is the platform that produces talking heads, voiceovers, lip-synced narration, AI b-roll, music, and captions, then composes them into a finished video.
+
+The [varg SDK](https://github.com/vargHQ/sdk) (`vargai` on npm) is open-source under Apache 2.0. It ships:
+
+- A custom JSX runtime (not React) that produces a `VargElement` tree, consumed by an internal compositor.
+- High-level components — `<Render>`, `<Clip>`, `<Image>`, `<Video>`, `<Speech>`, `<Music>`, `<TalkingHead>`, `<Captions>`, `<Subtitle>`, `<Title>`, `<Overlay>`, `<Slider>`, `<Swipe>`, `<Packshot>`, `<Split>`, `<Grid>` — that map to creative intent, not per-frame primitives.
+- A unified gateway (`api.varg.ai`) — one API key fans out to fal, ElevenLabs, Replicate, Higgsfield, HeyGen, PiAPI, Magnific, and more.
+- Content-addressed caching (sha256 of prompt + parameters) backed by Cloudflare R2 with stable `s3.varg.ai` URLs and a 30-day TTL. Identical prompts cost nothing on re-render.
+- A cloud render endpoint at `render.varg.ai` that accepts TSX as a string and returns an MP4 URL — zero local dependencies required.
+- An agent skill (`varg-ai`) installable in Claude Code, Cursor, Windsurf, OpenCode via `npx -y skills add vargHQ/skills`. The skill ships with reference docs for models, components, prompting, recipes, and error recovery.
+- x402 USDC micropayments for anonymous agents, and BYOK with AES-256-GCM-encrypted provider keys.
+
+### Architecture
+
+Four layers, each thin and replaceable:
+
+1. **Authoring DSL** — JSX with the `vargai` import source. Components describe high-level media (`<TalkingHead>`, `<Speech>`, `<Clip>`) rather than per-frame primitives.
+2. **Provider orchestration** — the gateway resolves one API key to whatever provider is needed, caches the result to R2, and returns a stable URL.
+3. **Composition** — the SDK's editly compositor walks the VargElement tree and emits an ffmpeg filter graph.
+4. **Rendering** — ffmpeg locally, Rendi cloud ffmpeg in production, or the `render.varg.ai` service that wraps both.
+
+The custom JSX runtime is deliberately not React. Components like `Image()`, `Video()`, and `Speech()` are async element factories that materialize AI assets, and the runtime understands both static and thenable elements. The result is that agents can write code that looks like React but actually describes a pipeline of AI generations and compositions.
+
+### Strengths
+
+| Strength | Notes |
+|---|---|
+| Generates the media itself | The only framework here that calls AI models (Kling, Sora, Veo, Seedance, Flux, nano-banana, ElevenLabs, OmniHuman, Sync) and produces the underlying clips, voices, and music. |
+| Caching is sacred | Content-addressed, R2-backed, 30-day TTL. Identical prompts are free on re-render, which is critical for the economics of iteration when each generation costs $0.05–$0.50+. |
+| One API key replaces seven | A single `VARG_API_KEY` fans out to fal, ElevenLabs, Replicate, Higgsfield, HeyGen, PiAPI, and Magnific. No more juggling provider accounts and dashboards. |
+| Agent-native by design | The skill spec is cross-tool (Claude Code, Cursor, Windsurf, OpenCode). The CLI has structured `--json` and `--quiet` output. Action definitions ship as JSON schemas. OTP-based auth is built into the skill so agents can onboard users end-to-end. |
+| Cloud render via pure curl | Agents without a local toolchain can POST TSX as a string to `render.varg.ai/api/render`. Globals are pre-injected — no imports, no `package.json`, no bundler. |
+| High-level creative components | `<TalkingHead>`, `<Speech>`, `<Captions>`, `<Lipsync>` match how creators and agents actually reason about AI video — not "what happens on frame 137." |
+| Open-source SDK | The [varg SDK](https://github.com/vargHQ/sdk) and templates are Apache 2.0. You pay only for AI generation, and only when the cache misses. |
+| BYOK with encryption | Bring your own provider keys, stored AES-256-GCM-encrypted. Or use varg's pooled keys with usage-based billing. |
+| x402 micropayments | Anonymous agents can pay per-request in USDC on Base without ever creating an account. |
+
+### Limitations (by design)
+
+| Limitation | Why it's a deliberate scope choice |
+|---|---|
+| No per-frame programmability | varg's bet is that the right abstraction for AI-first video is "clips of AI-generated media composed on a timeline," not "what does pixel (x,y) look like on frame 137." Different problem, different abstraction. |
+| No browser preview | The composition is server-side because the AI generation steps are server-side. Preview happens by rendering — and caching keeps re-renders nearly free. |
+| Quality depends on upstream models | True of any AI orchestration layer. Mitigated by giving you instant access to the best provider for each capability, plus failover and BYOK. |
+| Newer than Remotion | Beta as of 2026. Smaller community, fewer Stack Overflow answers — but the agent skill replaces a lot of what a community would otherwise carry. |
+
+### Best for
+
+AI-generated content — talking heads, narrated explainers, UGC-style ads, social shorts, character-driven videos, before/after transformations, lip-synced narration. Anywhere the creative work is choosing the right prompt and the right model, not animating individual frames.
+
+## The Remotion vs Hyperframes debate
+
+Hyperframes' [own comparison](https://hyperframes.mintlify.app/guides/hyperframes-vs-remotion) frames the debate as React vs HTML. Both sides have honest arguments:
+
+**Hyperframes' case**
+
+- LLMs are trained more on HTML than React, so agents produce better output with fewer guardrails.
+- GSAP, Anime.js, Motion One, Lottie, and Web Animations API all seek deterministically — no wall-clock misfire.
+- Any HTML page is a potential composition: landing pages, design-system docs, CodePen demos. Paste and animate.
+- The DOM you render is the DOM you edit, so a real visual editor is straightforward.
+- HDR is supported.
+- Apache 2.0 means no per-render fees, no seat caps, no commercial-license threshold.
+
+**Remotion's case**
+
+- Mature: years of production use, ~48k GitHub stars, ~3M installs, 8000+ Discord members, hundreds of templates.
+- Remotion Lambda is battle-tested at scale. Hyperframes' Lambda path is newer.
+- React component reuse means you can pull from an existing design system and ship videos from the same primitives as your app.
+- TypeScript, IDE completion, refactor-across-files — real developer ergonomics.
+- Broader product surface: Studio, Player, Editor Starter, Recorder, Timeline.
+- "Source-available, not OSI" doesn't matter if your use case fits the free tier or your company is fine paying for what works.
+
+**Honest read.** Hyperframes is the more architecturally interesting bet *for AI agents authoring video*. Remotion is the more mature bet *for engineering teams shipping video apps today*. If you're hand-writing motion graphics in 2026, the choice is mostly aesthetic plus licensing. If you're letting an agent author them, Hyperframes' HTML-first surface is a real advantage.
+
+**But.** Both of them stop at the renderer. Neither answers "where does the talking head come from?" or "where does the voiceover come from?" or "where does the b-roll come from?" — and that's the question that matters for AI video.
+
+That's the layer varg owns.
+
+## Comparative analysis
+
+### Authoring model
+
+| | Authoring language | Build step | Animation library support |
+|---|---|---|---|
+| **Remotion** | React (JSX + CSS). Frame access via hooks. | Webpack + Babel. | Native React state and hooks. External libraries (GSAP) require wrappers and misfire because their clocks tick in real time. |
+| **Hyperframes** | HTML + CSS + JavaScript (+ GSAP, Anime, Motion). Data attributes for timing. | None. `index.html` plays as-is. | First-class. Runtime pauses and seeks library timelines per frame. |
+| **varg** | Custom JSX (`vargai` import source, not React). High-level components (`<Image>`, `<Speech>`, `<Clip>`, `<TalkingHead>`). | None for the SDK. Cloud Render compiles TSX strings via sucrase. | Clip-level (fade, slide, split, packshot). Per-frame motion graphics is out of scope. |
+
+### Runtime and rendering
+
+| | Rendering mechanism | Distributed rendering | Key distinctions |
+|---|---|---|---|
+| **Remotion** | Headless Chrome + FFmpeg. React reconciles each frame. | Mature AWS Lambda. | Library-clock animations run at wall-clock speed during render. |
+| **Hyperframes** | Headless Chrome (`beginFrame` or screenshot fallback) + FFmpeg. | Newer AWS Lambda path. | Deterministic seek-and-capture. HDR supported. |
+| **varg** | FFmpeg locally, Rendi (cloud FFmpeg) in production, or `render.varg.ai`. No headless Chrome. | Render service auto-scales ffmpeg workers; gateway caches AI generations to R2. | AI model calls happen during composition. Cache is sha256-keyed and free on hit. |
+
+### Agent experience and editing
+
+| | Agent friendliness | Visual editing | Licensing |
+|---|---|---|---|
+| **Remotion** | Agents must follow React rules; more prompting needed for creative output. | Code-centric Studio; Editor Starter ships as a paid template. Visual edits require recompile. | Source-available custom license. Commercial use above small-team thresholds requires a paid license + per-render fees. |
+| **Hyperframes** | Highly agent-native. Built-in skills for website-to-video and captioning. | Studio uses the same DOM as the renderer — click, drag, edit. No recompile. | Apache 2.0. Free commercial use, no per-render fees. |
+| **varg** | Agent-first design: cross-tool skill, JSON action definitions, structured CLI output, OTP onboarding, pure-curl cloud render. | No browser editor. Preview by rendering — cache keeps re-renders nearly free. The dashboard at `app.varg.ai` handles project management. | SDK and templates are Apache 2.0 ([vargHQ/sdk](https://github.com/vargHQ/sdk)). AI generations are pay-per-call (or BYOK) with content-addressed caching. |
+
+## When to choose what
+
+### Choose varg when
+
+- The video is **AI-generated content** — talking heads, narrated explainers, UGC ads, social shorts, character-driven stories, before/after transformations.
+- You want **one API key** instead of seven provider integrations.
+- You're letting an **agent author end-to-end pipelines** (script → voiceover → b-roll → lip-sync → captions → music → final cut).
+- **Iteration economics matter** — content-addressed caching means re-rendering the same prompt is free.
+- You want a **no-toolchain path** for agents (cloud render via pure curl).
+
+### Choose Hyperframes when
+
+- You're **hand-authoring motion graphics** in HTML, CSS, and GSAP.
+- You need **library-clock animations** that seek deterministically.
+- You want a **WYSIWYG editor** on the same source as the renderer.
+- **OSS licensing** matters (Apache 2.0).
+- You need **HDR** output.
+
+### Choose Remotion when
+
+- You have a **React design system** to reuse.
+- You need **mature AWS Lambda** at production scale.
+- You're building a **video app with `<Player>` embedded**.
+- You need **fine-grained per-frame motion graphics** for data visualization or kinetic typography.
+
+### They're complementary
+
+These are not zero-sum choices. varg outputs MP4s with stable URLs on `s3.varg.ai`. Those URLs drop straight into a Remotion `<Video>` or a Hyperframes `<video>` element. If you need both AI-generated content *and* per-frame motion graphics, the natural pattern is:
+
+1. **varg generates the AI assets** — characters, voices, b-roll, lip-synced shots — and caches them to R2.
+2. **Remotion or Hyperframes composes them** with whatever per-frame animation you need on top.
+
+For most agent-authored video workflows, though, varg's own clip-level composition is enough — and skipping the second renderer keeps the pipeline simpler.
+
+## Conclusion
+
+Remotion, Hyperframes, and varg solve different problems that happen to share a JSX-shaped surface.
+
+- **Remotion** is the mature React-based renderer for developer-built video apps and per-frame motion graphics.
+- **Hyperframes** is the agent-native HTML-based renderer for compositions you'd want to edit visually.
+- **varg** is the AI media generation and composition platform — the only one of the three that produces the underlying talking heads, voiceovers, b-roll, music, and captions instead of asking you to bring them.
+
+If your bottleneck is creative per-frame control, choose Remotion or Hyperframes. If your bottleneck is AI generation cost, provider sprawl, and shipping agent-authored video pipelines — that's varg's home turf, and there isn't really anything else in the same category.
+
+## References
+
+- [Hyperframes vs Remotion (Hyperframes' own comparison)](https://hyperframes.mintlify.app/guides/hyperframes-vs-remotion)
+- [Hyperframes — Deterministic Rendering](https://hyperframes.mintlify.app/concepts/determinism)
+- [Hyperframes — Compositions](https://hyperframes.mintlify.app/concepts/compositions)
+- [Remotion — The Fundamentals](https://www.remotion.dev/docs/the-fundamentals)
+- [Remotion Lambda](https://www.remotion.dev/docs/lambda)
+- [varg SDK on GitHub (Apache 2.0)](https://github.com/vargHQ/sdk)
+- [varg AI agents guide](/ai-agents/index)

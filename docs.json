@@ -113,6 +113,12 @@
               "ai-agents/claude-code",
               "ai-agents/cursor"
             ]
+          },
+          {
+            "group": "Comparisons",
+            "pages": [
+              "comparisons/varg-vs-remotion-vs-hyperframes"
+            ]
           }
         ]
       },
