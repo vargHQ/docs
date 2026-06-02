@@ -1054,7 +1054,7 @@ paths:
                   type: object
                   additionalProperties:
                     type: string
-                  description: Map of input labels to URLs (e.g. `{"in_1": "url1", "in_2": "url2"}`)
+                  description: 'Map of input labels to URLs (e.g. `{"in_1": "url1", "in_2": "url2"}`)'
                 output_files:
                   oneOf:
                     - type: object
@@ -1062,7 +1062,7 @@ paths:
                         type: string
                     - type: string
                       enum: ["OUTPUT_FOLDER"]
-                  description: Output file map or `"OUTPUT_FOLDER"`. Defaults to `{"out_1": "output.mp4"}`.
+                  description: 'Output file map or `"OUTPUT_FOLDER"`. Defaults to `{"out_1": "output.mp4"}`.'
                   default:
                     out_1: output.mp4
             examples:
