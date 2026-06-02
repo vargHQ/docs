@@ -13,6 +13,19 @@ All three frameworks output real MP4s from code, and all three lean on JSX-ish s
 
 The first two are renderers competing on authoring surface. varg is the layer that produces what those renderers would otherwise consume — so for AI-native video, varg owns a category of its own.
 
+## At a glance
+
+| | **varg** | **Hyperframes** | **Remotion** |
+|---|---|---|---|
+| **Authoring model** | Custom JSX (`vargai`) — high-level AI clip components | HTML + CSS + JavaScript with data attributes | React components (JSX + CSS) with frame hooks |
+| **Rendering engine** | FFmpeg (local or Rendi cloud) — no headless browser | Headless Chrome (`beginFrame` or screenshot fallback) + FFmpeg | Headless Chrome + FFmpeg |
+| **AI models supported** | 70+ models across 6 providers (fal, ElevenLabs, Replicate, Higgsfield, HeyGen, PiAPI) | None built-in — bring your own URLs | None built-in — bring your own URLs |
+| **Animation control** | Clip-level (fade, slide, split, packshot) | Per-frame, deterministic — GSAP, Anime.js, Lottie all seek correctly | Per-frame via `useCurrentFrame()` — library-clock animations misfire |
+| **Build / dependencies** | None for cloud render (pure curl); Bun + FFmpeg for local | None — `index.html` plays as-is | Webpack + Babel bundler required |
+| **License** | Apache 2.0 | Apache 2.0 | Commercial license only |
+| **Open source** | Yes — [vargHQ/sdk](https://github.com/vargHQ/sdk) | Yes — OSI-approved | No — source-available |
+| **Best fit** | Agents that use generative media models and compose them | Agent-authored motion graphics in HTML; WYSIWYG editor UX | Developer-built video apps with React design systems |
+
 ## Why this comparison exists
 
 Hyperframes published [its own comparison with Remotion](https://hyperframes.mintlify.app/guides/hyperframes-vs-remotion), which is honest and well-written. It argues that HTML is a better authoring surface than React for AI agents, and lays out the technical reasons. Both sides have merit, and the doc is worth reading.
