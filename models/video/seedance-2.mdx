@@ -33,7 +33,7 @@ console.log(result.video.url)
 
 ```bash cURL
 # Submit generation
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -43,9 +43,10 @@ curl -X POST https://api.varg.ai/v1/video \
     "aspect_ratio": "16:9"
   }'
 
-# Poll for result (use job_id from response)
-curl https://api.varg.ai/v1/jobs/JOB_ID \
+# Poll for result (use the `id` from the response)
+curl https://api.varg.ai/v2/jobs/JOB_ID \
   -H "Authorization: Bearer $VARG_API_KEY"
+# When completed, the video URL is in output.outputs[0].url
 ```
 </CodeGroup>
 
@@ -67,7 +68,7 @@ const result = await varg.videoModel("seedance-2-preview").generate({
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -93,7 +94,7 @@ const result = await varg.videoModel("seedance-2-preview").generate({
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -118,7 +119,7 @@ const result = await varg.videoModel("seedance-2-preview").generate({
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

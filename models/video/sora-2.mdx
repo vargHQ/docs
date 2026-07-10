@@ -33,7 +33,7 @@ console.log(result.video.url)
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -61,7 +61,7 @@ const result = await varg.videoModel("sora-2").generate({
 Animate a still image:
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -85,7 +85,7 @@ const result = await varg.videoModel("sora-2-remix").generate({
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -120,9 +120,9 @@ The [varg SDK](https://github.com/vargHQ/sdk) (`vargai` on npm) is open-source u
 - High-level components — `<Render>`, `<Clip>`, `<Image>`, `<Video>`, `<Speech>`, `<Music>`, `<TalkingHead>`, `<Captions>`, `<Subtitle>`, `<Title>`, `<Overlay>`, `<Slider>`, `<Swipe>`, `<Packshot>`, `<Split>`, `<Grid>` — that map to creative intent, not per-frame primitives.
 - A unified gateway (`api.varg.ai`) — one API key fans out to fal, ElevenLabs, Replicate, Higgsfield, HeyGen, PiAPI, Magnific, and more.
 - Content-addressed caching (sha256 of prompt + parameters) backed by Cloudflare R2 with stable `s3.varg.ai` URLs and a 30-day TTL. Identical prompts cost nothing on re-render.
-- A cloud render endpoint at `render.varg.ai` that accepts TSX as a string and returns an MP4 URL — zero local dependencies required.
+- A cloud render endpoint (`POST api.varg.ai/v2/render`) that accepts TSX as a string and returns an MP4 URL — zero local dependencies required.
 - An agent skill (`varg-ai`) installable in Claude Code, Cursor, Windsurf, OpenCode via `npx -y skills add vargHQ/skills`. The skill ships with reference docs for models, components, prompting, recipes, and error recovery.
-- x402 USDC micropayments for anonymous agents, and BYOK with AES-256-GCM-encrypted provider keys.
+- Direct provider modules in the SDK for local rendering with your own provider keys.
 
 ### Architecture
 
@@ -131,7 +131,7 @@ Four layers, each thin and replaceable:
 1. **Authoring DSL** — JSX with the `vargai` import source. Components describe high-level media (`<TalkingHead>`, `<Speech>`, `<Clip>`) rather than per-frame primitives.
 2. **Provider orchestration** — the gateway resolves one API key to whatever provider is needed, caches the result to R2, and returns a stable URL.
 3. **Composition** — the SDK's editly compositor walks the VargElement tree and emits an ffmpeg filter graph.
-4. **Rendering** — ffmpeg locally, Rendi cloud ffmpeg in production, or the `render.varg.ai` service that wraps both.
+4. **Rendering** — ffmpeg locally, Rendi cloud ffmpeg in production, or the `POST /v2/render` cloud service that wraps both.
 
 The custom JSX runtime is deliberately not React. Components like `Image()`, `Video()`, and `Speech()` are async element factories that materialize AI assets, and the runtime understands both static and thenable elements. The result is that agents can write code that looks like React but actually describes a pipeline of AI generations and compositions.
 
@@ -143,11 +143,9 @@ The custom JSX runtime is deliberately not React. Components like `Image()`, `Vi
 | Caching is sacred | Content-addressed, R2-backed, 30-day TTL. Identical prompts are free on re-render, which is critical for the economics of iteration when each generation costs $0.05–$0.50+. |
 | One API key replaces seven | A single `VARG_API_KEY` fans out to fal, ElevenLabs, Replicate, Higgsfield, HeyGen, PiAPI, and Magnific. No more juggling provider accounts and dashboards. |
 | Agent-native by design | The skill spec is cross-tool (Claude Code, Cursor, Windsurf, OpenCode). The CLI has structured `--json` and `--quiet` output. Action definitions ship as JSON schemas. OTP-based auth is built into the skill so agents can onboard users end-to-end. |
-| Cloud render via pure curl | Agents without a local toolchain can POST TSX as a string to `render.varg.ai/api/render`. Globals are pre-injected — no imports, no `package.json`, no bundler. |
+| Cloud render via pure curl | Agents without a local toolchain can POST TSX as a string to `api.varg.ai/v2/render`. Globals are pre-injected — no imports, no `package.json`, no bundler. |
 | High-level creative components | `<TalkingHead>`, `<Speech>`, `<Captions>`, `<Lipsync>` match how creators and agents actually reason about AI video — not "what happens on frame 137." |
 | Open-source SDK | The [varg SDK](https://github.com/vargHQ/sdk) and templates are Apache 2.0. You pay only for AI generation, and only when the cache misses. |
-| BYOK with encryption | Bring your own provider keys, stored AES-256-GCM-encrypted. Or use varg's pooled keys with usage-based billing. |
-| x402 micropayments | Anonymous agents can pay per-request in USDC on Base without ever creating an account. |
 
 ### Limitations (by design)
 
@@ -155,7 +153,7 @@ The custom JSX runtime is deliberately not React. Components like `Image()`, `Vi
 |---|---|
 | No per-frame programmability | varg's bet is that the right abstraction for AI-first video is "clips of AI-generated media composed on a timeline," not "what does pixel (x,y) look like on frame 137." Different problem, different abstraction. |
 | No browser preview | The composition is server-side because the AI generation steps are server-side. Preview happens by rendering — and caching keeps re-renders nearly free. |
-| Quality depends on upstream models | True of any AI orchestration layer. Mitigated by giving you instant access to the best provider for each capability, plus failover and BYOK. |
+| Quality depends on upstream models | True of any AI orchestration layer. Mitigated by giving you instant access to the best provider for each capability, plus failover. |
 | Newer than Remotion | Beta as of 2026. Smaller community, fewer Stack Overflow answers — but the agent skill replaces a lot of what a community would otherwise carry. |
 
 ### Best for
@@ -206,7 +204,7 @@ That's the layer varg owns.
 |---|---|---|---|
 | **Remotion** | Headless Chrome + FFmpeg. React reconciles each frame. | Mature AWS Lambda. | Library-clock animations run at wall-clock speed during render. |
 | **Hyperframes** | Headless Chrome (`beginFrame` or screenshot fallback) + FFmpeg. | Newer AWS Lambda path. | Deterministic seek-and-capture. HDR supported. |
-| **varg** | FFmpeg locally, Rendi (cloud FFmpeg) in production, or `render.varg.ai`. No headless Chrome. | Render service auto-scales ffmpeg workers; gateway caches AI generations to R2. | AI model calls happen during composition. Cache is sha256-keyed and free on hit. |
+| **varg** | FFmpeg locally, Rendi (cloud FFmpeg) in production, or cloud render (`POST /v2/render`). No headless Chrome. | Render service auto-scales ffmpeg workers; gateway caches AI generations to R2. | AI model calls happen during composition. Cache is sha256-keyed and free on hit. |
 
 ### Agent experience and editing
 
@@ -214,7 +212,7 @@ That's the layer varg owns.
 |---|---|---|---|
 | **Remotion** | Agents must follow React rules; more prompting needed for creative output. | Code-centric Studio; Editor Starter ships as a paid template. Visual edits require recompile. | Source-available custom license. Commercial use above small-team thresholds requires a paid license + per-render fees. |
 | **Hyperframes** | Highly agent-native. Built-in skills for website-to-video and captioning. | Studio uses the same DOM as the renderer — click, drag, edit. No recompile. | Apache 2.0. Free commercial use, no per-render fees. |
-| **varg** | Agent-first design: cross-tool skill, JSON action definitions, structured CLI output, OTP onboarding, pure-curl cloud render. | No browser editor. Preview by rendering — cache keeps re-renders nearly free. The dashboard at `app.varg.ai` handles project management. | SDK and templates are Apache 2.0 ([vargHQ/sdk](https://github.com/vargHQ/sdk)). AI generations are pay-per-call (or BYOK) with content-addressed caching. |
+| **varg** | Agent-first design: cross-tool skill, JSON action definitions, structured CLI output, OTP onboarding, pure-curl cloud render. | No browser editor. Preview by rendering — cache keeps re-renders nearly free. The dashboard at `app.varg.ai` handles project management. | SDK and templates are Apache 2.0 ([vargHQ/sdk](https://github.com/vargHQ/sdk)). AI generations are pay-per-call with content-addressed caching. |
 
 ## When to choose what
 

@@ -1,89 +1,39 @@
 ---
 title: "Bring Your Own Keys"
-description: "Use your own provider API keys for $0 varg billing"
+description: "Using your own provider API keys with varg"
 ---
 
-BYOK (Bring Your Own Key) lets you use your own provider API keys through the varg gateway. You still get caching, stable URLs, and unified API — but you're billed directly by the provider instead of through varg credits.
+<Warning>
+**BYOK via the varg API is not available in v2 yet.** The v1 gateway's `X-Provider-Key-*` headers were not carried over, and passing provider keys in the request body is not supported. Requests are always billed in varg credits. BYOK support for v2 is planned — this page will be updated when it ships.
+</Warning>
 
-<Info>
-**You still need a `VARG_API_KEY`** even with BYOK. It authenticates you with the gateway. BYOK just changes who pays for the AI generation.
-</Info>
+## What works today
 
-## Why BYOK?
+### varg credits (default)
 
-- **$0 varg cost** — you pay the provider directly
-- **Own quotas** — use your own rate limits and billing
-- **Same gateway features** — caching, stable URLs, unified API
-- **Mix and match** — use BYOK for some providers, varg credits for others
-
-## How it works
-
-When a request reaches the gateway, it resolves the API key in this order:
-
-1. **BYOK header** (`X-Provider-Key-*`) — $0 varg cost
-2. **Dashboard-saved BYOK key** — $0 varg cost
-3. **Varg pooled key** — metered billing via credits
-
-## Provider keys
-
-| Provider | Header | Env var | Get key at |
-|----------|--------|---------|------------|
-| Fal | `X-Provider-Key-Fal` | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
-| ElevenLabs | `X-Provider-Key-ElevenLabs` | `ELEVENLABS_API_KEY` | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
-| Higgsfield | `X-Provider-Key-Higgsfield` | `HIGGSFIELD_API_KEY` | [higgsfield.ai](https://higgsfield.ai) |
-| Replicate | `X-Provider-Key-Replicate` | `REPLICATE_API_TOKEN` | [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens) |
-
-## Quick tutorial
-
-### Gateway API (curl)
-
-Pass your provider key as a header alongside your varg key:
+One `VARG_API_KEY`, all providers, metered billing. This is the supported path for the [varg API](/api):
 
 ```bash
-# Generate an image using your own Fal key ($0 varg cost)
-curl -X POST https://api.varg.ai/v1/image \
-  -H "Authorization: Bearer varg_xxx" \
-  -H "X-Provider-Key-Fal: fal_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"model": "nano-banana-pro", "prompt": "sunset over mountains"}'
-```
-
-### Cloud Render
-
-Pass BYOK keys in the request body:
-
-```bash
-curl -s -X POST https://render.varg.ai/api/render \
+curl -X POST https://api.varg.ai/v2/image \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "code": "export default (<Render width={1920} height={1080}><Clip duration={3}>{Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"mountains\" })}</Clip></Render>);",
-    "providerKeys": {
-      "fal": "fal_xxx",
-      "elevenlabs": "el_xxx"
-    }
-  }'
+  -d '{"model": "nano_banana_pro", "prompt": "sunset over mountains"}'
 ```
 
-### Local Render (TypeScript)
+Estimate any cost before running with [`POST /v2/estimate`](/api#pricing-and-billing). Cache hits are free.
 
-Pass provider keys when creating the varg client:
+### Direct provider modules in the local SDK
+
+For local rendering, the SDK ships direct provider modules (`fal`, `elevenlabs`, ...) that call the providers with **your own keys from env** — bypassing varg entirely (no varg billing, but also no varg caching or file storage):
 
 ```tsx
 /** @jsxImportSource vargai */
 import { Render, Clip, Image } from "vargai/react"
-import { createVarg } from "vargai/ai"
+import { fal } from "vargai/ai"
 
-const varg = createVarg({
-  apiKey: process.env.VARG_API_KEY!,
-  providerKeys: {
-    fal: process.env.FAL_KEY!,
-    elevenlabs: process.env.ELEVENLABS_API_KEY!,
-  },
-})
-
+// Uses FAL_KEY / FAL_API_KEY from your environment — billed by fal directly
 const img = Image({
-  model: varg.imageModel("nano-banana-pro"),
+  model: fal.imageModel("nano_banana_pro"),
   prompt: "a cabin in mountains at sunset",
   aspectRatio: "16:9",
 })
@@ -95,33 +45,20 @@ export default (
 )
 ```
 
-### .env setup for BYOK
-
 ```bash
-# Required
-VARG_API_KEY=varg_xxx
-
-# BYOK provider keys (optional — only include the ones you have)
-FAL_KEY=fal_xxx
-ELEVENLABS_API_KEY=xxx
-HIGGSFIELD_API_KEY=hf_xxx
-REPLICATE_API_TOKEN=r8_xxx
+# .env
+FAL_KEY=fal_xxx                 # fal.ai/dashboard/keys
+ELEVENLABS_API_KEY=xxx          # elevenlabs.io/app/settings/api-keys
 ```
 
-## Caching with BYOK
+<Note>
+This only applies to **local rendering** (`bunx vargai render`). Cloud render (`POST /v2/render`) and all API generation endpoints run on varg pooled keys and bill varg credits.
+</Note>
 
-BYOK requests use the same cache as pooled requests. The cache key is based on the request parameters (prompt, model, etc.), **not** the API key used.
-
-This means:
-- If a result is already cached from a previous pooled request, your BYOK request gets the cached result at $0
-- If you generate something new with BYOK, subsequent requests (pooled or BYOK) get the cached result
-
-## When to use BYOK vs credits
+## When to use which
 
 | Scenario | Use |
 |----------|-----|
-| Getting started, small projects | **Credits** — simplest, one key |
-| High volume production | **BYOK** — use provider pricing directly |
-| Need specific provider features | **BYOK** — full access to provider API |
-| Team with existing provider accounts | **BYOK** — reuse existing keys |
-| Prototyping, learning | **Credits** — no provider setup needed |
+| API access (curl, agents, cloud render) | **varg credits** — the only supported path |
+| Local rendering with existing provider accounts | **Direct provider modules** — your env keys, provider-direct billing |
+| Getting started, prototyping | **varg credits** — one key, caching included |

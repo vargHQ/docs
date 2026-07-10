@@ -35,7 +35,7 @@ console.log(result.video.url)
 ```
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -54,7 +54,7 @@ curl -X POST https://api.varg.ai/v1/video \
 LTX can generate audio alongside the video. Enable it with provider options:
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -70,7 +70,7 @@ curl -X POST https://api.varg.ai/v1/video \
 Provide two images to control start and end frames:
 
 ```bash cURL
-curl -X POST https://api.varg.ai/v1/video \
+curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

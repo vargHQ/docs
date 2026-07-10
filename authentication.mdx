@@ -3,7 +3,7 @@ title: "Authentication"
 description: "API keys, login, credentials, and billing"
 ---
 
-varg uses a single API key (`VARG_API_KEY`) for all AI generation. This key authenticates you with the varg gateway, which routes requests to the right AI provider (Fal, ElevenLabs, Higgsfield, Replicate) and handles billing.
+varg uses a single API key (`VARG_API_KEY`) for all AI generation. This key authenticates you with the varg API, which routes requests to the right AI provider (Fal, ElevenLabs, Higgsfield, PiAPI, HeyGen, ...) and handles billing.
 
 ## Get your API key
 
@@ -86,7 +86,7 @@ const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 Or with the REST API:
 
 ```bash
-curl -H "Authorization: Bearer varg_xxx" https://api.varg.ai/v1/balance
+curl -H "Authorization: Bearer varg_xxx" https://api.varg.ai/v2/me
 ```
 
 ## Credits and billing
@@ -100,11 +100,11 @@ bunx vargai balance
 Or via API:
 
 ```bash
-curl -s -H "Authorization: Bearer $VARG_API_KEY" https://api.varg.ai/v1/balance
-# {"balance_cents": 10000}
+curl -s -H "Authorization: Bearer $VARG_API_KEY" https://api.varg.ai/v2/billing/balance
+# {"available": 10000, "reserved": 0, "total_balance": 10000, ...}
 ```
 
-1 credit = 1 cent. `balance_cents: 10000` means 10,000 credits ($100).
+1 credit = 1 cent. `total_balance: 10000` means 10,000 credits ($100). `available` is what you can spend right now (`total` minus credits reserved by in-flight jobs).
 
 ### Add credits
 
@@ -129,15 +129,37 @@ Available packages:
 
 | Action | Model | Credits | Cost |
 |--------|-------|---------|------|
-| Image | nano-banana-pro | 5 | $0.05 |
-| Image | flux-pro | 10 | $0.10 |
-| Video (5s) | kling-v3 | 150 | $1.50 |
-| Video (5s) | seedance-2-preview | 250 | $2.50 |
-| Video (5s) | wan-2.5 | 80 | $0.80 |
-| Speech | eleven_v3 | 25 | $0.25 |
-| Music | music_v1 | 30 | $0.30 |
+| Image | grok_imagine_image | 4 | $0.04 |
+| Image | flux_dev | 68 | $0.68 |
+| Image | nano_banana_pro | 126 | $1.26 |
+| Video (5s) | sora_2 | 105 | $1.05 |
+| Video (5s) | wan_2.5 | 158 | $1.58 |
+| Video (5s) | kling_v3 | 221 | $2.21 |
+| Speech | eleven_turbo_v2_5 | 105 | $1.05 |
+| Music | music_v1 | 79 | $0.79 |
+
+Live catalog with all ~80 models: [`GET https://api.varg.ai/v2/pricing`](https://api.varg.ai/v2/pricing) (public, no auth). Estimate any request before running it with [`POST /v2/estimate`](/api#pricing-and-billing).
 
 **Cache hits are always free.** Same prompt + params = $0 instant result.
+
+## Managing API keys
+
+Create, rename, and revoke API keys from the [dashboard](https://app.varg.ai), or via the API with an app session:
+
+```bash
+# List keys
+curl -s https://api.varg.ai/v2/api-keys -H "Authorization: Bearer $SESSION_JWT"
+
+# Create a key (the plaintext key is returned ONCE)
+curl -s -X POST https://api.varg.ai/v2/api-keys \
+  -H "Authorization: Bearer $SESSION_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "production"}'
+```
+
+<Warning>
+Key management endpoints require an app session (JWT from the dashboard login), not an API key — a leaked API key can't be used to mint new keys.
+</Warning>
 
 ## CLI commands
 
@@ -150,4 +172,4 @@ Available packages:
 
 ## Bring Your Own Keys (BYOK)
 
-If you have your own provider API keys (fal, ElevenLabs, etc.), you can use them through the varg gateway at **$0 varg cost**. See the [BYOK guide](/byok) for details.
+BYOK via the varg API is not available in v2 yet. For local rendering you can use direct provider modules with your own env keys — see the [BYOK guide](/byok) for the current state.

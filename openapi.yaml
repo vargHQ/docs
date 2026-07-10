@@ -1,1221 +1,814 @@
 openapi: 3.1.0
 info:
-  title: Varg Gateway API
-  version: 0.1.0
-  description: Unified REST API for AI generation (video, image, speech, music) at api.varg.ai
+  title: varg API
+  version: 2.0.0
+  description: |
+    Unified REST API for AI media generation at `api.varg.ai/v2`.
 
+    One API key, ~80 models across 8 providers, async jobs, stable output URLs
+    on `s3.varg.ai`, files with lineage, and transparent credit billing
+    (1 credit = 1 cent = $0.01).
+
+    **The async job pattern:** every generation request returns `202 Accepted`
+    with a job object (`status: queued`). Poll `GET /jobs/{id}` until the job
+    reaches a terminal status (`completed`, `failed`, or `cancelled`), then read
+    `output.outputs[0].url`. Alternatively, set `options.webhook_url` in the
+    request to receive an HMAC-signed callback when the job finishes.
 servers:
-  - url: https://api.varg.ai/v1
-
+  - url: https://api.varg.ai/v2
 security:
   - bearerAuth: []
-
 tags:
   - name: Generation
-    description: Create AI-generated content
+    description: Create generation jobs (image, video, speech, music, transcription, ffmpeg, render, pipeline)
+  - name: Tools
+    description: Discover tools, their schemas, and call any tool generically
   - name: Jobs
-    description: Manage and monitor generation jobs
+    description: Poll and manage job lifecycle
   - name: Files
-    description: Upload files for use in generation
-  - name: Reference
-    description: Available models and voices
-  - name: Media Processing
-    description: FFmpeg-powered video utilities (trim, resize, probe, custom commands)
+    description: Upload, import, probe, and manage files
+  - name: Lineage
+    description: Resolve which job produced a file
+  - name: Pricing
+    description: Estimate costs and browse the price catalog
+  - name: Billing
+    description: Balance, usage, and transaction history
   - name: Account
-    description: Account info, balance, and usage
+    description: Identity and API key management
 
 paths:
-  /video:
-    post:
-      operationId: createVideo
-      tags: [Generation]
-      summary: Generate video
-      description: |
-        Generate video from text, image, or video input. Returns a job that you poll or stream for completion.
-
-        This endpoint also handles **lipsync** (provide audio + video/image via `files`), **video editing** (provide a video file), and **video upscaling** (provide a video file with an upscale model).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [model, prompt]
-              properties:
-                model:
-                  type: string
-                  description: |
-                    Video model to use. Also accepts lipsync and video upscale models.
-
-                    **Video generation:** `kling-v3`, `kling-v3-standard`, `seedance-2-preview`, `seedance-2-fast-preview`, `sora-2`, `sora-2-pro`, `wan-2.5`, `wan-2.5-preview`, `minimax`, `ltx-2-19b-distilled`, `grok-imagine`
-
-                    **Video editing:** `grok-imagine-edit`, `sora-2-remix`, `seedance-2-preview`
-
-                    **Motion control:** `kling-v2.6-motion`
-
-                    **Lipsync:** `veed-fabric-1.0`, `sync-v2`, `sync-v2-pro`, `omnihuman-v1.5`
-
-                    **Video upscale:** `seedvr-video`, `topaz-video`, `bytedance-upscaler`, `sima-video-upscaler`
-
-                    **Legacy:** `kling-v2.6`, `kling-v2.5`, `kling-v2.1`, `kling-v2`
-                  examples:
-                    - kling-v3
-                    - seedance-2-preview
-                    - seedance-2-fast-preview
-                    - sora-2
-                    - wan-2.5
-                    - minimax
-                    - ltx-2-19b-distilled
-                    - grok-imagine
-                    - veed-fabric-1.0
-                    - sync-v2
-                    - seedvr-video
-                prompt:
-                  type: string
-                  description: Text description of the video to generate. For lipsync and upscale models, can be empty.
-                  example: ocean waves crashing on a rocky beach at sunset
-                duration:
-                  type: number
-                  description: Duration in seconds. Seedance models only accept 5, 10, or 15. Kling V3 accepts integers 3-15.
-                  default: 5
-                  example: 5
-                aspect_ratio:
-                  type: string
-                  description: Output aspect ratio
-                  examples:
-                    - "16:9"
-                    - "9:16"
-                    - "1:1"
-                    - "4:3"
-                    - "3:4"
-                files:
-                  type: array
-                  description: |
-                    Input files for image-to-video, video editing, lipsync, or upscale.
-
-                    - **Image-to-video:** 1 image URL (first frame). Some models support 2 images for first+last keyframe.
-                    - **Video editing:** 1 video URL (`.mp4`, `.webm`, `.mov`)
-                    - **Lipsync:** 1 video/image URL + 1 audio URL
-                    - **Video upscale:** 1 video URL
-                  items:
-                    type: object
-                    required: [url]
-                    properties:
-                      url:
-                        type: string
-                        format: uri
-                        description: URL of the input file
-                provider_options:
-                  type: object
-                  description: Additional options passed directly to the provider
-                  additionalProperties: true
-            examples:
-              kling-v3-text-to-video:
-                summary: "Kling V3 \u2014 text-to-video"
-                value:
-                  model: kling-v3
-                  prompt: cinematic shot of ocean waves crashing on rocky cliffs at golden hour
-                  duration: 5
-                  aspect_ratio: "16:9"
-              kling-v3-image-to-video:
-                summary: "Kling V3 \u2014 image-to-video"
-                value:
-                  model: kling-v3
-                  prompt: slow camera push-in, the subject blinks and smiles
-                  duration: 5
-                  files:
-                    - url: https://example.com/portrait.jpg
-              kling-v3-keyframe:
-                summary: "Kling V3 \u2014 first + last frame keyframe"
-                value:
-                  model: kling-v3
-                  prompt: smooth transition from day to night
-                  duration: 5
-                  files:
-                    - url: https://example.com/day-scene.jpg
-                    - url: https://example.com/night-scene.jpg
-              kling-v3-standard:
-                summary: "Kling V3 Standard \u2014 budget text-to-video"
-                value:
-                  model: kling-v3-standard
-                  prompt: a paper airplane floating through a sunlit classroom
-                  duration: 8
-                  aspect_ratio: "16:9"
-              seedance-2-text-to-video:
-                summary: "Seedance 2 \u2014 text-to-video"
-                value:
-                  model: seedance-2-preview
-                  prompt: a golden retriever running through autumn leaves in slow motion
-                  duration: 5
-                  aspect_ratio: "16:9"
-              seedance-2-image-to-video:
-                summary: "Seedance 2 \u2014 image-to-video"
-                value:
-                  model: seedance-2-preview
-                  prompt: "@image1 the woman turns to face the camera and smiles"
-                  duration: 5
-                  files:
-                    - url: https://example.com/portrait.jpg
-              seedance-2-fast:
-                summary: "Seedance 2 Fast \u2014 quick iteration"
-                value:
-                  model: seedance-2-fast-preview
-                  prompt: aerial drone shot over a tropical island with turquoise water
-                  duration: 10
-                  aspect_ratio: "16:9"
-              sora-2-text-to-video:
-                summary: "Sora 2 \u2014 text-to-video"
-                value:
-                  model: sora-2
-                  prompt: a chef preparing sushi in a high-end restaurant, cinematic lighting
-                  duration: 5
-                  aspect_ratio: "16:9"
-              sora-2-image-to-video:
-                summary: "Sora 2 \u2014 image-to-video"
-                value:
-                  model: sora-2
-                  prompt: the scene slowly comes to life with gentle wind and moving clouds
-                  duration: 5
-                  files:
-                    - url: https://example.com/landscape.jpg
-              sora-2-remix:
-                summary: "Sora 2 Remix \u2014 video-to-video"
-                value:
-                  model: sora-2-remix
-                  prompt: transform into an anime art style with vibrant colors
-                  files:
-                    - url: https://example.com/original.mp4
-              wan-25:
-                summary: "Wan 2.5 \u2014 text-to-video"
-                value:
-                  model: wan-2.5
-                  prompt: a dancer performing contemporary dance in an empty warehouse, dramatic shadows
-                  duration: 5
-                  aspect_ratio: "9:16"
-              minimax:
-                summary: "MiniMax \u2014 text-to-video"
-                value:
-                  model: minimax
-                  prompt: a cat sitting on a windowsill watching rain fall outside
-                  duration: 5
-                  aspect_ratio: "16:9"
-              ltx:
-                summary: "LTX \u2014 fast text-to-video"
-                value:
-                  model: ltx-2-19b-distilled
-                  prompt: abstract colorful particles flowing through space
-                  duration: 5
-                  aspect_ratio: "16:9"
-              grok-imagine-video:
-                summary: "Grok Imagine \u2014 text-to-video"
-                value:
-                  model: grok-imagine
-                  prompt: a steam train crossing a stone bridge over a misty valley
-                  duration: 5
-                  aspect_ratio: "16:9"
-              grok-imagine-edit:
-                summary: "Grok Imagine Edit \u2014 video editing"
-                value:
-                  model: grok-imagine-edit
-                  prompt: change the background to a tropical beach at sunset
-                  files:
-                    - url: https://example.com/original.mp4
-              lipsync-veed:
-                summary: "VEED Fabric 1.0 \u2014 lipsync"
-                value:
-                  model: veed-fabric-1.0
-                  prompt: ""
-                  files:
-                    - url: https://example.com/talking-head.mp4
-                    - url: https://example.com/narration.mp3
-              lipsync-sync:
-                summary: "Sync V2 \u2014 lipsync"
-                value:
-                  model: sync-v2
-                  prompt: ""
-                  files:
-                    - url: https://example.com/talking-head.mp4
-                    - url: https://example.com/narration.mp3
-              lipsync-omnihuman:
-                summary: "OmniHuman 1.5 \u2014 lipsync"
-                value:
-                  model: omnihuman-v1.5
-                  prompt: ""
-                  files:
-                    - url: https://example.com/portrait.jpg
-                    - url: https://example.com/speech.mp3
-              upscale-seedvr-video:
-                summary: "SeedVR \u2014 video upscale"
-                value:
-                  model: seedvr-video
-                  prompt: ""
-                  files:
-                    - url: https://example.com/low-res-video.mp4
-              upscale-topaz-video:
-                summary: "Topaz \u2014 video upscale"
-                value:
-                  model: topaz-video
-                  prompt: ""
-                  files:
-                    - url: https://example.com/low-res-video.mp4
-      responses:
-        "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
-        "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-        "502":
-          $ref: "#/components/responses/ProviderError"
-
+  # ── Generation ─────────────────────────────────────────────────────────────
   /image:
     post:
-      operationId: createImage
       tags: [Generation]
-      summary: Generate image
+      operationId: createImage
+      summary: Generate an image
       description: |
-        Generate an image from a text prompt, or edit/upscale an existing image. Returns a job that you poll or stream for completion.
+        Create an image generation job. Also handles image editing (send a
+        source image in `files` with an edit-capable model like
+        `nano_banana_pro/edit`) and image upscaling (`clarity_upscaler`,
+        `aura_sr`, `topaz`, ...).
 
-        This endpoint also handles **image editing** (provide a source image via `files`) and **image upscaling** (provide an image with an upscale model).
+        Returns `202` with a queued job. Poll `GET /jobs/{id}` until `completed`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [model, prompt]
-              properties:
-                model:
-                  type: string
-                  description: |
-                    Image model to use. Also accepts image editing and upscale models.
-
-                    **Text-to-image:** `flux-pro`, `flux-dev`, `flux-schnell`, `nano-banana-pro`, `recraft-v3`, `phota`, `grok-imagine-image`, `soul`
-
-                    **Image editing:** `nano-banana-pro/edit`, `nano-banana-2/edit`, `phota/edit`, `phota/enhance`, `grok-imagine-image/edit`, `seedream-v4.5/edit`, `qwen-angles`
-
-                    **Image upscale:** `seedvr`, `recraft-clarity`, `clarity-upscaler`, `topaz`, `ccsr`, `aura-sr`
-                  examples:
-                    - flux-pro
-                    - flux-schnell
-                    - nano-banana-pro
-                    - recraft-v3
-                    - phota
-                    - grok-imagine-image
-                    - soul
-                    - nano-banana-pro/edit
-                    - seedvr
-                    - topaz
-                prompt:
-                  type: string
-                  description: Text description of the image to generate. For editing models, describe the desired change. For upscale models, can be empty.
-                  example: sunset over mountains, dramatic lighting, photorealistic
-                aspect_ratio:
-                  type: string
-                  description: Output aspect ratio
-                  default: "1:1"
-                  examples:
-                    - "1:1"
-                    - "16:9"
-                    - "9:16"
-                    - "4:3"
-                    - "3:4"
-                files:
-                  type: array
-                  description: |
-                    Input images for editing, style transfer, or upscaling.
-
-                    - **Image editing:** 1 source image URL
-                    - **Image upscale:** 1 image URL
-                    - **Multi-angle (qwen-angles):** 1 source image
-                  items:
-                    type: object
-                    required: [url]
-                    properties:
-                      url:
-                        type: string
-                        format: uri
-                        description: URL of the input image
-                provider_options:
-                  type: object
-                  description: Additional options passed directly to the provider
-                  additionalProperties: true
+              $ref: "#/components/schemas/ImageRequest"
             examples:
-              flux-pro:
-                summary: "Flux Pro \u2014 text-to-image"
+              text-to-image:
+                summary: Text to image
                 value:
-                  model: flux-pro
-                  prompt: a minimalist logo design, geometric shapes, blue and white gradient
-                  aspect_ratio: "1:1"
-              flux-schnell:
-                summary: "Flux Schnell \u2014 fast text-to-image"
-                value:
-                  model: flux-schnell
-                  prompt: sunset over mountains, dramatic lighting, photorealistic
+                  model: flux_schnell
+                  prompt: a cat astronaut floating in space, photorealistic
                   aspect_ratio: "16:9"
-              nano-banana-pro:
-                summary: "Nano Banana Pro \u2014 photorealistic"
+              image-edit:
+                summary: Image editing (nano banana pro)
                 value:
-                  model: nano-banana-pro
-                  prompt: professional headshot of a woman in a modern office, natural lighting, shallow depth of field
-                  aspect_ratio: "1:1"
-              nano-banana-edit:
-                summary: "Nano Banana Pro \u2014 image editing"
-                value:
-                  model: nano-banana-pro/edit
-                  prompt: change the shirt color to bright red
+                  model: nano_banana_pro/edit
+                  prompt: make the sky purple and add northern lights
                   files:
-                    - url: https://example.com/portrait.jpg
-              recraft-v3:
-                summary: "Recraft V3 \u2014 design and illustration"
+                    - url: https://s3.varg.ai/files/acc_x/file_abc.png
+              pinned-provider:
+                summary: Pin an exact provider
                 value:
-                  model: recraft-v3
-                  prompt: flat vector illustration of a coffee shop storefront, warm colors, clean lines
-                  aspect_ratio: "1:1"
-              phota:
-                summary: "Phota \u2014 text-to-image"
+                  model: "fal:flux_schnell"
+                  prompt: sunset over mountains
+              provider-options:
+                summary: Provider-native overrides
                 value:
-                  model: phota
-                  prompt: product photo of a ceramic mug on a wooden table, morning light, steam rising
-                  aspect_ratio: "4:3"
-              phota-edit:
-                summary: "Phota Edit \u2014 image editing"
-                value:
-                  model: phota/edit
-                  prompt: remove the background and replace with a clean white studio
-                  files:
-                    - url: https://example.com/product.jpg
-              grok-imagine-image:
-                summary: "Grok Imagine \u2014 text-to-image"
-                value:
-                  model: grok-imagine-image
-                  prompt: a medieval castle perched on a cliff overlooking a stormy sea
-                  aspect_ratio: "16:9"
-              qwen-angles:
-                summary: "Qwen Angles \u2014 multi-angle views"
-                value:
-                  model: qwen-angles
-                  prompt: generate multiple angles of this product
-                  files:
-                    - url: https://example.com/product.jpg
-              soul:
-                summary: "Soul \u2014 text-to-image (Higgsfield)"
-                value:
-                  model: soul
-                  prompt: a cyberpunk street scene at night, neon reflections on wet pavement
-                  aspect_ratio: "16:9"
-              upscale-seedvr:
-                summary: "SeedVR \u2014 image upscale"
-                value:
-                  model: seedvr
-                  prompt: ""
-                  files:
-                    - url: https://example.com/low-res-photo.jpg
-              upscale-topaz:
-                summary: "Topaz \u2014 image upscale"
-                value:
-                  model: topaz
-                  prompt: ""
-                  files:
-                    - url: https://example.com/low-res-photo.jpg
+                  model: flux_dev
+                  prompt: a serene mountain lake at sunrise
+                  provider_options:
+                    fal:
+                      seed: 42
+                      num_images: 2
       responses:
         "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
         "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-        "502":
-          $ref: "#/components/responses/ProviderError"
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
+
+  /video:
+    post:
+      tags: [Generation]
+      operationId: createVideo
+      summary: Generate a video
+      description: |
+        Create a video generation job. Handles text-to-video, image-to-video
+        (send a start frame in `files`), lipsync (`sync_v2`, `veed_fabric_1.0`,
+        `omnihuman_v1.5`, ...), video editing (`grok_imagine_edit`), avatars
+        (`heygen_avatar`), and video upscaling (`topaz_video`, `seedvr_video`).
+
+        When `files` contains an image and the model has an image-to-video
+        variant, varg routes to it automatically — same model family, never
+        substituted.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoRequest"
+            examples:
+              text-to-video:
+                summary: Text to video
+                value:
+                  model: kling_v3
+                  prompt: cat jumping over a fence in slow motion
+                  duration: 5
+                  aspect_ratio: "16:9"
+              image-to-video:
+                summary: Image to video
+                value:
+                  model: kling_v3
+                  prompt: the cat turns and looks at the camera
+                  files:
+                    - url: https://s3.varg.ai/files/acc_x/cat.jpg
+              lipsync:
+                summary: Lipsync (video + audio)
+                value:
+                  model: sync_v2
+                  files:
+                    - url: https://s3.varg.ai/files/acc_x/talking.mp4
+                    - url: https://s3.varg.ai/files/acc_x/voice.mp3
+              webhook:
+                summary: With completion webhook
+                value:
+                  model: sora_2
+                  prompt: aerial shot of a coastal city at golden hour
+                  options:
+                    webhook_url: https://example.com/varg-webhook
+      responses:
+        "202":
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
+        "402":
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
 
   /speech:
     post:
-      operationId: createSpeech
       tags: [Generation]
-      summary: Generate speech
-      description: |
-        Convert text to speech using ElevenLabs voices. Returns a job that you poll or stream for completion.
-
-        Use `GET /voices` to browse all available voices with previews.
+      operationId: createSpeech
+      summary: Generate speech (TTS)
+      description: Convert text to speech. ElevenLabs models (`eleven_v3`, `eleven_turbo_v2_5`, `eleven_multilingual_v2`, ...).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [model, text]
-              properties:
-                model:
-                  type: string
-                  description: |
-                    Speech model to use.
-
-                    **Latest:** `eleven_v3` (best quality, multilingual)
-
-                    **Fast:** `eleven_flash_v2_5`, `eleven_flash_v2` (lowest latency)
-
-                    **Turbo:** `eleven_turbo_v2_5`, `eleven_turbo_v2`, `turbo` (balanced)
-
-                    **Multilingual:** `eleven_multilingual_v2` (29 languages)
-                  examples:
-                    - eleven_v3
-                    - eleven_flash_v2_5
-                    - eleven_multilingual_v2
-                    - eleven_turbo_v2_5
-                    - turbo
-                text:
-                  type: string
-                  description: Text to convert to speech
-                  example: Hello everyone! Welcome to my channel.
-                voice:
-                  type: string
-                  description: Voice name or ElevenLabs voice_id. Use `GET /voices` to browse available voices.
-                  default: rachel
-                  enum:
-                    - rachel
-                    - domi
-                    - sarah
-                    - antoni
-                    - elli
-                    - josh
-                    - arnold
-                    - adam
-                    - sam
-                provider_options:
-                  type: object
-                  description: Additional options passed directly to the provider (e.g. stability, similarity_boost, style)
-                  additionalProperties: true
+              $ref: "#/components/schemas/SpeechRequest"
             examples:
-              eleven-v3:
-                summary: "ElevenLabs V3 \u2014 best quality"
+              basic:
+                summary: Text to speech
                 value:
                   model: eleven_v3
-                  text: "Welcome to today's episode. We'll be exploring the fascinating world of deep sea creatures."
+                  text: Hello everyone! Welcome to my channel.
                   voice: rachel
-              eleven-multilingual:
-                summary: "ElevenLabs Multilingual \u2014 29 languages"
-                value:
-                  model: eleven_multilingual_v2
-                  text: "Bonjour tout le monde! Bienvenue sur ma cha\u00eene."
-                  voice: sarah
-              eleven-flash:
-                summary: "ElevenLabs Flash \u2014 low latency"
-                value:
-                  model: eleven_flash_v2_5
-                  text: "Breaking news: scientists have discovered a new species of deep-sea fish."
-                  voice: josh
-              turbo:
-                summary: "Turbo \u2014 balanced speed and quality"
-                value:
-                  model: turbo
-                  text: "Hey there! Just wanted to share a quick update on the project."
-                  voice: adam
       responses:
         "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
         "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-        "502":
-          $ref: "#/components/responses/ProviderError"
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
 
   /music:
     post:
-      operationId: createMusic
       tags: [Generation]
+      operationId: createMusic
       summary: Generate music
-      description: |
-        Generate background music from a text description using ElevenLabs. Returns a job that you poll or stream for completion.
-
-        Describe genre, mood, tempo, and instruments for best results.
+      description: Generate a music track from a text prompt (`music_v1`, `eleven_music`).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [model, prompt]
-              properties:
-                model:
-                  type: string
-                  description: Music model to use. Currently `music_v1` is the only available model.
-                  example: music_v1
-                prompt:
-                  type: string
-                  description: Description of the music to generate. Include genre, mood, tempo, and instruments.
-                  example: upbeat electronic pop, energetic, 120bpm
-                duration:
-                  type: number
-                  description: Duration in seconds
-                  example: 30
-                provider_options:
-                  type: object
-                  description: Additional options passed directly to the provider
-                  additionalProperties: true
+              $ref: "#/components/schemas/MusicRequest"
             examples:
-              cinematic:
-                summary: "Music V1 \u2014 cinematic score"
+              basic:
+                summary: Music from prompt
                 value:
                   model: music_v1
-                  prompt: epic cinematic orchestral score, building tension, dramatic strings, brass crescendo
+                  prompt: upbeat electronic music, cheerful vibes, 120 bpm
                   duration: 30
-              electronic:
-                summary: "Music V1 \u2014 electronic pop"
-                value:
-                  model: music_v1
-                  prompt: upbeat electronic pop, energetic, 120bpm, synth arpeggios
-                  duration: 15
-              ambient:
-                summary: "Music V1 \u2014 ambient background"
-                value:
-                  model: music_v1
-                  prompt: calm ambient lo-fi, soft piano, gentle rain sounds, relaxing study music
-                  duration: 60
       responses:
         "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
         "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-        "502":
-          $ref: "#/components/responses/ProviderError"
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
 
   /transcription:
     post:
-      operationId: createTranscription
       tags: [Generation]
+      operationId: createTranscription
       summary: Transcribe audio
-      description: |
-        Transcribe audio to text using Whisper. Returns a job that you poll or stream for completion.
-
-        Supports both Fal-hosted Whisper and Groq-hosted Whisper (faster, cheaper).
+      description: Transcribe an audio file by URL (`whisper`, `groq_whisper_large_v3_turbo`, ...).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [model, audio_url]
-              properties:
-                model:
-                  type: string
-                  description: |
-                    Transcription model to use.
-
-                    **Fal (standard):** `whisper`, `whisper-large-v3`
-
-                    **Groq (faster, cheaper):** `groq-whisper`, `groq-whisper-large-v3`, `groq-whisper-large-v3-turbo`
-                  examples:
-                    - whisper
-                    - whisper-large-v3
-                    - groq-whisper
-                    - groq-whisper-large-v3-turbo
-                audio_url:
-                  type: string
-                  format: uri
-                  description: URL of the audio file to transcribe (mp3, wav, m4a, webm, etc.)
-                  example: https://example.com/audio.mp3
-                language:
-                  type: string
-                  description: Language code (e.g. "en", "es", "fr", "ja"). Auto-detected if omitted.
-                  example: en
-                provider_options:
-                  type: object
-                  description: Additional options passed directly to the provider
-                  additionalProperties: true
+              $ref: "#/components/schemas/TranscriptionRequest"
             examples:
-              whisper:
-                summary: "Whisper \u2014 standard transcription"
+              basic:
+                summary: Transcribe an audio URL
                 value:
                   model: whisper
-                  audio_url: https://example.com/podcast-episode.mp3
-              whisper-large:
-                summary: "Whisper Large V3 \u2014 highest accuracy"
-                value:
-                  model: whisper-large-v3
-                  audio_url: https://example.com/interview.wav
-                  language: en
-              groq-whisper:
-                summary: "Groq Whisper \u2014 fast and cheap"
-                value:
-                  model: groq-whisper
-                  audio_url: https://example.com/meeting-recording.mp3
-              groq-whisper-turbo:
-                summary: "Groq Whisper Turbo \u2014 fastest"
-                value:
-                  model: groq-whisper-large-v3-turbo
-                  audio_url: https://example.com/voice-memo.m4a
+                  audio_url: https://s3.varg.ai/files/acc_x/voice.mp3
                   language: en
       responses:
         "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
-        "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-        "502":
-          $ref: "#/components/responses/ProviderError"
-
-  /ffmpeg/probe:
-    post:
-      operationId: probeMedia
-      tags: [Media Processing]
-      summary: Probe media file
-      description: |
-        Inspect a video or audio file to retrieve metadata: duration, dimensions, codec, fps, bitrate, and file size. Returns results synchronously.
-
-        Use this before trim or resize to understand the media you're working with.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url]
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  description: URL of the video or audio file to inspect
-                  example: https://s3.varg.ai/o/my-video.mp4
-            examples:
-              probe-video:
-                summary: "Probe a video file"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-      responses:
+          $ref: "#/components/responses/JobAccepted"
         "200":
-          description: Media metadata
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProbeResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
+          $ref: "#/components/responses/JobReplay"
         "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /ffmpeg/trim:
-    post:
-      operationId: trimVideo
-      tags: [Media Processing]
-      summary: Trim video
-      description: |
-        Cut a segment from a video by specifying start time and either end time or duration. Returns a job that you poll for completion.
-
-        Set `precise: true` for frame-accurate cuts (re-encodes, slower). Default is fast keyframe-aligned cutting.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url, start]
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  description: URL of the source video
-                  example: https://s3.varg.ai/o/my-video.mp4
-                start:
-                  type: number
-                  minimum: 0
-                  description: Start time in seconds
-                  example: 5
-                end:
-                  type: number
-                  minimum: 0
-                  description: End time in seconds (mutually exclusive with `duration`)
-                  example: 15
-                duration:
-                  type: number
-                  minimum: 0
-                  description: Duration in seconds (mutually exclusive with `end`)
-                precise:
-                  type: boolean
-                  default: false
-                  description: Frame-accurate cuts (re-encodes) vs fast keyframe-aligned
-            examples:
-              trim-with-end:
-                summary: "Trim 5s to 15s"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  start: 5
-                  end: 15
-              trim-with-duration:
-                summary: "Trim 10s starting at 5s"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  start: 5
-                  duration: 10
-              trim-precise:
-                summary: "Frame-accurate trim"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  start: 2.5
-                  end: 8.3
-                  precise: true
-      responses:
-        "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
           $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
         "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /ffmpeg/resize:
-    post:
-      operationId: resizeVideo
-      tags: [Media Processing]
-      summary: Resize video
-      description: |
-        Scale a video to new dimensions. At least one of `width` or `height` must be provided; the other is calculated to maintain aspect ratio.
-
-        Three fit modes:
-        - `cover` (default) — fill the target size, cropping overflow
-        - `contain` — fit within the target size, adding black bars if needed
-        - `stretch` — distort to exact dimensions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url]
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  description: URL of the source video
-                  example: https://s3.varg.ai/o/my-video.mp4
-                width:
-                  type: integer
-                  minimum: 1
-                  description: Target width in pixels
-                  example: 1080
-                height:
-                  type: integer
-                  minimum: 1
-                  description: Target height in pixels
-                  example: 1920
-                fit:
-                  type: string
-                  enum: [contain, cover, stretch]
-                  default: cover
-                  description: How to fit the video into the target dimensions
-            examples:
-              resize-portrait:
-                summary: "Resize to 1080x1920 (portrait)"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  width: 1080
-                  height: 1920
-              resize-width-only:
-                summary: "Resize to 720p width (auto height)"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  width: 1280
-              resize-contain:
-                summary: "Letterbox to 1080x1080"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  width: 1080
-                  height: 1080
-                  fit: contain
-      responses:
-        "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
-        "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /ffmpeg/slice:
-    post:
-      operationId: sliceVideo
-      tags: [Media Processing]
-      summary: Slice video into segments
-      description: |
-        Split a video into time-based segments. Each segment includes a video file, a full-resolution first frame (JPEG), and a 480px thumbnail (WebP).
-
-        Exactly one of `every`, `at`, `count`, or `ranges` must be provided.
-
-        - `every` — split at regular intervals (e.g. every 15 seconds)
-        - `at` — split at specific timestamps
-        - `count` — split into N equal parts
-        - `ranges` — split at explicit time ranges
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [video_url]
-              properties:
-                video_url:
-                  type: string
-                  format: uri
-                  description: URL of the source video
-                  example: https://s3.varg.ai/o/my-video.mp4
-                codec:
-                  type: string
-                  enum: [copy, reencode]
-                  default: copy
-                  description: "`copy` for fast keyframe-aligned cuts, `reencode` for frame-accurate"
-                every:
-                  type: number
-                  minimum: 0.1
-                  maximum: 3600
-                  description: Split every N seconds
-                  example: 15
-                at:
-                  type: array
-                  items:
-                    type: number
-                    minimum: 0
-                  description: Split at specific timestamps (seconds)
-                  example: [5, 15, 30]
-                count:
-                  type: integer
-                  minimum: 2
-                  maximum: 1000
-                  description: Split into N equal parts
-                  example: 4
-                ranges:
-                  type: array
-                  items:
-                    type: object
-                    required: [start, end]
-                    properties:
-                      start:
-                        type: number
-                        minimum: 0
-                      end:
-                        type: number
-                        minimum: 0
-                  description: Explicit time ranges to extract
-                thumbnails:
-                  type: boolean
-                  default: true
-                  description: Extract first_frame (full-res JPEG) and thumbnail (480px WebP) for each segment
-            examples:
-              every-15s:
-                summary: "Split every 15 seconds"
-                value:
-                  video_url: https://s3.varg.ai/o/my-video.mp4
-                  every: 15
-              count-4:
-                summary: "Split into 4 equal parts"
-                value:
-                  video_url: https://s3.varg.ai/o/my-video.mp4
-                  count: 4
-              at-timestamps:
-                summary: "Split at specific timestamps"
-                value:
-                  video_url: https://s3.varg.ai/o/my-video.mp4
-                  at: [5, 15, 30]
-              no-thumbnails:
-                summary: "Split without thumbnails"
-                value:
-                  video_url: https://s3.varg.ai/o/my-video.mp4
-                  every: 10
-                  thumbnails: false
-      responses:
-        "202":
-          description: Job created. Poll with `GET /jobs/{job_id}`. Completed job metadata contains `segments` array.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-              example:
-                job_id: job_abc123
-                status: queued
-                cache:
-                  hit: false
-                pricing:
-                  estimated: 5
-                  billing: metered
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
-        "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
 
   /ffmpeg:
     post:
+      tags: [Generation]
       operationId: runFfmpeg
-      tags: [Media Processing]
-      summary: Run FFmpeg command
+      summary: Run an ffmpeg operation
       description: |
-        Run an arbitrary FFmpeg command in the cloud. Use `{{in_1}}`, `{{in_2}}` as input file placeholders and `{{out_1}}` as the output placeholder.
+        Media processing via ffmpeg. One endpoint, four operation modes selected
+        by the `model` field:
 
-        For single-input convenience, pass `url` and your command will be automatically wrapped: `-i {{in_1}} <your command> {{out_1}}`.
+        | Model | Operation | Fields |
+        |---|---|---|
+        | `rendi_ffmpeg` | Generic command | `command`, `input_files`, `output_files` |
+        | `rendi_ffmpeg_trim` | Trim | `url`, `start`, `end` or `duration`, `precise` |
+        | `rendi_ffmpeg_resize` | Resize | `url`, `width`/`height`, `fit` |
+        | `rendi_ffmpeg_slice` | Slice into segments | `video_url`, `every`/`at`/`count`/`ranges`, `codec`, `thumbnails` |
 
-        For multi-input workflows (concat, overlay, etc.), use `input_files` to map labels to URLs.
+        Generic commands use placeholder references, e.g.
+        `-i {{in_1}} -t 5 {{out_1}}` with `input_files` mapping `in_1` to a URL
+        and `output_files` mapping `out_1` to an output filename.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FfmpegRequest"
+            examples:
+              trim:
+                summary: Trim a video
+                value:
+                  model: rendi_ffmpeg_trim
+                  url: https://s3.varg.ai/files/acc_x/video.mp4
+                  start: 2.5
+                  duration: 5
+                  precise: true
+              resize:
+                summary: Resize to 9:16
+                value:
+                  model: rendi_ffmpeg_resize
+                  url: https://s3.varg.ai/files/acc_x/video.mp4
+                  width: 1080
+                  height: 1920
+                  fit: cover
+              slice:
+                summary: Slice every 10 seconds
+                value:
+                  model: rendi_ffmpeg_slice
+                  video_url: https://s3.varg.ai/files/acc_x/long.mp4
+                  every: 10
+                  codec: copy
+                  thumbnails: true
+              command:
+                summary: Generic ffmpeg command
+                value:
+                  model: rendi_ffmpeg
+                  command: "-i {{in_1}} -vf scale=1280:720 -c:a copy {{out_1}}"
+                  input_files:
+                    in_1: https://s3.varg.ai/files/acc_x/video.mp4
+                  output_files:
+                    out_1: resized.mp4
+      responses:
+        "202":
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
+        "402":
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/NoPricing"
+
+  /render:
+    post:
+      tags: [Generation]
+      operationId: createRender
+      summary: Render TSX to video
+      description: |
+        Submit varg TSX code and get back a rendered video (or image frames).
+        No local setup needed — the render runs in the cloud, generating AI
+        assets and stitching them together.
+
+        Billing: a flat stitching fee (~5 credits) plus each AI sub-generation
+        billed as its own job. Sub-generation assets are linked to the render
+        job, so partial work is recoverable even if the render fails.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenderRequest"
+            examples:
+              basic:
+                summary: Render a short clip
+                value:
+                  code: "import { Render, Clip, Image, Video } from \"vargai/react\";\nimport { fal } from \"vargai/ai\";\nconst img = Image({ prompt: \"cute orange cat, Pixar style\", aspectRatio: \"9:16\", model: fal.imageModel(\"nano_banana_pro\") });\nexport default <Render width={1080} height={1920}><Clip duration={3}><Video prompt={{ text: \"cat waves hello\", images: [img] }} model={fal.videoModel(\"kling_v3\")} /></Clip></Render>;"
+                  mode: strict
+                  output: video
+      responses:
+        "202":
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
+        "402":
+          $ref: "#/components/responses/InsufficientBalance"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /pipeline:
+    post:
+      tags: [Generation]
+      operationId: createPipeline
+      summary: Run a custom pipeline
+      description: |
+        Run a registered multi-step pipeline (e.g. `v2vStitch`). Pipelines are
+        access-gated per account — contact varg to get access to a pipeline.
+        The `model` field is the pipeline name; remaining fields are defined by
+        the pipeline's own input schema (discover it via
+        `GET /tools/pipeline?model=<name>`).
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PipelineRequest"
+      responses:
+        "202":
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
+        "402":
+          $ref: "#/components/responses/InsufficientBalance"
+        "403":
+          description: No access to this pipeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ── Tools ──────────────────────────────────────────────────────────────────
+  /tools:
+    get:
+      tags: [Tools]
+      operationId: listTools
+      summary: List tools
+      description: List every registered tool (capability) with a short description.
+      responses:
+        "200":
+          description: Tool list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tool_key:
+                          type: string
+                          example: image
+                        description:
+                          type: string
+                          example: Generate images from text prompts
+
+  /tools/{tool_key}:
+    get:
+      tags: [Tools]
+      operationId: getTool
+      summary: Get tool metadata
+      description: |
+        Full metadata for one tool: JSON Schema for its input, output shape,
+        and a worked example. Pass `?model=<model>` to enrich `provider_options`
+        with the explicit per-provider schema for that model (instead of the
+        generic passthrough bag).
+      parameters:
+        - name: tool_key
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [image, video, speech, music, transcription, ffmpeg, render, pipeline]
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Enrich the schema with per-provider options for this model
+          example: flux_schnell
+      responses:
+        "200":
+          description: Tool metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tool_key:
+                    type: string
+                  description:
+                    type: string
+                  input_schema:
+                    type: object
+                    description: JSON Schema for the request body
+                  output_schema:
+                    type: object
+                    description: JSON Schema of the job output
+                  example:
+                    type: object
+                    description: A worked input/output example
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+
+  /tools/{tool_key}/call:
+    post:
+      tags: [Tools]
+      operationId: callTool
+      summary: Call a tool generically
+      description: |
+        Generic equivalent of the sugar routes — `POST /tools/image/call` is the
+        same as `POST /image`. Useful for dynamic clients that discover tools at
+        runtime via `GET /tools`.
+      parameters:
+        - name: tool_key
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [command]
+              required: [model]
               properties:
-                url:
+                model:
                   type: string
-                  format: uri
-                  description: Primary input file URL (shorthand — becomes `{{in_1}}`). Mutually exclusive with providing `in_1` in `input_files`.
-                  example: https://s3.varg.ai/o/my-video.mp4
-                command:
-                  type: string
-                  description: FFmpeg command arguments. Use `{{in_1}}`, `{{out_1}}` placeholders.
-                  example: "-vf eq=brightness=0.1 -c:a copy"
-                input_files:
-                  type: object
-                  additionalProperties:
-                    type: string
-                  description: 'Map of input labels to URLs (e.g. `{"in_1": "url1", "in_2": "url2"}`)'
-                output_files:
-                  oneOf:
-                    - type: object
-                      additionalProperties:
-                        type: string
-                    - type: string
-                      enum: ["OUTPUT_FOLDER"]
-                  description: 'Output file map or `"OUTPUT_FOLDER"`. Defaults to `{"out_1": "output.mp4"}`.'
-                  default:
-                    out_1: output.mp4
+              additionalProperties: true
             examples:
-              brightness:
-                summary: "Adjust brightness"
+              image:
+                summary: Same as POST /image
                 value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  command: "-vf eq=brightness=0.1 -c:a copy"
-              extract-audio:
-                summary: "Extract audio to MP3"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  command: "-vn -acodec libmp3lame"
-                  output_files:
-                    out_1: audio.mp3
-              speed-up:
-                summary: "2x speed"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  command: "-filter:v setpts=0.5*PTS -filter:a atempo=2.0"
-              to-gif:
-                summary: "Convert to GIF"
-                value:
-                  url: https://s3.varg.ai/o/my-video.mp4
-                  command: "-vf fps=10,scale=480:-1:flags=lanczos -loop 0"
-                  output_files:
-                    out_1: output.gif
+                  model: flux_schnell
+                  prompt: a cat astronaut
       responses:
         "202":
-          description: Job created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JobResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/AuthError"
+          $ref: "#/components/responses/JobAccepted"
+        "200":
+          $ref: "#/components/responses/JobReplay"
         "402":
-          $ref: "#/components/responses/InsufficientBalanceError"
+          $ref: "#/components/responses/InsufficientBalance"
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "429":
-          $ref: "#/components/responses/RateLimitError"
-        "500":
-          $ref: "#/components/responses/InternalError"
+          $ref: "#/components/responses/RateLimited"
 
-  /jobs/{job_id}:
+  # ── Jobs ───────────────────────────────────────────────────────────────────
+  /jobs:
     get:
-      operationId: getJob
       tags: [Jobs]
-      summary: Get job status
-      description: Retrieve the current status and output of a generation job.
-      parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The job ID returned when the job was created
-          example: job_a1b2c3d4
+      operationId: listJobs
+      summary: List jobs
+      description: List the caller's jobs, newest first.
       responses:
         "200":
-          description: Job details
+          description: Job list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JobResponse"
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
-        "500":
-          $ref: "#/components/responses/InternalError"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Job"
 
-    delete:
-      operationId: cancelJob
-      tags: [Jobs]
-      summary: Cancel job
-      description: Cancel a queued or processing job. Has no effect on completed or failed jobs.
-      parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The job ID to cancel
-          example: job_a1b2c3d4
-      responses:
-        "204":
-          description: Job cancelled
-        "401":
-          $ref: "#/components/responses/AuthError"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /jobs/{job_id}/stream:
+  /jobs/{id}:
     get:
-      operationId: streamJob
       tags: [Jobs]
-      summary: Stream job updates
+      operationId: getJob
+      summary: Get a job
       description: |
-        Real-time job status updates via Server-Sent Events (SSE).
-
-        Events have type `status` and contain the full job object as JSON data. The stream closes automatically when the job reaches a terminal state (completed, failed, cancelled).
-
-        Keepalive comments are sent every 15 seconds. The connection times out after 10 minutes.
+        Full job view. Poll this until `status` is terminal (`completed`,
+        `failed`, or `cancelled`), then read `output.outputs[0].url`.
       parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The job ID to stream
-          example: job_a1b2c3d4
+        - $ref: "#/components/parameters/JobId"
       responses:
         "200":
-          description: SSE stream of job status events
+          description: The job
           content:
-            text/event-stream:
+            application/json:
               schema:
-                type: string
+                $ref: "#/components/schemas/Job"
               examples:
-                status-event:
-                  summary: Status update event
-                  value: |
-                    event: status
-                    data: {"job_id":"job_a1b2c3d4","status":"processing","model":"fal:kling-v2.5","created_at":"2026-02-13T10:00:00Z"}
-
-                    event: status
-                    data: {"job_id":"job_a1b2c3d4","status":"completed","model":"fal:kling-v2.5","output":{"url":"https://s3.varg.ai/o/job_a1b2c3d4.mp4","media_type":"video/mp4"},"created_at":"2026-02-13T10:00:00Z","completed_at":"2026-02-13T10:02:30Z"}
-        "401":
-          $ref: "#/components/responses/AuthError"
+                completed:
+                  summary: Completed job
+                  value:
+                    id: job_a1b2c3d4e5f6
+                    status: completed
+                    tool: image
+                    input:
+                      model: flux_schnell
+                      prompt: a cat astronaut
+                    output:
+                      version: v1
+                      outputs:
+                        - url: https://s3.varg.ai/files/acc_x/file_abc.png
+                          file_id: file_abc123
+                          media_type: image/png
+                          size_bytes: 2048576
+                          thumbnail_url: https://s3.varg.ai/thumbs/file_abc123.jpg
+                    error: null
+                    progress_message: null
+                    progress: null
+                    estimated_cost_cents: 4
+                    actual_cost_cents: 4
+                    pricing:
+                      estimated: 4
+                      actual: 4
+                      billing: metered
+                      cached: null
+                      billed_units:
+                        images: 1
+                      pricing_id: ppr_abc123
+                    provider: fal
+                    provider_model: "fal:flux_schnell"
+                    provider_status: COMPLETED
+                    created_at: "2026-07-01T10:00:00Z"
+                    started_at: "2026-07-01T10:00:01Z"
+                    completed_at: "2026-07-01T10:00:09Z"
         "404":
-          $ref: "#/components/responses/NotFoundError"
+          $ref: "#/components/responses/JobNotFound"
 
+  /jobs/{id}/status:
+    get:
+      tags: [Jobs]
+      operationId: getJobStatus
+      summary: Get job status (lightweight)
+      description: Minimal status projection — cheaper to poll than the full job view.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    $ref: "#/components/schemas/JobStatus"
+                  provider_status:
+                    type: [string, "null"]
+                  progress_message:
+                    type: [string, "null"]
+                    example: "stitching 3/8 (40%)"
+                  progress:
+                    type: [number, "null"]
+                    description: Numeric fraction 0..1 for a progress bar
+                  error:
+                    type: [object, "null"]
+        "404":
+          $ref: "#/components/responses/JobNotFound"
+
+  /jobs/{id}/price:
+    get:
+      tags: [Jobs]
+      operationId: getJobPrice
+      summary: Get job pricing breakdown
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Pricing breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    $ref: "#/components/schemas/JobStatus"
+                  model:
+                    type: [string, "null"]
+                  tool:
+                    type: string
+                  pricing_id:
+                    type: [string, "null"]
+                  estimated_cost_cents:
+                    type: [integer, "null"]
+                  actual_cost_cents:
+                    type: [integer, "null"]
+                  billed_units:
+                    type: [object, "null"]
+                    example:
+                      seconds: 6
+        "404":
+          $ref: "#/components/responses/JobNotFound"
+
+  /jobs/{id}/refresh:
+    post:
+      tags: [Jobs]
+      operationId: refreshJob
+      summary: Refresh a job
+      description: Force a re-poll of the provider and mirror the latest state onto the job.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: The refreshed job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          $ref: "#/components/responses/JobNotFound"
+        "409":
+          description: Job is already terminal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}/cancel:
+    post:
+      tags: [Jobs]
+      operationId: cancelJob
+      summary: Cancel a job
+      description: Abort a running job (best-effort at the provider). Returns 409 if the job is already terminal.
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: The cancelled job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          $ref: "#/components/responses/JobNotFound"
+        "409":
+          description: Job is already terminal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}/retry:
+    post:
+      tags: [Jobs]
+      operationId: retryJob
+      summary: Retry a failed job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: The retried job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          $ref: "#/components/responses/JobNotFound"
+        "409":
+          description: Job cannot be retried in its current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Files ──────────────────────────────────────────────────────────────────
   /files:
     post:
-      operationId: uploadFile
       tags: [Files]
-      summary: Upload file
+      operationId: uploadFile
+      summary: Upload a file
       description: |
-        Upload a file (image, audio, video) for use in generation requests. Returns a stable URL you can pass to `files[].url`.
+        Upload a file as a raw binary body (max 200 MB). Set `Content-Type` to
+        the file's media type; when it's missing or generic, varg sniffs the
+        type from magic bytes.
 
-        Max file size: 50MB. Pass `X-Content-Hash` for deduplication — if a file with the same hash already exists, the existing file is returned without re-uploading.
+        Send `X-Content-Hash: sha256:<hex>` to enable deduplication — if your
+        account already has a file with the same content, the existing file is
+        returned instantly (`deduplicated: true`) without re-uploading. Use
+        `GET /files/check?hash=` to pre-check before sending bytes.
       parameters:
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+          example: image/jpeg
         - name: X-Content-Hash
           in: header
           required: false
           schema:
             type: string
-          description: SHA-256 hash of the file content, used for deduplication
-          example: sha256:abc123def456...
+          description: "sha256 hash of the bytes (with or without the `sha256:` prefix) for dedup"
+        - name: X-Filename
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Original filename
       requestBody:
         required: true
         content:
@@ -1225,139 +818,734 @@ paths:
               format: binary
       responses:
         "200":
-          description: File uploaded
+          description: File stored (or deduplicated)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileUploadResponse"
-        "401":
-          $ref: "#/components/responses/AuthError"
         "413":
-          description: File too large (max 50MB)
+          description: File too large (max 200 MB)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /voices:
+        "502":
+          description: Storage upload failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
-      operationId: listVoices
-      tags: [Reference]
-      summary: List voices
-      description: Returns all available voices for speech generation.
+      tags: [Files]
+      operationId: listFiles
+      summary: List files
+      description: |
+        List the caller's files. Filter by creation criteria (`?tool=speech`,
+        `?model=eleven_turbo_v2`, `?q=hello`), by kind (`?kind=image|video|audio`
+        for media type, `?kind=upload|generated` for origin), or by date range
+        (`?from=`, `?to=`, ISO 8601).
+      parameters:
+        - name: tool
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search in prompts/titles
+        - name: kind
+          in: query
+          schema:
+            type: string
+            enum: [image, video, audio, upload, generated]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: cursor
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
       responses:
         "200":
-          description: List of voices
+          description: File list
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  voices:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/File"
+                  nextCursor:
+                    type: [integer, "null"]
+
+  /files/import:
+    post:
+      tags: [Files]
+      operationId: importFile
+      summary: Import a file by URL
+      description: |
+        Register a file from a URL. varg-hosted URLs (`*.varg.ai`) are
+        registered without re-uploading; external URLs are streamed to varg
+        storage. SSRF-protected (private IPs and localhost are rejected).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                filename:
+                  type: string
+                media_type:
+                  type: string
+                origin:
+                  type: string
+                  enum: [upload, generated]
+                  description: Explicit provenance (defaults to `generated` for varg URLs, `upload` for external)
+                hash:
+                  type: string
+                  description: "sha256 of the bytes for dedup (`sha256:<hex>` or bare hex)"
+                size:
+                  type: integer
+                metadata:
+                  type: object
+                  description: Client-measured metadata (width, height, duration_ms, ...)
+            examples:
+              external:
+                summary: Import an external URL
+                value:
+                  url: https://example.com/photo.jpg
+                  filename: photo.jpg
+      responses:
+        "200":
+          description: File imported (or deduplicated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        "400":
+          description: Missing/unsafe URL or invalid origin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Fetch/store failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/probe:
+    post:
+      tags: [Files]
+      operationId: probeFile
+      summary: Probe a URL's media metadata
+      description: Inspect a media URL (dimensions, duration) without storing it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                media_type:
+                  type: string
+      responses:
+        "200":
+          description: Probe result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  media_type:
+                    type: string
+                  metadata:
+                    type: [object, "null"]
+                  width:
+                    type: [integer, "null"]
+                  height:
+                    type: [integer, "null"]
+                  duration_ms:
+                    type: [number, "null"]
+                  duration:
+                    type: [number, "null"]
+                    description: Seconds
+        "400":
+          description: Missing or unsafe URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/check:
+    get:
+      tags: [Files]
+      operationId: checkFileHash
+      summary: Check for an existing file by hash
+      description: |
+        Dedup pre-check — returns whether your account already has a file with
+        this content hash. Lets clients skip the upload entirely.
+      parameters:
+        - name: hash
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "sha256 hex, with or without the `sha256:` prefix"
+      responses:
+        "200":
+          description: Check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                  file:
+                    type: [object, "null"]
+                    properties:
+                      file_id:
+                        type: string
+                      url:
+                        type: string
+                      media_type:
+                        type: string
+                      size:
+                        type: integer
+                      filename:
+                        type: [string, "null"]
+                      origin:
+                        type: string
+
+  /files/{id}:
+    get:
+      tags: [Files]
+      operationId: getFile
+      summary: Get file metadata
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+      responses:
+        "200":
+          description: File metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "404":
+          $ref: "#/components/responses/FileNotFound"
+    delete:
+      tags: [Files]
+      operationId: deleteFile
+      summary: Delete a file
+      description: Soft-deletes the file (it disappears from lists; the underlying object is garbage-collected later).
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+        "404":
+          $ref: "#/components/responses/FileNotFound"
+
+  /files/{id}/feedback:
+    post:
+      tags: [Files]
+      operationId: addFileFeedback
+      summary: Rate or comment on a file
+      description: |
+        `like`/`dislike` upserts your rating (one per account per file).
+        `comment` is append-only.
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind]
+              properties:
+                kind:
+                  type: string
+                  enum: [like, dislike, comment]
+                comment:
+                  type: string
+                  maxLength: 2000
+                  description: Required when kind=comment
+      responses:
+        "200":
+          description: Rating saved
+        "201":
+          description: Comment added
+        "404":
+          $ref: "#/components/responses/FileNotFound"
+    get:
+      tags: [Files]
+      operationId: listFileFeedback
+      summary: List feedback for a file
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+      responses:
+        "200":
+          description: Feedback summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_id:
+                    type: string
+                  likes:
+                    type: integer
+                  dislikes:
+                    type: integer
+                  my_rating:
+                    type: [string, "null"]
+                  comments:
                     type: array
                     items:
                       type: object
                       properties:
-                        voice_id:
+                        id:
                           type: string
-                          example: rachel
-                        name:
+                        comment:
                           type: string
-                          example: Rachel
-              example:
-                voices:
-                  - voice_id: rachel
-                    name: Rachel
-                  - voice_id: domi
-                    name: Domi
-                  - voice_id: sarah
-                    name: Sarah
-                  - voice_id: antoni
-                    name: Antoni
-                  - voice_id: elli
-                    name: Elli
-                  - voice_id: josh
-                    name: Josh
-                  - voice_id: arnold
-                    name: Arnold
-                  - voice_id: adam
-                    name: Adam
-                  - voice_id: sam
-                    name: Sam
-        "401":
-          $ref: "#/components/responses/AuthError"
-
-  /balance:
-    get:
-      operationId: getBalance
-      tags: [Account]
-      summary: Get balance
-      description: Returns your current account balance in cents.
+                        created_at:
+                          type: string
+        "404":
+          $ref: "#/components/responses/FileNotFound"
+    delete:
+      tags: [Files]
+      operationId: removeFileFeedback
+      summary: Remove your rating on a file
+      parameters:
+        - $ref: "#/components/parameters/FileId"
       responses:
         "200":
-          description: Account balance
+          description: Rating removed
+        "404":
+          $ref: "#/components/responses/FileNotFound"
+
+  # ── Lineage ────────────────────────────────────────────────────────────────
+  /lineage:
+    post:
+      tags: [Lineage]
+      operationId: getLineage
+      summary: Resolve a file to the job that created it
+      description: |
+        Given a `file_id` or a varg URL, returns the job that produced the file
+        together with its recipe (prompt, model, tool, cost) — so an agent can
+        "create something similar".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file_id:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+            examples:
+              by-id:
+                value:
+                  file_id: file_abc123
+              by-url:
+                value:
+                  url: https://s3.varg.ai/files/acc_x/file_abc.png
+      responses:
+        "200":
+          description: Lineage
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  balance_cents:
-                    type: number
-                    description: Current balance in cents
-                    example: 5000
-                  currency:
+                  file_id:
                     type: string
-                    example: usd
-              example:
-                balance_cents: 5000
-                currency: usd
-        "401":
-          $ref: "#/components/responses/AuthError"
+                  job_id:
+                    type: string
+                  tool:
+                    type: string
+                  input:
+                    type: object
+                    description: The job's input (prompt, model, code, ...)
+        "404":
+          description: File not found or no job linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /usage:
+  # ── Pricing ────────────────────────────────────────────────────────────────
+  /estimate:
+    post:
+      tags: [Pricing]
+      operationId: estimatePrice
+      summary: Estimate a price without creating a job
+      description: |
+        Send the same body you would send to a generation endpoint and get the
+        price back. Also accepts a batch format with an `items` array where each
+        item carries `tool`, `model`, and `params`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [model]
+                  properties:
+                    model:
+                      type: string
+                    tool:
+                      type: string
+                  additionalProperties: true
+                  title: Single
+                - type: object
+                  required: [items]
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          tool:
+                            type: string
+                          capability:
+                            type: string
+                          model:
+                            type: string
+                          params:
+                            type: object
+                  title: Batch
+            examples:
+              single:
+                summary: Single estimate
+                value:
+                  model: kling_v3
+                  prompt: cat jumping over a fence
+                  duration: 5
+              batch:
+                summary: Batch estimate
+                value:
+                  items:
+                    - tool: image
+                      model: flux_schnell
+                      params:
+                        aspect_ratio: "16:9"
+                    - tool: video
+                      model: kling_v3
+                      params:
+                        duration: 5
+      responses:
+        "200":
+          description: Estimate
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    title: Single
+                    properties:
+                      valid:
+                        type: boolean
+                      model:
+                        type: string
+                      tool:
+                        type: string
+                      pricing:
+                        type: object
+                        properties:
+                          provider_cost_cents:
+                            type: [integer, "null"]
+                          user_price_cents:
+                            type: [integer, "null"]
+                          markup_percent:
+                            type: number
+                          pricing_id:
+                            type: [string, "null"]
+                  - type: object
+                    title: Batch
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            capability:
+                              type: string
+                            model:
+                              type: string
+                            credits:
+                              type: integer
+                            billing:
+                              type: string
+                            provider:
+                              type: string
+                      total_credits:
+                        type: integer
+        "404":
+          $ref: "#/components/responses/ModelNotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          $ref: "#/components/responses/NoPricing"
+
+  /pricing:
     get:
+      tags: [Pricing]
+      operationId: getPricingCatalog
+      summary: Get the price catalog (public)
+      description: |
+        The full model catalog with per-provider price estimates, grouped by
+        tool. No authentication required.
+      security: []
+      responses:
+        "200":
+          description: Price catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                          example: flux_schnell
+                        tool:
+                          type: string
+                          example: image
+                        providers:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              provider:
+                                type: string
+                                example: fal
+                              model_key:
+                                type: string
+                                example: "fal:flux_schnell"
+                              pricing_id:
+                                type: [string, "null"]
+                              user_price_estimate_cents:
+                                type: [integer, "null"]
+
+  # ── Billing ────────────────────────────────────────────────────────────────
+  /billing/balance:
+    get:
+      tags: [Billing]
+      operationId: getBalance
+      summary: Get balance
+      description: |
+        Balance breakdown in cents (credits). `available` = total − reserved.
+        `reserved` is held by in-flight jobs and is committed on completion or
+        released on failure.
+      responses:
+        "200":
+          description: Balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription_balance:
+                    type: integer
+                    example: 5000
+                  subscription_expires:
+                    type: [string, "null"]
+                  rollover_balance:
+                    type: integer
+                    example: 2000
+                  rollover_expires:
+                    type: [string, "null"]
+                  onetime_balance:
+                    type: integer
+                    example: 1500
+                  reserved:
+                    type: integer
+                    example: 300
+                  available:
+                    type: integer
+                    example: 8200
+                  total_balance:
+                    type: integer
+                    example: 8500
+
+  /billing/usage:
+    get:
+      tags: [Billing]
       operationId: getUsage
-      tags: [Account]
-      summary: Get usage
-      description: Returns usage records for the specified date range.
+      summary: Get usage records
       parameters:
         - name: from
           in: query
-          required: false
           schema:
             type: string
-            format: date
-          description: Start date (inclusive), e.g. 2026-01-01
-          example: "2026-01-01"
+            format: date-time
         - name: to
           in: query
-          required: false
           schema:
             type: string
-            format: date
-          description: End date (inclusive), e.g. 2026-01-31
-          example: "2026-01-31"
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
       responses:
         "200":
           description: Usage records
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UsageResponse"
-        "401":
-          $ref: "#/components/responses/AuthError"
+                type: object
+                properties:
+                  usage:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        job_id:
+                          type: string
+                        provider:
+                          type: string
+                        cost_cents:
+                          type: integer
+                        billing_type:
+                          type: string
+                          example: metered
+                        billed_units:
+                          type: [object, "null"]
+                          example:
+                            images: 1
+                        created_at:
+                          type: string
+                  total_cents:
+                    type: integer
 
-  /me:
+  /billing/transactions:
     get:
-      operationId: getMe
-      tags: [Account]
-      summary: Get current user
-      description: Returns the authenticated user's profile.
+      tags: [Billing]
+      operationId: getTransactions
+      summary: Get transaction ledger
+      description: |
+        Account ledger rows (spend/topup history). Negative `amount_cents` =
+        charge, positive = credit. Job charges carry context (`job_id`, `tool`,
+        `model`, `billed_units`).
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
       responses:
         "200":
-          description: User profile
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        amount_cents:
+                          type: integer
+                          example: -150
+                        type:
+                          type: string
+                          example: job_charge
+                        bucket:
+                          type: string
+                          example: onetime
+                        balance_after_cents:
+                          type: integer
+                        billed_units:
+                          type: [object, "null"]
+                        job_id:
+                          type: [string, "null"]
+                        tool:
+                          type: [string, "null"]
+                          example: Video
+                        tool_key:
+                          type: [string, "null"]
+                          example: video
+                        model:
+                          type: [string, "null"]
+                          example: kling_v3
+                        created_at:
+                          type: string
+                  total:
+                    type: integer
+
+  # ── Account ────────────────────────────────────────────────────────────────
+  /me:
+    get:
+      tags: [Account]
+      operationId: getMe
+      summary: Get the authenticated account
+      responses:
+        "200":
+          description: Account identity
           content:
             application/json:
               schema:
@@ -1365,309 +1553,797 @@ paths:
                 properties:
                   userId:
                     type: string
-                    example: user_abc123
+                    format: uuid
                   email:
+                    type: [string, "null"]
+
+  /api-keys:
+    get:
+      tags: [Account]
+      operationId: listApiKeys
+      summary: List API keys
+      description: Requires an app session (Supabase JWT), not an API key.
+      responses:
+        "200":
+          description: API keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_keys:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKey"
+        "403":
+          description: Only app sessions can manage API keys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Account]
+      operationId: createApiKey
+      summary: Create an API key
+      description: |
+        Creates a new API key. The plaintext key is returned **once** in the
+        `api_key` field — store it securely. Requires an app session (JWT).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 64
+      responses:
+        "201":
+          description: Key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
                     type: string
-                    format: email
-                    example: user@example.com
-              example:
-                userId: user_abc123
-                email: user@example.com
-        "401":
-          $ref: "#/components/responses/AuthError"
+                    description: The plaintext key — shown only once
+                    example: varg_a1b2c3...
+                  key:
+                    $ref: "#/components/schemas/ApiKey"
+        "403":
+          description: Only app sessions can create API keys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api-keys/{id}:
+    patch:
+      tags: [Account]
+      operationId: renameApiKey
+      summary: Rename an API key
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 64
+      responses:
+        "200":
+          description: Key renamed
+        "404":
+          description: Unknown API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Account]
+      operationId: revokeApiKey
+      summary: Revoke an API key
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                  revoked_at:
+                    type: string
+        "404":
+          description: Unknown API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: varg_xxx
       description: |
-        API key from [varg.ai/dashboard](https://varg.ai/dashboard).
+        varg API key (`varg_...`). Get one at [app.varg.ai](https://app.varg.ai)
+        or run `bunx vargai login`. App sessions may alternatively send a
+        Supabase JWT.
 
-        Pass as `Authorization: Bearer varg_xxx`.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+      description: |
+        Any unique string. Retrying a request with the same key returns the
+        existing job (HTTP 200) instead of creating and charging a new one
+        (HTTP 202).
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^job_"
+      example: job_a1b2c3d4e5f6
+    FileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: file_abc123
 
   schemas:
-    JobResponse:
+    JobStatus:
+      type: string
+      enum: [queued, submitting, running, completed, failed, cancelled]
+      description: |
+        Lifecycle is `queued` then `submitting` then `running`, ending in a
+        terminal status (`completed`, `failed`, or `cancelled`).
+
+    JobOutput:
       type: object
-      required: [job_id, status, model, created_at]
+      description: Canonical output envelope. Present only when the job is completed.
       properties:
-        job_id:
+        version:
           type: string
-          description: Unique job identifier
-          example: job_a1b2c3d4
+          const: v1
+        outputs:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: Stable varg-hosted URL (s3.varg.ai)
+              file_id:
+                type: string
+                description: The file record for this output — use with /files and /lineage
+              media_type:
+                type: string
+                example: video/mp4
+              size_bytes:
+                type: integer
+              thumbnail_url:
+                type: [string, "null"]
+
+    JobPricing:
+      type: object
+      description: "Structured pricing. 1 credit = 1 cent = $0.01."
+      properties:
+        estimated:
+          type: [integer, "null"]
+          description: Reserved at creation (cents)
+        actual:
+          type: [integer, "null"]
+          description: Charged at completion (cents). 0 for cache hits.
+        billing:
+          type: [string, "null"]
+        cached:
+          type: [boolean, "null"]
+          description: true when the result came from cache (actual = 0)
+        billed_units:
+          type: [object, "null"]
+          example:
+            images: 1
+        pricing_id:
+          type: [string, "null"]
+          description: The pinned pricing rule this job was charged under
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          example: job_a1b2c3d4e5f6
         status:
+          $ref: "#/components/schemas/JobStatus"
+        tool:
           type: string
-          enum: [queued, processing, completed, failed, cancelled]
-          description: Current job status
-          example: completed
-        model:
-          type: string
-          description: Resolved model identifier (provider:model format)
-          example: fal:kling-v2.5
+          example: image
+        input:
+          type: object
+          description: The request body as submitted (model, prompt, ...)
+        output:
+          oneOf:
+            - $ref: "#/components/schemas/JobOutput"
+            - type: "null"
+        error:
+          type: [object, "null"]
+        progress_message:
+          type: [string, "null"]
+          example: "stitching 3/8 (40%)"
+        progress:
+          type: [number, "null"]
+          description: Fraction 0..1
+        progress_metadata:
+          type: [object, "null"]
+        estimated_duration_ms:
+          type: [integer, "null"]
+        estimated_cost_cents:
+          type: [integer, "null"]
+        actual_cost_cents:
+          type: [integer, "null"]
+        pricing:
+          $ref: "#/components/schemas/JobPricing"
+        provider:
+          type: [string, "null"]
+          example: fal
+        provider_model:
+          type: [string, "null"]
+          example: "fal:flux_schnell"
+        provider_status:
+          type: [string, "null"]
+          description: The provider's raw status string
+        provider_job_id:
+          type: [string, "null"]
         created_at:
           type: string
           format: date-time
-          description: When the job was created
-          example: "2026-02-13T10:00:00Z"
-        completed_at:
-          type: string
+        started_at:
+          type: [string, "null"]
           format: date-time
-          description: When the job finished (completed, failed, or cancelled)
-          example: "2026-02-13T10:02:30Z"
-        output:
+        completed_at:
+          type: [string, "null"]
+          format: date-time
+        urls:
           type: object
-          description: Job output, present when status is completed
+          description: Lifecycle URLs (present on creation responses)
           properties:
-            url:
+            self:
               type: string
-              format: uri
-              description: URL of the generated file on s3.varg.ai
-              example: https://s3.varg.ai/o/job_a1b2c3d4.mp4
-            media_type:
+            status:
               type: string
-              description: MIME type of the output
-              example: video/mp4
-        cache:
-          type: object
-          description: Cache metadata
-          properties:
-            hit:
-              type: boolean
-              description: Whether this result was served from cache
-              example: false
-            key:
+            refresh:
               type: string
-              description: Cache key for this request
-              example: "sha256:abc123..."
-        error:
-          type: string
-          description: Error message, present when status is failed
-          example: Provider returned an error
+            cancel:
+              type: string
+            retry:
+              type: string
 
-    ProbeResponse:
+    FileInput:
       type: object
+      required: [url]
       properties:
-        duration:
-          type: number
-          description: Duration in seconds
-          example: 12.5
-        width:
-          type: integer
-          description: Video width in pixels
-          example: 1920
-        height:
-          type: integer
-          description: Video height in pixels
-          example: 1080
-        codec:
-          type: string
-          description: Video codec
-          example: h264
-        audio_codec:
-          type: string
-          description: Audio codec
-          example: aac
-        format:
-          type: string
-          description: Container format
-          example: mov,mp4,m4a,3gp,3g2,mj2
-        bitrate:
-          type: number
-          description: Overall bitrate in bits/second
-          example: 5200000
-        fps:
-          type: number
-          description: Frames per second
-          example: 30
-        size_bytes:
-          type: number
-          description: File size in bytes
-          example: 8125000
-
-    FileUploadResponse:
-      type: object
-      required: [file_id, url, hash, size, media_type, deduplicated]
-      properties:
-        file_id:
-          type: string
-          description: Unique file identifier
-          example: file_abc123
         url:
           type: string
           format: uri
-          description: Stable URL for the uploaded file
-          example: https://s3.varg.ai/u/user_xxx/abc123.jpg
-        hash:
-          type: string
-          description: SHA-256 hash of the file content
-          example: sha256:abc123def456...
-        size:
-          type: number
-          description: File size in bytes
-          example: 102400
-        media_type:
-          type: string
-          description: Detected MIME type
-          example: image/jpeg
-        deduplicated:
-          type: boolean
-          description: True if an existing file with the same hash was returned
-          example: false
+          description: Public http(s) URL — upload via POST /files first to get a stable varg URL
 
-    UsageResponse:
+    ProviderOptions:
       type: object
-      properties:
-        usage:
-          type: array
-          items:
-            $ref: "#/components/schemas/UsageRecord"
-        total_cents:
-          type: number
-          description: Total cost in cents for the period
-          example: 1250
+      description: |
+        Provider-native overrides, keyed by provider id
+        (e.g. a `fal` object with `seed`, `num_images`, ...). Discover
+        per-model fields via `GET /tools/{tool_key}?model=<model>`.
+      additionalProperties:
+        type: object
 
-    UsageRecord:
+    JobOptions:
       type: object
+      description: Cross-cutting job options
       properties:
-        job_id:
+        webhook_url:
           type: string
-          example: job_a1b2c3d4
+          format: uri
+          description: |
+            HTTPS URL to receive the job snapshot when the job reaches a
+            terminal status. Signed with an `X-Varg-Signature` HMAC header.
+            8 retries with exponential backoff.
+
+    ImageRequest:
+      type: object
+      required: [model]
+      properties:
         model:
           type: string
-          example: fal:kling-v2.5
-        capability:
+          description: Model id (`flux_schnell`) or provider-pinned (`fal:flux_schnell`)
+          example: flux_schnell
+        prompt:
           type: string
-          enum: [video, image, speech, music, transcription]
-          example: video
-        cost_cents:
+          maxLength: 2000
+        aspect_ratio:
+          type: string
+          example: "16:9"
+        files:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/FileInput"
+          description: Source images for editing / reference
+        provider_options:
+          $ref: "#/components/schemas/ProviderOptions"
+        options:
+          $ref: "#/components/schemas/JobOptions"
+
+    VideoRequest:
+      type: object
+      required: [model]
+      properties:
+        model:
+          type: string
+          example: kling_v3
+        prompt:
+          type: string
+          maxLength: 2000
+        aspect_ratio:
+          type: string
+          example: "16:9"
+        duration:
+          oneOf:
+            - type: number
+              minimum: 1
+              maximum: 120
+            - type: string
+          description: Seconds
+        files:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/FileInput"
+          description: Start frame (image-to-video), source video + audio (lipsync), etc.
+        provider_options:
+          $ref: "#/components/schemas/ProviderOptions"
+        options:
+          $ref: "#/components/schemas/JobOptions"
+
+    SpeechRequest:
+      type: object
+      required: [model, text]
+      properties:
+        model:
+          type: string
+          example: eleven_v3
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        voice:
+          type: string
+          example: rachel
+        provider_options:
+          $ref: "#/components/schemas/ProviderOptions"
+        options:
+          $ref: "#/components/schemas/JobOptions"
+
+    MusicRequest:
+      type: object
+      required: [model, prompt]
+      properties:
+        model:
+          type: string
+          example: music_v1
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        duration:
           type: number
-          description: Cost in cents
-          example: 25
-        cache_hit:
+          minimum: 1
+          maximum: 600
+          description: Seconds
+        provider_options:
+          $ref: "#/components/schemas/ProviderOptions"
+        options:
+          $ref: "#/components/schemas/JobOptions"
+
+    TranscriptionRequest:
+      type: object
+      required: [model, audio_url]
+      properties:
+        model:
+          type: string
+          example: whisper
+        audio_url:
+          type: string
+          format: uri
+        language:
+          type: string
+          example: en
+        provider_options:
+          $ref: "#/components/schemas/ProviderOptions"
+        options:
+          $ref: "#/components/schemas/JobOptions"
+
+    FfmpegRequest:
+      oneOf:
+        - title: Command
+          type: object
+          required: [model, command, input_files, output_files]
+          properties:
+            model:
+              type: string
+              const: rendi_ffmpeg
+            command:
+              type: string
+              description: "ffmpeg args with `{{in_N}}` / `{{out_N}}` placeholders"
+            input_files:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+            output_files:
+              oneOf:
+                - type: object
+                  additionalProperties:
+                    type: string
+                - type: string
+                  const: OUTPUT_FOLDER
+        - title: Trim
+          type: object
+          required: [model, url, start]
+          properties:
+            model:
+              type: string
+              const: rendi_ffmpeg_trim
+            url:
+              type: string
+              format: uri
+            start:
+              type: number
+              minimum: 0
+            end:
+              type: number
+            duration:
+              type: number
+            precise:
+              type: boolean
+              default: false
+              description: Re-encode for frame-accurate cuts (slower)
+        - title: Resize
+          type: object
+          required: [model, url]
+          properties:
+            model:
+              type: string
+              const: rendi_ffmpeg_resize
+            url:
+              type: string
+              format: uri
+            width:
+              type: integer
+              minimum: 1
+              maximum: 7680
+            height:
+              type: integer
+              minimum: 1
+              maximum: 4320
+            fit:
+              type: string
+              enum: [contain, cover, stretch]
+              default: cover
+        - title: Slice
+          type: object
+          required: [model, video_url]
+          properties:
+            model:
+              type: string
+              const: rendi_ffmpeg_slice
+            video_url:
+              type: string
+              format: uri
+            every:
+              type: number
+              minimum: 0.1
+              maximum: 3600
+              description: Split every N seconds
+            at:
+              type: array
+              items:
+                type: number
+              description: Split at these timestamps
+            count:
+              type: integer
+              minimum: 2
+              maximum: 1000
+              description: Split into N equal segments
+            ranges:
+              type: array
+              items:
+                type: object
+                properties:
+                  start:
+                    type: number
+                  end:
+                    type: number
+            codec:
+              type: string
+              enum: [copy, reencode]
+              default: copy
+            thumbnails:
+              type: boolean
+              default: true
+
+    RenderRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: |
+            TSX source. Import components from `vargai/react` and providers
+            from `vargai/ai`, and default-export a `<Render>` element.
+        mode:
+          type: string
+          enum: [strict, preview]
+          description: "`strict` (default) fails on errors; `preview` substitutes placeholders"
+        output:
+          type: string
+          enum: [video, frames]
+          description: "`frames` skips stitching for image-only renders"
+        verbose:
           type: boolean
-          example: false
+
+    PipelineRequest:
+      type: object
+      required: [model]
+      properties:
+        model:
+          type: string
+          description: The pipeline name
+          example: v2vStitch
+      additionalProperties: true
+
+    File:
+      type: object
+      properties:
+        id:
+          type: string
+          example: file_abc123
+        url:
+          type: string
+        media_type:
+          type: string
+        size_bytes:
+          type: integer
+        hash:
+          type: [string, "null"]
+        metadata:
+          type: [object, "null"]
+          example:
+            width: 1920
+            height: 1080
+        filename:
+          type: [string, "null"]
+        title:
+          type: [string, "null"]
+          description: AI-generated title
+        subtitle:
+          type: [string, "null"]
+        thumbnail_url:
+          type: [string, "null"]
+        origin:
+          type: string
+          enum: [upload, generated]
+        tool:
+          type: [string, "null"]
+          description: The tool of the job that produced this file (via lineage)
+        created_at:
+          type: [string, "null"]
+
+    FileUploadResponse:
+      type: object
+      properties:
+        file_id:
+          type: string
+        url:
+          type: string
+          description: Stable varg-hosted URL
+        hash:
+          type: [string, "null"]
+        size:
+          type: integer
+        media_type:
+          type: string
+        filename:
+          type: [string, "null"]
+        title:
+          type: [string, "null"]
+        subtitle:
+          type: [string, "null"]
+        metadata:
+          type: [object, "null"]
+        deduplicated:
+          type: boolean
+          description: true when an existing file with the same content was returned
+
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key_preview:
+          type: string
+          example: varg_a1b2...c3d4
+        name:
+          type: string
         created_at:
           type: string
-          format: date-time
-          example: "2026-02-13T10:00:00Z"
+        last_active_at:
+          type: [string, "null"]
 
     ErrorResponse:
       type: object
-      required: [error, message]
       properties:
         error:
-          type: string
-          description: Error code
-          example: ValidationError
-        message:
-          type: string
-          description: Human-readable error description
-          example: prompt is required
-        field:
-          type: string
-          description: The field that caused the error, if applicable
-          example: prompt
-        provider:
-          type: string
-          description: The upstream provider that returned the error, if applicable
-          example: fal
-        statusCode:
-          type: number
-          description: HTTP status code
-          example: 400
+          type: object
+          properties:
+            code:
+              type: string
+              example: model_not_found
+            message:
+              type: string
+              example: "Unknown model: flux-shnell"
+            details: {}
 
   responses:
+    JobAccepted:
+      description: Job created and queued. Poll `urls.self` until terminal.
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: string
+        X-RateLimit-Remaining:
+          schema:
+            type: string
+        X-RateLimit-Reset:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Job"
+          examples:
+            queued:
+              summary: Queued job
+              value:
+                id: job_a1b2c3d4e5f6
+                status: queued
+                tool: image
+                input:
+                  model: flux_schnell
+                  prompt: a cat astronaut
+                output: null
+                error: null
+                estimated_cost_cents: 4
+                actual_cost_cents: null
+                pricing:
+                  estimated: 4
+                  actual: null
+                  billing: metered
+                  cached: null
+                  billed_units: null
+                  pricing_id: ppr_abc123
+                provider: fal
+                provider_model: "fal:flux_schnell"
+                created_at: "2026-07-01T10:00:00Z"
+                urls:
+                  self: https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6
+                  status: https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/status
+                  refresh: https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/refresh
+                  cancel: https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/cancel
+                  retry: https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/retry
+    JobReplay:
+      description: Idempotency replay — the existing job for this `Idempotency-Key` (no new charge).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Job"
     ValidationError:
-      description: Invalid request body
+      description: Request body failed validation
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: ValidationError
-            message: prompt is required
-            field: prompt
-            statusCode: 400
-
-    AuthError:
-      description: Missing or invalid API key
+          examples:
+            invalid:
+              value:
+                error:
+                  code: invalid_request
+                  message: "Body validation failed (text: Required)"
+    ModelNotFound:
+      description: Unknown model or tool
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: AuthError
-            message: Invalid API key
-            statusCode: 401
-
-    InsufficientBalanceError:
-      description: Account balance too low
+          examples:
+            model:
+              value:
+                error:
+                  code: model_not_found
+                  message: "Unknown model: flux-shnell"
+    JobNotFound:
+      description: Unknown job (or not owned by the caller)
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: InsufficientBalanceError
-            message: Insufficient balance. Add credits at varg.ai/dashboard.
-            statusCode: 402
-
-    NotFoundError:
-      description: Job or file not found
+    FileNotFound:
+      description: Unknown file (or not owned by the caller)
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: NotFoundError
-            message: Job not found
-            statusCode: 404
-
-    RateLimitError:
-      description: Too many requests
+    InsufficientBalance:
+      description: Account balance too low to reserve the estimated cost
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: RateLimitError
-            message: Rate limit exceeded. Retry after 60 seconds.
-            statusCode: 429
-
-    InternalError:
-      description: Internal server error
+          examples:
+            insufficient:
+              value:
+                error:
+                  code: insufficient_balance
+                  message: Insufficient balance to run this job
+    RateLimited:
+      description: Rate limit exceeded (sliding window per API key)
+      headers:
+        Retry-After:
+          schema:
+            type: string
+        X-RateLimit-Limit:
+          schema:
+            type: string
+        X-RateLimit-Remaining:
+          schema:
+            type: string
+        X-RateLimit-Reset:
+          schema:
+            type: string
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: InternalError
-            message: An unexpected error occurred
-            statusCode: 500
-
-    ProviderError:
-      description: Upstream provider returned an error
+    NoPricing:
+      description: No active pricing rule for this model
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example:
-            error: ProviderError
-            message: Provider returned an error
-            provider: fal
-            statusCode: 502
-
-  headers:
-    X-Cache:
-      description: Whether the response was served from cache (HIT or MISS)
-      schema:
-        type: string
-        enum: [HIT, MISS]
-    X-Cache-Key:
-      description: The cache key for this request
-      schema:
-        type: string
-    X-Cache-TTL:
-      description: Cache TTL in seconds
-      schema:
-        type: number
