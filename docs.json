@@ -133,45 +133,70 @@
         {
           "group": "Generation",
           "pages": [
-            "POST /video",
             "POST /image",
+            "POST /video",
             "POST /speech",
             "POST /music",
-            "POST /transcription"
+            "POST /transcription",
+            "POST /ffmpeg",
+            "POST /render",
+            "POST /pipeline"
           ]
         },
         {
-          "group": "Media Processing",
+          "group": "Tools",
           "pages": [
-            "POST /ffmpeg/probe",
-            "POST /ffmpeg/trim",
-            "POST /ffmpeg/resize",
-            "POST /ffmpeg/slice",
-            "POST /ffmpeg"
+            "GET /tools",
+            "GET /tools/{tool_key}",
+            "POST /tools/{tool_key}/call"
           ]
         },
         {
           "group": "Jobs",
           "pages": [
-            "GET /jobs/{job_id}",
-            "GET /jobs/{job_id}/stream",
-            "DELETE /jobs/{job_id}"
+            "GET /jobs",
+            "GET /jobs/{id}",
+            "GET /jobs/{id}/status",
+            "GET /jobs/{id}/price",
+            "POST /jobs/{id}/refresh",
+            "POST /jobs/{id}/cancel",
+            "POST /jobs/{id}/retry"
           ]
         },
         {
           "group": "Files",
-          "pages": ["POST /files"]
+          "pages": [
+            "POST /files",
+            "GET /files",
+            "POST /files/import",
+            "POST /files/probe",
+            "GET /files/check",
+            "GET /files/{id}",
+            "DELETE /files/{id}",
+            "POST /files/{id}/feedback",
+            "GET /files/{id}/feedback",
+            "DELETE /files/{id}/feedback",
+            "POST /lineage"
+          ]
         },
         {
-          "group": "Reference",
-          "pages": ["GET /voices"]
+          "group": "Pricing & Billing",
+          "pages": [
+            "POST /estimate",
+            "GET /pricing",
+            "GET /billing/balance",
+            "GET /billing/usage",
+            "GET /billing/transactions"
+          ]
         },
         {
           "group": "Account",
           "pages": [
             "GET /me",
-            "GET /balance",
-            "GET /usage"
+            "GET /api-keys",
+            "POST /api-keys",
+            "PATCH /api-keys/{id}",
+            "DELETE /api-keys/{id}"
           ]
         }
       ]

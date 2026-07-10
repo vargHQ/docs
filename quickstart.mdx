@@ -45,41 +45,44 @@ First render takes 1-2 minutes (AI generation). Subsequent runs with the same pr
 
 | Action | Model | Credits | Cost |
 |--------|-------|---------|------|
-| Image | nano-banana-pro | 5 | $0.05 |
-| Image | flux-pro | 10 | $0.10 |
-| Video (5s) | kling-v3 | 150 | $1.50 |
-| Video (5s) | wan-2.5 | 80 | $0.80 |
-| Video (5s) | seedance-2-preview | 250 | $2.50 |
-| Speech | eleven_v3 | 25 | $0.25 |
-| Music | music_v1 | 30 | $0.30 |
+| Image | grok_imagine_image | 4 | $0.04 |
+| Image | flux_dev | 68 | $0.68 |
+| Image | nano_banana_pro | 126 | $1.26 |
+| Video (5s) | sora_2 | 105 | $1.05 |
+| Video (5s) | wan_2.5 | 158 | $1.58 |
+| Video (5s) | kling_v3 | 221 | $2.21 |
+| Speech | eleven_turbo_v2_5 | 105 | $1.05 |
+| Music | music_v1 | 79 | $0.79 |
 | Cache hit | any | 0 | $0.00 |
 
-A typical 3-clip video costs $2-5. Cache hits are always free.
+A typical 3-clip video costs $2-5. Cache hits are always free. Live catalog: [api.varg.ai/v2/pricing](https://api.varg.ai/v2/pricing).
 
 ---
 
 ## Alternative: Cloud Render (curl only)
 
-No installation needed. Submit TSX code to the [Cloud Render API](/render-api) via curl:
+No installation needed. Submit TSX code to the [Render API](/render-api) via curl:
 
 ```bash
 # Submit a render job
-JOB=$(curl -s -X POST https://render.varg.ai/api/render \
+JOB=$(curl -s -X POST https://api.varg.ai/v2/render \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "code": "const img = Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"a cabin in mountains at sunset\", aspectRatio: \"16:9\" });\nexport default (<Render width={1920} height={1080}><Clip duration={3}>{img}</Clip></Render>);"
+    "code": "const img = Image({ model: fal.imageModel(\"nano_banana_pro\"), prompt: \"a cabin in mountains at sunset\", aspectRatio: \"16:9\" });\nexport default (<Render width={1920} height={1080}><Clip duration={3}>{img}</Clip></Render>);"
   }')
 
-JOB_ID=$(echo $JOB | jq -r '.job_id')
+JOB_ID=$(echo $JOB | jq -r '.id')
 
 # Poll for result
-curl -s "https://render.varg.ai/api/render/jobs/$JOB_ID" \
+curl -s "https://api.varg.ai/v2/jobs/$JOB_ID" \
   -H "Authorization: Bearer $VARG_API_KEY"
+
+# When completed, the video URL is in .output.outputs[0].url
 ```
 
 <Info>
-Cloud render uses `fal.*Model()` syntax — provider globals are auto-injected server-side. See the [Cloud Render API](/render-api) reference for full details.
+Cloud render uses `fal.*Model()` syntax — provider globals are auto-injected server-side. See the [Render API](/render-api) reference for full details.
 </Info>
 
 ---

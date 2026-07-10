@@ -1,71 +1,52 @@
 ---
 title: "Bring Your Own Keys"
-description: "Use your own provider API keys for $0 varg billing"
+description: "Use your own provider API keys through the varg API"
 ---
 
-BYOK (Bring Your Own Key) lets you use your own provider API keys through the varg gateway. You still get caching, stable URLs, and unified API — but you're billed directly by the provider instead of through varg credits.
+BYOK (Bring Your Own Key) lets you use your own provider API keys through the varg API. You still get caching, stable URLs, files with lineage, and the unified API — the AI generation runs against your provider account.
 
 <Info>
-**You still need a `VARG_API_KEY`** even with BYOK. It authenticates you with the gateway. BYOK just changes who pays for the AI generation.
+**You still need a `VARG_API_KEY`** even with BYOK. It authenticates you with the varg API. BYOK changes which provider account runs the generation.
 </Info>
 
 ## Why BYOK?
 
-- **$0 varg cost** — you pay the provider directly
+- **Provider-direct billing** — you pay the provider directly, at provider rates
 - **Own quotas** — use your own rate limits and billing
-- **Same gateway features** — caching, stable URLs, unified API
+- **Same API features** — caching, stable URLs, files, lineage, unified API
 - **Mix and match** — use BYOK for some providers, varg credits for others
 
 ## How it works
 
-When a request reaches the gateway, it resolves the API key in this order:
-
-1. **BYOK header** (`X-Provider-Key-*`) — $0 varg cost
-2. **Dashboard-saved BYOK key** — $0 varg cost
-3. **Varg pooled key** — metered billing via credits
-
-## Provider keys
-
-| Provider | Header | Env var | Get key at |
-|----------|--------|---------|------------|
-| Fal | `X-Provider-Key-Fal` | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
-| ElevenLabs | `X-Provider-Key-ElevenLabs` | `ELEVENLABS_API_KEY` | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
-| Higgsfield | `X-Provider-Key-Higgsfield` | `HIGGSFIELD_API_KEY` | [higgsfield.ai](https://higgsfield.ai) |
-| Replicate | `X-Provider-Key-Replicate` | `REPLICATE_API_TOKEN` | [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens) |
-
-## Quick tutorial
-
-### Gateway API (curl)
-
-Pass your provider key as a header alongside your varg key:
+Pass your provider key inside `provider_options.<provider>.apiKey` in the request body:
 
 ```bash
-# Generate an image using your own Fal key ($0 varg cost)
-curl -X POST https://api.varg.ai/v1/image \
-  -H "Authorization: Bearer varg_xxx" \
-  -H "X-Provider-Key-Fal: fal_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"model": "nano-banana-pro", "prompt": "sunset over mountains"}'
-```
-
-### Cloud Render
-
-Pass BYOK keys in the request body:
-
-```bash
-curl -s -X POST https://render.varg.ai/api/render \
+# Generate an image using your own Fal key
+curl -X POST https://api.varg.ai/v2/image \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "code": "export default (<Render width={1920} height={1080}><Clip duration={3}>{Image({ model: fal.imageModel(\"nano-banana-pro\"), prompt: \"mountains\" })}</Clip></Render>);",
-    "providerKeys": {
-      "fal": "fal_xxx",
-      "elevenlabs": "el_xxx"
+    "model": "nano_banana_pro",
+    "prompt": "sunset over mountains",
+    "provider_options": {
+      "fal": { "apiKey": "fal_xxx" }
     }
   }'
 ```
 
-### Local Render (TypeScript)
+<Note>
+Your provider keys are **encrypted immediately** on receipt and stripped from the stored job input — they are never persisted in plaintext and never appear when you read the job back.
+</Note>
+
+## Provider keys
+
+| Provider | provider_options key | Env var | Get key at |
+|----------|---------------------|---------|------------|
+| Fal | `fal` | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
+| ElevenLabs | `elevenlabs` | `ELEVENLABS_API_KEY` | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
+| Higgsfield | `higgsfield` | `HIGGSFIELD_API_KEY` | [higgsfield.ai](https://higgsfield.ai) |
+
+## Local render (TypeScript)
 
 Pass provider keys when creating the varg client:
 
@@ -83,7 +64,7 @@ const varg = createVarg({
 })
 
 const img = Image({
-  model: varg.imageModel("nano-banana-pro"),
+  model: varg.imageModel("nano_banana_pro"),
   prompt: "a cabin in mountains at sunset",
   aspectRatio: "16:9",
 })
@@ -105,7 +86,6 @@ VARG_API_KEY=varg_xxx
 FAL_KEY=fal_xxx
 ELEVENLABS_API_KEY=xxx
 HIGGSFIELD_API_KEY=hf_xxx
-REPLICATE_API_TOKEN=r8_xxx
 ```
 
 ## Caching with BYOK
@@ -122,6 +102,6 @@ This means:
 |----------|-----|
 | Getting started, small projects | **Credits** — simplest, one key |
 | High volume production | **BYOK** — use provider pricing directly |
-| Need specific provider features | **BYOK** — full access to provider API |
+| Need specific provider features | **BYOK** — full access via `provider_options` |
 | Team with existing provider accounts | **BYOK** — reuse existing keys |
 | Prototyping, learning | **Credits** — no provider setup needed |

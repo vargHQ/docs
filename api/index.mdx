@@ -1,19 +1,19 @@
 ---
-title: "Gateway API"
-description: "Unified REST API for AI generation at api.varg.ai"
+title: "varg API"
+description: "Unified REST API for AI media generation at api.varg.ai/v2"
 ---
 
-The varg Gateway provides a single REST API for AI generation across multiple providers (Fal, ElevenLabs, Higgsfield, Replicate, PiAPI). One API key, server-side caching, and stable output URLs at `s3.varg.ai`.
+The varg API is a single REST API for AI media generation across 8 providers (Fal, ElevenLabs, Higgsfield, PiAPI, HeyGen, Together, Groq, Rendi). One API key, ~80 models, async jobs, stable output URLs at `s3.varg.ai`, and transparent credit billing.
 
 ## Base URL
 
 ```
-https://api.varg.ai/v1
+https://api.varg.ai/v2
 ```
 
 ## Authentication
 
-All requests require a varg API key:
+All requests (except `GET /pricing`) require a varg API key:
 
 ```bash
 Authorization: Bearer varg_xxx
@@ -21,218 +21,275 @@ Authorization: Bearer varg_xxx
 
 Get your API key at [app.varg.ai](https://app.varg.ai) or run `bunx vargai login`. See [Authentication](/authentication) for details.
 
-### Bring Your Own Key (BYOK)
+## Core concepts
 
-You can also pass your own provider keys to bypass varg billing. See the [BYOK guide](/byok) for a full tutorial.
+The API vocabulary has three levels:
+
+| Concept | Example | What it is |
+|---------|---------|------------|
+| **Tool** | `image`, `video`, `speech` | A capability. Each tool has its own endpoint (`POST /v2/image`) and unified input schema. |
+| **Model** | `flux_schnell`, `kling_v3` | What you put in the `model` field. One model can be served by multiple providers. |
+| **Provider** | `fal`, `elevenlabs` | Who actually runs the generation. varg picks the best provider automatically. |
+
+Tools: `image`, `video`, `speech`, `music`, `transcription`, `ffmpeg`, `render`, `pipeline`. Discover them at runtime via [`GET /v2/tools`](#discovering-schemas-at-runtime).
+
+## Quick start
+
+Every generation is an **async job**: create it, poll until terminal, read the output URL.
 
 ```bash
-X-Provider-Key-Fal: fal_xxx
-X-Provider-Key-ElevenLabs: el_xxx
-```
-
-## Quick Start
-
-Generate a video and poll for the result:
-
-```bash
-# Create job
-curl -X POST https://api.varg.ai/v1/video \
-  -H "Authorization: Bearer varg_xxx" \
+# 1. Create a job (202 Accepted)
+JOB=$(curl -s -X POST https://api.varg.ai/v2/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model": "kling-v3", "prompt": "cat jumping over a fence"}'
+  -d '{"model": "kling_v3", "prompt": "cat jumping over a fence", "duration": 5}')
 
-# Response
-# {"job_id": "job_a1b2c3d4", "status": "queued", "model": "fal:kling-v2.5", "created_at": "2026-02-13T10:00:00Z"}
+JOB_ID=$(echo $JOB | jq -r '.id')
 
-# Poll until complete
-curl https://api.varg.ai/v1/jobs/job_a1b2c3d4 \
-  -H "Authorization: Bearer varg_xxx"
+# 2. Poll until status is terminal
+curl -s https://api.varg.ai/v2/jobs/$JOB_ID \
+  -H "Authorization: Bearer $VARG_API_KEY" | jq '{status, output}'
 
-# Response when done
-# {"job_id": "job_a1b2c3d4", "status": "completed", "output": {"url": "https://s3.varg.ai/o/job_a1b2c3d4.mp4", "media_type": "video/mp4"}, ...}
+# 3. When completed, the video URL is in output.outputs[0].url
+# {
+#   "status": "completed",
+#   "output": {
+#     "version": "v1",
+#     "outputs": [{
+#       "url": "https://s3.varg.ai/files/acc_x/file_abc.mp4",
+#       "file_id": "file_abc123",
+#       "media_type": "video/mp4"
+#     }]
+#   }
+# }
 ```
 
-## TypeScript SDK
-
-The `vargai` package provides a high-level provider for AI SDK integration:
-
-```bash
-bun add vargai
-```
-
-```typescript
-import { createVarg } from "vargai/ai";
-
-const varg = createVarg({ apiKey: "varg_xxx" });
-
-// Use with AI SDK
-const { images } = await generateImage({
-  model: varg.imageModel("nano-banana-pro"),
-  prompt: "sunset over mountains",
-});
-```
-
-For low-level REST API access, the `@vargai/gateway` package exposes `VargClient`:
-
-```bash
-bun add @vargai/gateway
-```
-
-```typescript
-import { VargClient } from "@vargai/gateway";
-
-const client = new VargClient({ apiKey: "varg_xxx" });
-```
-
-### Generate video
-
-```typescript
-// Create job and wait for completion
-const job = await client.createVideo({
-  model: "kling-v3",
-  prompt: "cat jumping over a fence in slow motion",
-  duration: 5,
-  aspect_ratio: "16:9",
-});
-
-const result = await client.waitForJob(job.job_id);
-console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp4
-
-// Image-to-video
-const i2vJob = await client.createVideo({
-  model: "kling-v3",
-  prompt: "cat turns and looks at camera",
-  files: [{ url: "https://example.com/cat.jpg" }],
-});
-```
-
-### Generate image
-
-```typescript
-const job = await client.createImage({
-  model: "flux-schnell",
-  prompt: "sunset over mountains, dramatic lighting",
-  aspect_ratio: "16:9",
-});
-
-const result = await client.waitForJob(job.job_id);
-console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.jpg
-```
-
-### Generate speech
-
-```typescript
-const job = await client.createSpeech({
-  model: "eleven_v3",
-  text: "Hello everyone! Welcome to my channel.",
-  voice: "rachel", // rachel, domi, sarah, antoni, elli, josh, arnold, adam, sam
-});
-
-const result = await client.waitForJob(job.job_id);
-console.log(result.output.url); // https://s3.varg.ai/o/job_xxx.mp3
-```
-
-### Upload a file
-
-```typescript
-const file = await fs.readFile("./photo.jpg");
-
-const uploaded = await client.uploadFile(file, "image/jpeg");
-
-console.log(uploaded.url); // https://s3.varg.ai/u/user_xxx/abc123.jpg
-
-// Use in generation
-const job = await client.createVideo({
-  model: "kling-v2.5",
-  prompt: "photo comes to life",
-  files: [{ url: uploaded.url }],
-});
-```
-
-## Model resolution
-
-Models can be specified as `provider:model` or just the model name. The gateway resolves the provider automatically.
-
-```json
-{ "model": "fal:kling-v2.5" }  // explicit
-{ "model": "kling-v2.5" }      // auto-resolved to fal
-{ "model": "soul" }            // auto-resolved to higgsfield
-```
-
-| Model | Provider |
-|-------|----------|
-| `kling-v3`, `kling-v2.6`, `kling-v2.5` | Fal |
-| `seedance-2-preview`, `seedance-2-fast-preview` | PiAPI |
-| `wan-2.5`, `minimax`, `ltx` | Fal |
-| `nano-banana-pro`, `flux-schnell`, `flux-pro` | Fal |
-| `sync-v2`, `sync-v2-pro`, `omnihuman` | Fal |
-| `recraft-v3` | Fal |
-| `eleven_v3`, `eleven_multilingual_v2`, `eleven_flash_v2_5` | ElevenLabs |
-| `music_v1` | ElevenLabs |
-| `soul` | Higgsfield |
-| `background-remover` | Replicate |
-| `whisper` | Fal |
-
-## Caching
-
-All generations are cached. Same parameters return instantly from cache at no cost.
-
-The cache key is computed from: capability, model, prompt, duration/aspect ratio, and file content hashes (not URLs).
-
-**Response headers:**
-
-```http
-X-Cache: HIT
-X-Cache-Key: sha256:abc123...
-X-Cache-TTL: 2592000
-```
-
-**Bypass cache:**
-
-```http
-Cache-Control: no-cache   # skip lookup, still store result
-Cache-Control: no-store   # skip cache entirely
-```
-
-## Billing
-
-**Cache hits are free.** Only cache misses with pooled keys are billed.
-
-**BYOK users pay $0** varg cost. You're billed directly by the provider.
-
-Key resolution order:
-1. `X-Provider-Key-*` header — BYOK, $0
-2. Dashboard-saved key — BYOK, $0
-3. Varg pooled key — metered billing
-
-## Error codes
-
-| Status | Error | Description |
-|--------|-------|-------------|
-| 400 | `ValidationError` | Invalid request body |
-| 401 | `AuthError` | Missing or invalid API key |
-| 402 | `InsufficientBalanceError` | Account balance too low |
-| 404 | `NotFoundError` | Job or file not found |
-| 413 | — | File too large (max 50MB) |
-| 429 | `RateLimitError` | Too many requests |
-| 500 | `InternalError` | Server error |
-| 502 | `ProviderError` | Upstream provider failed |
-
-Error responses follow this shape:
+Creation responses include ready-made lifecycle URLs:
 
 ```json
 {
-  "error": "ValidationError",
-  "message": "prompt is required",
-  "field": "prompt",
-  "statusCode": 400
+  "id": "job_a1b2c3d4e5f6",
+  "status": "queued",
+  "estimated_cost_cents": 221,
+  "urls": {
+    "self": "https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6",
+    "status": "https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/status",
+    "cancel": "https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/cancel",
+    "retry": "https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/retry",
+    "refresh": "https://api.varg.ai/v2/jobs/job_a1b2c3d4e5f6/refresh"
+  }
 }
 ```
 
+## Job lifecycle
+
+```
+queued → submitting → running → completed | failed | cancelled
+```
+
+| Status | Meaning |
+|--------|---------|
+| `queued` | Accepted, waiting for a provider slot |
+| `submitting` | Being sent to the provider |
+| `running` | The provider is generating |
+| `completed` | Done — read `output.outputs[0].url` |
+| `failed` | Check the `error` field; retry with `POST /jobs/{id}/retry` |
+| `cancelled` | Aborted via `POST /jobs/{id}/cancel` |
+
+Poll `GET /v2/jobs/{id}` (full view) or `GET /v2/jobs/{id}/status` (lightweight, includes `progress` 0..1 and `progress_message`). A stuck job is guaranteed to reach a terminal status — the platform times out jobs after 30 minutes.
+
+<Tip>
+Instead of polling, set `options.webhook_url` in your request. When the job finishes, varg POSTs the job snapshot to your URL, signed with `X-Varg-Signature: v1=<hmac-sha256>`, with 8 retries and exponential backoff.
+</Tip>
+
+## Request format
+
+All generation endpoints take a flat JSON body: `model` plus tool-specific fields at the top level.
+
+```json
+{
+  "model": "kling_v3",
+  "prompt": "cat jumping over a fence",
+  "duration": 5,
+  "aspect_ratio": "16:9",
+  "files": [{ "url": "https://s3.varg.ai/files/acc_x/cat.jpg" }],
+  "provider_options": { "fal": { "seed": 42 } },
+  "options": { "webhook_url": "https://example.com/hook" }
+}
+```
+
+| Field | Applies to | Description |
+|-------|-----------|-------------|
+| `model` | all | Model id — required |
+| `prompt` | image, video, music | Text prompt (max 2000 chars) |
+| `text` | speech | Text to speak (max 10000 chars) |
+| `voice` | speech | Voice name |
+| `audio_url` | transcription | Public URL of the audio file |
+| `duration` | video, music | Seconds |
+| `aspect_ratio` | image, video | e.g. `"16:9"`, `"9:16"` |
+| `files` | image, video | Input files by URL (max 10) — start frames, edit sources, lipsync inputs |
+| `provider_options` | all | Provider-native overrides, keyed by provider |
+| `options.webhook_url` | all | Completion webhook |
+
+Media inputs are always passed **by URL** — upload local files first via [`POST /v2/files`](#files-and-lineage) to get a stable varg URL.
+
+## Model resolution
+
+Specify a bare model name and varg picks the provider, or pin an exact provider with a prefix:
+
+```json
+{ "model": "flux_schnell" }        // varg picks the provider
+{ "model": "fal:flux_schnell" }    // pinned to fal
+```
+
+Two guarantees:
+
+1. **No silent substitution.** varg only picks *which provider* serves the model you named — never a different model family.
+2. **Transparent routing.** The job records which provider model actually ran (`provider`, `provider_model` fields).
+
+Within a model, input shape can select a variant automatically: sending an image in `files` to `kling_v3` routes to its image-to-video endpoint. Same family, same pricing rules.
+
+Model ids use underscores (`kling_v3`, `flux_schnell`). Dashed spellings (`kling-v3`) are accepted and normalized automatically. Browse all models and prices at [`GET /v2/pricing`](https://api.varg.ai/v2/pricing) (public, no auth).
+
+## Discovering schemas at runtime
+
+Agents and dynamic clients can discover the full API without reading docs:
+
+```bash
+# List all tools
+curl -s https://api.varg.ai/v2/tools -H "Authorization: Bearer $VARG_API_KEY"
+
+# Get the image tool's input schema, output shape, and a worked example
+curl -s https://api.varg.ai/v2/tools/image -H "Authorization: Bearer $VARG_API_KEY"
+
+# Get the explicit per-provider options for a specific model
+curl -s "https://api.varg.ai/v2/tools/image?model=flux_schnell" \
+  -H "Authorization: Bearer $VARG_API_KEY"
+
+# Call any tool generically (same as POST /v2/image)
+curl -s -X POST https://api.varg.ai/v2/tools/image/call \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "flux_schnell", "prompt": "a cat astronaut"}'
+```
+
+## Pricing and billing
+
+1 credit = 1 cent = $0.01. The billing flow:
+
+1. **Reserve** — at job creation, the estimated cost is held from your balance (402 if insufficient).
+2. **Commit** — on completion, the hold is charged and a usage record written.
+3. **Release** — on failure, the hold is returned (most models; some bill partial work).
+
+```bash
+# Price a request WITHOUT creating a job
+curl -s -X POST https://api.varg.ai/v2/estimate \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "kling_v3", "prompt": "cat", "duration": 5}'
+# {"valid": true, "model": "kling_v3", "tool": "video",
+#  "pricing": {"user_price_cents": 221, ...}}
+
+# Check your balance
+curl -s https://api.varg.ai/v2/billing/balance \
+  -H "Authorization: Bearer $VARG_API_KEY"
+# {"available": 8200, "reserved": 300, "total_balance": 8500, ...}
+```
+
+Each job carries its pricing in the response: `pricing.estimated`, `pricing.actual`, `pricing.billed_units` (e.g. `{"seconds": 6}`), and a `pricing_id` that pins the price rule the job was charged under — mid-flight price changes never affect running jobs.
+
+## Caching
+
+Results are cached by canonical input. Repeating an identical request returns a completed job instantly with `actual_cost_cents: 0` and `pricing.cached: true` — **cache hits are free**.
+
+## Idempotency
+
+Pass an `Idempotency-Key` header on any job-creating POST to make retries safe:
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Idempotency-Key: my-unique-key-1" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "flux_schnell", "prompt": "a cat astronaut"}'
+```
+
+The first request creates the job (`202`). Retrying with the same key returns the same job (`200`) — no duplicate charge, no duplicate generation.
+
+## Files and lineage
+
+Outputs are mirrored to varg storage and served from stable `s3.varg.ai` URLs. Every output gets a file record with an AI-generated title, a thumbnail, and **lineage** back to the job that created it:
+
+```bash
+# Upload an input file (raw binary body, max 200MB)
+curl -s -X POST https://api.varg.ai/v2/files \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: image/jpeg" \
+  -H "X-Filename: cat.jpg" \
+  --data-binary @cat.jpg
+# {"file_id": "file_abc123", "url": "https://s3.varg.ai/files/...", ...}
+
+# Which job made this file? (get the recipe: prompt, model, cost)
+curl -s -X POST https://api.varg.ai/v2/lineage \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": "file_abc123"}'
+```
+
+Send `X-Content-Hash: sha256:<hex>` on upload for content deduplication, or pre-check with `GET /v2/files/check?hash=`.
+
+## Error format
+
+All errors use one envelope:
+
+```json
+{
+  "error": {
+    "code": "model_not_found",
+    "message": "Unknown model: flux-shnell",
+    "details": null
+  }
+}
+```
+
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `invalid_request`, `invalid_json` | Malformed body |
+| 401 | `unauthorized` | Missing or invalid API key |
+| 402 | `insufficient_balance` | Balance too low to reserve the estimated cost |
+| 404 | `model_not_found`, `tool_not_found`, `job_not_found`, `file_not_found` | Unknown resource |
+| 409 | — | Job is already terminal (cancel/refresh) |
+| 413 | `file_too_large` | Upload over 200 MB |
+| 422 | `invalid_request` | Body failed schema validation (details included) |
+| 429 | `rate_limited` | Too many requests — honor `Retry-After` |
+| 503 | `no_pricing` | Model temporarily has no active pricing |
+
 ## Rate limits
 
-| Plan | Requests/minute | Concurrent jobs |
-|------|-----------------|-----------------|
-| Free | 10 | 2 |
-| Pro | 100 | 10 |
-| Enterprise | Custom | Custom |
+Rate limiting is a sliding window per API key. Every job-creation response carries:
+
+```http
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 2026-07-01T10:01:00.000Z
+```
+
+On 429, wait for `Retry-After` seconds and retry (ideally with the same `Idempotency-Key`).
+
+## Migrating from v1
+
+The v1 gateway (`api.varg.ai/v1`) is frozen. Key differences in v2:
+
+| v1 | v2 |
+|----|----|
+| `job_id` field | `id` field |
+| `output.url` (single) | `output.outputs[]` (array, each with `file_id`) |
+| `GET /jobs/{id}/stream` (SSE) | Removed — poll or use `options.webhook_url` |
+| `DELETE /jobs/{id}` | `POST /jobs/{id}/cancel` |
+| `GET /balance` | `GET /billing/balance` (richer breakdown) |
+| `GET /usage` | `GET /billing/usage` |
+| `POST /ffmpeg/trim` etc. | Single `POST /ffmpeg`, operation selected by `model` |
+| `POST /ffmpeg/probe` | `POST /files/probe` |
+| `GET /voices` | Not yet ported — pass `voice` by name |
+| Model names with dashes | Underscores canonical (dashes still accepted) |
+| Flat error shape | `{"error": {"code", "message"}}` envelope |
