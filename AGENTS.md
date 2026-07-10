@@ -1,6 +1,6 @@
 # varg Documentation
 
-Documentation for varg AI video generation SDK and Gateway API.
+Documentation for varg AI video generation SDK and the varg API (api.varg.ai).
 
 ## About this project
 
@@ -22,7 +22,7 @@ docs/
 │   ├── models.mdx            # AI models reference
 │   └── cli.mdx               # CLI reference
 ├── api/
-│   └── index.mdx             # Gateway API docs
+│   └── index.mdx             # varg API docs (api.varg.ai/v2)
 ├── templates/
 │   ├── index.mdx             # Template gallery
 │   ├── slideshow.mdx         # Slideshow template
@@ -69,7 +69,7 @@ The `/ai-agents/index.mdx` page is the most important - it contains complete con
 ## Content boundaries
 
 - Document SDK (open-source vargai package)
-- Document Gateway API (api.varg.ai)
+- Document the varg API (api.varg.ai/v2)
 - Do NOT document internal app implementation details
 - Do NOT document deployment/infrastructure
 

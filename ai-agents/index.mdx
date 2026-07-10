@@ -9,7 +9,7 @@ This page provides complete context for AI agents (Claude, GPT, Cursor, etc.) to
 
 ## What is varg?
 
-varg is a JSX-based AI video generation platform. Users write React-like code to describe video compositions, and varg handles AI generation (images, video, voice, music) and final video rendering. Everything goes through one gateway, one API key.
+varg is a JSX-based AI video generation platform. Users write React-like code to describe video compositions, and varg handles AI generation (images, video, voice, music) and final video rendering. Everything goes through one API (api.varg.ai), one API key.
 
 **For the best agent experience**, install the varg skill which includes 10 reference docs, setup scripts, and auto-update:
 
@@ -24,7 +24,7 @@ npx -y skills add vargHQ/skills --all --copy -y
 VARG_API_KEY=varg_xxx
 ```
 
-Get a key at [app.varg.ai](https://app.varg.ai). This single key provides access to all AI providers (images, video, speech, music, lipsync) through the varg gateway.
+Get a key at [app.varg.ai](https://app.varg.ai). This single key provides access to all AI providers (images, video, speech, music, lipsync) through the varg API.
 
 <Tip>
 If the user doesn't have a key, you can drive the OTP login flow with curl. See [Authentication](/authentication) for the agent-driven login flow.
@@ -111,7 +111,7 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 
 ### Image Models
 
-| Model | Code (gateway) | Best For | Credits |
+| Model | Code (varg API) | Best For | Credits |
 |-------|---------------|----------|---------|
 | Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | Versatile, fast | 5 |
 | Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | Image editing | 5 |
@@ -123,7 +123,7 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 
 ### Video Models
 
-| Model | Code (gateway) | Duration | Best For | Credits |
+| Model | Code (varg API) | Duration | Best For | Credits |
 |-------|---------------|----------|----------|---------|
 | Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | 150 |
 | Seedance 2 | `varg.videoModel("seedance-2-preview")` | 5 or 10s | Excellent quality (ByteDance) | 250 |
@@ -134,14 +134,14 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 
 ### Lipsync Models
 
-| Model | Code (gateway) | Best For | Credits |
+| Model | Code (varg API) | Best For | Credits |
 |-------|---------------|----------|---------|
 | Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | Lip sync | 100 |
 | Sync V2 | `varg.videoModel("sync-v2")` | Lip sync (fast) | 75 |
 
 ### Audio Models
 
-| Model | Code (gateway) | Best For | Credits |
+| Model | Code (varg API) | Best For | Credits |
 |-------|---------------|----------|---------|
 | Eleven V3 | `varg.speechModel("eleven_v3")` | Best TTS | 25 |
 | Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | Multi-language | 20 |

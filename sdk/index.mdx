@@ -3,7 +3,7 @@ title: "SDK Overview"
 description: "vargai SDK for programmatic AI video generation"
 ---
 
-The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syntax. One API key, one gateway, all providers.
+The varg SDK (`vargai`) lets you create AI videos programmatically using JSX syntax. One API key, one API, all providers.
 
 ## Installation
 
@@ -33,7 +33,7 @@ Get your key at [app.varg.ai](https://app.varg.ai) or run `bunx vargai login`.
 
 ## Two Ways to Use varg
 
-### 1. Gateway Mode (Recommended)
+### 1. varg API Mode (Recommended)
 
 Use `createVarg()` for one-key access to all providers:
 
@@ -144,7 +144,7 @@ const scene3 = Image({ prompt: "mountain" })
 // React/JSX components
 import { Render, Clip, Image, Video, Speech, Music, Captions, ... } from "vargai/react"
 
-// Gateway client (recommended — routes through api.varg.ai)
+// varg API client (recommended — routes through api.varg.ai)
 import { createVarg } from "vargai/ai"
 
 // Direct providers (BYOK)
@@ -155,7 +155,7 @@ import { fal, elevenlabs, higgsfield, openai, replicate } from "vargai/ai"
 
 ```bash
 # Required
-VARG_API_KEY=varg_xxx              # Gateway key (one key for everything)
+VARG_API_KEY=varg_xxx              # varg API key (one key for everything)
 
 # Optional (BYOK — see /byok for details)
 FAL_KEY=fal_xxx                    # Direct Fal access
