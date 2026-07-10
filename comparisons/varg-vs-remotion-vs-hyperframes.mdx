@@ -122,7 +122,7 @@ The [varg SDK](https://github.com/vargHQ/sdk) (`vargai` on npm) is open-source u
 - Content-addressed caching (sha256 of prompt + parameters) backed by Cloudflare R2 with stable `s3.varg.ai` URLs and a 30-day TTL. Identical prompts cost nothing on re-render.
 - A cloud render endpoint (`POST api.varg.ai/v2/render`) that accepts TSX as a string and returns an MP4 URL — zero local dependencies required.
 - An agent skill (`varg-ai`) installable in Claude Code, Cursor, Windsurf, OpenCode via `npx -y skills add vargHQ/skills`. The skill ships with reference docs for models, components, prompting, recipes, and error recovery.
-- BYOK with AES-256-GCM-encrypted provider keys.
+- Direct provider modules in the SDK for local rendering with your own provider keys.
 
 ### Architecture
 
@@ -146,7 +146,6 @@ The custom JSX runtime is deliberately not React. Components like `Image()`, `Vi
 | Cloud render via pure curl | Agents without a local toolchain can POST TSX as a string to `api.varg.ai/v2/render`. Globals are pre-injected — no imports, no `package.json`, no bundler. |
 | High-level creative components | `<TalkingHead>`, `<Speech>`, `<Captions>`, `<Lipsync>` match how creators and agents actually reason about AI video — not "what happens on frame 137." |
 | Open-source SDK | The [varg SDK](https://github.com/vargHQ/sdk) and templates are Apache 2.0. You pay only for AI generation, and only when the cache misses. |
-| BYOK with encryption | Bring your own provider keys, stored AES-256-GCM-encrypted. Or use varg's pooled keys with usage-based billing. |
 
 ### Limitations (by design)
 
@@ -154,7 +153,7 @@ The custom JSX runtime is deliberately not React. Components like `Image()`, `Vi
 |---|---|
 | No per-frame programmability | varg's bet is that the right abstraction for AI-first video is "clips of AI-generated media composed on a timeline," not "what does pixel (x,y) look like on frame 137." Different problem, different abstraction. |
 | No browser preview | The composition is server-side because the AI generation steps are server-side. Preview happens by rendering — and caching keeps re-renders nearly free. |
-| Quality depends on upstream models | True of any AI orchestration layer. Mitigated by giving you instant access to the best provider for each capability, plus failover and BYOK. |
+| Quality depends on upstream models | True of any AI orchestration layer. Mitigated by giving you instant access to the best provider for each capability, plus failover. |
 | Newer than Remotion | Beta as of 2026. Smaller community, fewer Stack Overflow answers — but the agent skill replaces a lot of what a community would otherwise carry. |
 
 ### Best for
@@ -213,7 +212,7 @@ That's the layer varg owns.
 |---|---|---|---|
 | **Remotion** | Agents must follow React rules; more prompting needed for creative output. | Code-centric Studio; Editor Starter ships as a paid template. Visual edits require recompile. | Source-available custom license. Commercial use above small-team thresholds requires a paid license + per-render fees. |
 | **Hyperframes** | Highly agent-native. Built-in skills for website-to-video and captioning. | Studio uses the same DOM as the renderer — click, drag, edit. No recompile. | Apache 2.0. Free commercial use, no per-render fees. |
-| **varg** | Agent-first design: cross-tool skill, JSON action definitions, structured CLI output, OTP onboarding, pure-curl cloud render. | No browser editor. Preview by rendering — cache keeps re-renders nearly free. The dashboard at `app.varg.ai` handles project management. | SDK and templates are Apache 2.0 ([vargHQ/sdk](https://github.com/vargHQ/sdk)). AI generations are pay-per-call (or BYOK) with content-addressed caching. |
+| **varg** | Agent-first design: cross-tool skill, JSON action definitions, structured CLI output, OTP onboarding, pure-curl cloud render. | No browser editor. Preview by rendering — cache keeps re-renders nearly free. The dashboard at `app.varg.ai` handles project management. | SDK and templates are Apache 2.0 ([vargHQ/sdk](https://github.com/vargHQ/sdk)). AI generations are pay-per-call with content-addressed caching. |
 
 ## When to choose what
 
