@@ -135,17 +135,23 @@ Media inputs are always passed **by URL** — upload local files first via [`POS
 
 ## Model resolution
 
-The `model` field accepts three address forms, from loose to exact:
+**Most requests should just use the model name.** Pass a canonical varg name (`seedance_2`, `kling_v3`, `flux_schnell`) and varg auto-routes by priority and input shape — if your request includes `files`, routes that map files are preferred; the first route whose schema accepts your input wins.
 
 ```json
-{ "model": "seedance_2" }                                          // canonical — varg picks the route
+{ "model": "seedance_2" }   // canonical name — varg picks the route (recommended)
+```
+
+For advanced control, two more address forms exist:
+
+```json
 { "model": "fal:seedance_2" }                                      // provider prefix — routes filtered to fal
 { "model": "fal:bytedance/seedance-2.0/fast/reference-to-video" }  // exact model_key — pins one route
 ```
 
-1. **Canonical name** — varg auto-routes by priority and input shape. If your request includes `files`, routes that map files are preferred; the first route whose schema accepts your input wins.
-2. **Provider prefix** — same auto-routing, restricted to routes on that provider.
-3. **Exact `model_key`** — pins one specific route. `model_key` values are a permanent public contract, listed in [`GET /v2/models`](#model-catalog), and safe to hardcode.
+- **Provider prefix** — same auto-routing, restricted to routes on that provider.
+- **Exact `model_key`** — pins one specific route. `model_key` values are a permanent public contract and safe to hardcode.
+
+Every route's `model_key` is listed in [`GET /v2/models`](#model-catalog).
 
 Two guarantees:
 

@@ -48,6 +48,8 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Model | Code | Duration | Credits | Docs |
 |-------|------|----------|---------|------|
 | Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | per-second, 160 (5s@720p) | [Details](/models/video/seedance-2) |
+| Seedance 2 Mini | `varg.videoModel("seedance_2_mini")` | 4-15s (int) | per-second, 74 (5s@720p) | [Details](/models/video/seedance-2) |
+| Seedance 2 Less Restriction | `varg.videoModel("seedance_2_less_restriction")` | 4-15s (int) | per-second, 116 (5s@720p) — permissive review, explicit opt-in | [Details](/models/video/seedance-2) |
 | Kling V3 Pro | `varg.videoModel("kling-v3")` | 3-15s (int) | 150 | [Details](/models/video/kling-v3) |
 | Kling V3 Standard | `varg.videoModel("kling-v3-standard")` | 3-15s (int) | 100 | [Details](/models/video/kling-v3) |
 | Sora 2 | `varg.videoModel("sora-2")` | varies | 100 | [Details](/models/video/sora-2) |
@@ -63,7 +65,7 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | HeyGen Avatar IV | `varg.videoModel("heygen-avatar-iv")` | varies | 300 | — |
 
 <Note>
-Seedance 2 bills per second and spans 9 routes; estimates are exact when you pass a numeric `duration` (`"auto"` reserves the worst case). Pin an exact key like `piapi:seedance-2` (5s@720p = 105 credits) or `piapi:seedance-2-mini` (5s@480p = 37 credits, cheapest) for the lower tiers. See [Seedance 2](/models/video/seedance-2) for the full route table.
+Seedance 2 bills per second; estimates are exact when you pass a numeric `duration` (`"auto"` reserves the worst case). The budget tier is `seedance_2_mini` (5s@480p = 37 credits, cheapest). Exact `model_key`s remain available for advanced route pinning — see [Seedance 2](/models/video/seedance-2) for the full route table.
 </Note>
 
 ### Image Models

@@ -7,21 +7,19 @@ icon: "seedling"
 
 ## Overview
 
-Seedance 2 is ByteDance's latest video generation model. In varg it is one canonical model, `seedance_2`, served by 9 routes across two providers (fal and PiAPI). Send `model: "seedance_2"` and varg picks the best route for your input, or pin an exact `model_key` to select a specific mode or tier.
+Seedance 2 is ByteDance's latest video generation model. In varg you address it by name and varg picks the best provider route for your input:
 
-| Priority | model_key | Mode | Pricing (per second) |
-|----------|-----------|------|----------------------|
-| 1 | `fal:bytedance/seedance-2.0/text-to-video` | Text-to-video, standard tier, up to 4k | $0.135 (480p), $0.3034 (720p), $0.682 (1080p), $1.556 (4k) |
-| 2 | `fal:bytedance/seedance-2.0/fast/image-to-video` | Image-to-video (start + optional end frame), fast tier | $0.108 (480p), $0.2419 (720p) |
-| 3 | `fal:bytedance/seedance-2.0/fast/reference-to-video` | Reference-to-video (up to 9 images, 3 videos, 3 audio refs) | $0.108 (480p), $0.2419 (720p) |
-| 10 | `piapi:seedance-2` | Pro tier, t2v / i2v / omni | $0.10 (480p), $0.20 (720p), $0.50 (1080p) |
-| 11 | `piapi:seedance-2-fast` | Fast tier | $0.08 (480p), $0.16 (720p) |
-| 12 | `piapi:seedance-2-mini` | Mini tier, lowest cost | $0.07 (480p), $0.14 (720p) |
-| 20 | `piapi:seedance-2-less-restriction` | Pro, permissive content review | Pro +10% |
-| 21 | `piapi:seedance-2-fast-less-restriction` | Fast, permissive content review | Fast +10% |
-| 22 | `piapi:seedance-2-mini-less-restriction` | Mini, permissive content review | Mini +10% |
+| varg name | What it is | Credits (5s @ 720p) |
+|-----------|------------|---------------------|
+| `seedance_2` | Canonical — best quality. Auto-routes: text-to-video by default (up to 4k), image-to-video when you send files | 160 |
+| `seedance_2_mini` | Cheapest tier (ByteDance mini) | 74 |
+| `seedance_2_less_restriction` | Permissive content review — explicit opt-in by choosing this name, +10% over strict tiers | 116 |
 
-Browse the full route list at any time via [`GET /v2/models?tool=video`](https://api.varg.ai/v2/models?tool=video) (public, no auth).
+All three share the same input schema. Under the hood each name spans one or more provider routes — see [Advanced: exact route addressing](#advanced-exact-route-addressing) if you need to pin a specific route.
+
+<Note>
+The legacy `seedance-2-preview` and `seedance-2-fast-preview` names still work but are deprecated — use the names above.
+</Note>
 
 ## Quick start
 
@@ -59,64 +57,11 @@ curl https://api.varg.ai/v2/jobs/JOB_ID \
 ```
 </CodeGroup>
 
-## Choosing a specific mode or tier
-
-With `model: "seedance_2"`, varg routes automatically:
-
-- **No files** → `fal:bytedance/seedance-2.0/text-to-video`
-- **Files present** → `fal:bytedance/seedance-2.0/fast/image-to-video` (first image becomes the start frame)
-
-To reach other modes or tiers, address a route directly. You have three address forms:
-
-```json
-{ "model": "seedance_2" }                                          // canonical — varg picks the route
-{ "model": "piapi:seedance_2" }                                    // provider prefix — restrict to PiAPI routes
-{ "model": "fal:bytedance/seedance-2.0/fast/reference-to-video" }  // exact model_key — pin one route
-```
-
-Reference-to-video and the PiAPI tiers are reachable **only** via exact `model_key`:
-
-<CodeGroup>
-```bash Reference-to-video (exact key)
-curl -X POST https://api.varg.ai/v2/video \
-  -H "Authorization: Bearer $VARG_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "fal:bytedance/seedance-2.0/fast/reference-to-video",
-    "prompt": "@Image1 walks through the scene from @Image2 while @Audio1 plays",
-    "files": [
-      { "url": "https://example.com/character.jpg" },
-      { "url": "https://example.com/background.jpg" },
-      { "url": "https://example.com/theme.mp3" }
-    ],
-    "duration": 5
-  }'
-```
-
-```bash PiAPI mini tier (cheapest)
-curl -X POST https://api.varg.ai/v2/video \
-  -H "Authorization: Bearer $VARG_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "piapi:seedance-2-mini",
-    "prompt": "a golden retriever running through autumn leaves",
-    "duration": 5,
-    "aspect_ratio": "16:9"
-  }'
-```
-</CodeGroup>
-
-`model_key` values are a permanent public contract — they are listed in [`GET /v2/models`](https://api.varg.ai/v2/models) and safe to hardcode.
-
-<Tip>
-Not sure which route your request will hit? Send the same body to `POST /v2/estimate` — the response includes `resolved_model_key` and the exact price, without creating a job.
-</Tip>
-
 ## Capabilities
 
 ### Text-to-video
 
-Generate video from a text prompt alone. The canonical fal route supports resolutions up to 4k.
+Generate video from a text prompt alone. The default route supports resolutions up to 4k.
 
 <CodeGroup>
 ```typescript SDK
@@ -142,7 +87,7 @@ curl -X POST https://api.varg.ai/v2/video \
 
 ### Image-to-video
 
-Animate a still image. The first image in `files` becomes the start frame. The fal fast route also accepts an optional end frame via `provider_options`.
+Animate a still image. The first image in `files` becomes the start frame. An optional end frame can be set via `provider_options`.
 
 <CodeGroup>
 ```typescript SDK
@@ -170,7 +115,7 @@ curl -X POST https://api.varg.ai/v2/video \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "fal:bytedance/seedance-2.0/fast/image-to-video",
+    "model": "seedance_2",
     "prompt": "smooth transition from day to night",
     "duration": 5,
     "files": [{ "url": "https://example.com/day.jpg" }],
@@ -181,7 +126,7 @@ curl -X POST https://api.varg.ai/v2/video \
 
 ### Reference-to-video
 
-Compose a video from multiple references: up to 9 images, 3 videos, and 3 audio files. Reference them in your prompt with `@Image1`, `@Video1`, `@Audio1`, and so on. This mode requires the exact key `fal:bytedance/seedance-2.0/fast/reference-to-video` (or PiAPI's omni mode via `piapi:seedance-2`).
+Compose a video from multiple references: up to 9 images, 3 videos, and 3 audio files. Reference them in your prompt with `@Image1`, `@Video1`, `@Audio1`, and so on. Reference mode is not reachable by auto-routing — it requires [exact route addressing](#advanced-exact-route-addressing):
 
 ```bash
 curl -X POST https://api.varg.ai/v2/video \
@@ -199,40 +144,57 @@ curl -X POST https://api.varg.ai/v2/video \
   }'
 ```
 
-## Parameters
+## Budget tier (seedance_2_mini)
 
-<ResponseField name="prompt" type="string" required>
-  Text description of the video to generate. In reference mode, address inputs with `@Image1`, `@Video1`, `@Audio1`, etc.
-</ResponseField>
+`seedance_2_mini` is the cheapest Seedance tier. Same input schema as `seedance_2` — integer `duration` 4 to 15 (no `"auto"`). 5s at 720p costs 74 credits; drop to 480p for 37 credits.
 
-<ResponseField name="duration" type="integer | 'auto'" default="5">
-  Video duration in seconds, `4` to `15`. The fal routes also accept `"auto"` (the model picks a natural length). PiAPI routes accept integers only.
-</ResponseField>
-
-<ResponseField name="aspect_ratio" type="string" default="16:9">
-  Output aspect ratio. Supported values: `auto`, `21:9`, `16:9`, `4:3`, `1:1`, `3:4`, `9:16`.
-</ResponseField>
-
-<ResponseField name="files" type="array">
-  Array of `{ url: string }` objects. On the canonical model, an image triggers image-to-video (start frame). In reference mode, up to 9 images, 3 videos, and 3 audio files.
-</ResponseField>
-
-<ResponseField name="provider_options" type="object">
-  Provider-native overrides. PiAPI routes default to 720p — override with `{"piapi": {"input": {"resolution": "480p"}}}`. fal routes: `{"fal": {"resolution": "480p"}}`.
-</ResponseField>
-
-```json
-{
-  "model": "piapi:seedance-2-fast",
-  "prompt": "a paper boat drifting down a rainy street",
-  "duration": 6,
-  "provider_options": { "piapi": { "input": { "resolution": "480p" } } }
-}
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("seedance_2_mini").generate({
+  prompt: "a paper boat drifting down a rainy street",
+  duration: 5,
+  aspectRatio: "16:9",
+})
 ```
 
-## Less-restriction variants
+```bash cURL
+curl -X POST https://api.varg.ai/v2/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance_2_mini",
+    "prompt": "a paper boat drifting down a rainy street",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
 
-The three `*-less-restriction` PiAPI routes run the same models with a more permissive content review, at +10% over the corresponding strict tier. They are explicit opt-in: their input schemas are identical to the strict routes, so auto-routing can never select them — you must address them by exact `model_key` (for example `piapi:seedance-2-less-restriction`).
+## Less-restriction variant (seedance_2_less_restriction)
+
+`seedance_2_less_restriction` runs Seedance with a more permissive content review, at +10% over the matching strict tier (5s at 720p = 116 credits). Choosing this name **is** the explicit opt-in — auto-routing never selects a less-restriction route on your behalf.
+
+<CodeGroup>
+```typescript SDK
+const result = await varg.videoModel("seedance_2_less_restriction").generate({
+  prompt: "your prompt",
+  duration: 5,
+  aspectRatio: "16:9",
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v2/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedance_2_less_restriction",
+    "prompt": "your prompt",
+    "duration": 5,
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
 
 Behavior differences:
 
@@ -243,20 +205,55 @@ Behavior differences:
 Photorealistic reference faces are rejected even on less-restriction routes — the model refuses to animate real-person likenesses. Anime and 2D character references work. If you need a specific-looking person, describe them in the text prompt instead of providing a photo.
 </Warning>
 
+`seedance_2_less_restriction` auto-routes to the pro less-restriction tier. Fast and mini less-restriction tiers are reachable only via [exact route addressing](#advanced-exact-route-addressing).
+
+## Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the video to generate. In reference mode, address inputs with `@Image1`, `@Video1`, `@Audio1`, etc.
+</ResponseField>
+
+<ResponseField name="duration" type="integer | 'auto'" default="5">
+  Video duration in seconds, `4` to `15`. The fal routes also accept `"auto"` (the model picks a natural length). PiAPI routes (including `seedance_2_mini` and `seedance_2_less_restriction`) accept integers only.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="16:9">
+  Output aspect ratio. Supported values: `auto`, `21:9`, `16:9`, `4:3`, `1:1`, `3:4`, `9:16`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Array of `{ url: string }` objects. On `seedance_2`, an image triggers image-to-video (start frame). In reference mode, up to 9 images, 3 videos, and 3 audio files.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Provider-native overrides. PiAPI routes default to 720p — override with `{"piapi": {"input": {"resolution": "480p"}}}`. fal routes: `{"fal": {"resolution": "480p"}}`.
+</ResponseField>
+
+```json
+{
+  "model": "seedance_2_mini",
+  "prompt": "a paper boat drifting down a rainy street",
+  "duration": 6,
+  "provider_options": { "piapi": { "input": { "resolution": "480p" } } }
+}
+```
+
 ## Pricing
 
 All Seedance 2 routes bill **per second of output video**:
 
-| Route | 480p | 720p | 1080p | 4k |
-|-------|------|------|-------|-----|
-| fal text-to-video | $0.135/s | $0.3034/s | $0.682/s | $1.556/s |
-| fal fast i2v / r2v | $0.108/s | $0.2419/s | — | — |
-| `piapi:seedance-2` (pro) | $0.10/s | $0.20/s | $0.50/s | — |
-| `piapi:seedance-2-fast` | $0.08/s | $0.16/s | — | — |
-| `piapi:seedance-2-mini` | $0.07/s | $0.14/s | — | — |
-| less-restriction variants | +10% over the matching strict tier | | | |
+| Model | Route detail | 480p | 720p | 1080p | 4k |
+|-------|-------------|------|------|-------|-----|
+| `seedance_2` | fal text-to-video (default) | $0.135/s | $0.3034/s | $0.682/s | $1.556/s |
+| `seedance_2` | fal fast i2v / r2v (with files) | $0.108/s | $0.2419/s | — | — |
+| `seedance_2_mini` | PiAPI mini | $0.07/s | $0.14/s | — | — |
+| `seedance_2_less_restriction` | PiAPI pro, permissive review | +10% over pro | +10% over pro | +10% over pro | — |
 
-Estimates are exact when you pass a numeric `duration` — for example, 5s at 480p on the fal text-to-video route costs 72 credits, and 5s at 720p on `piapi:seedance-2` costs 105 credits. One exception: `duration: "auto"` (fal routes) makes the length unknowable upfront, so the estimate reserves the worst case (~479 credits at 720p) and the charge equals the reservation. Pass an explicit duration when cost matters.
+Worked examples: 5s at 720p costs 160 credits on `seedance_2` (text-to-video), 74 credits on `seedance_2_mini`, and 116 credits on `seedance_2_less_restriction`. At 480p, `seedance_2_mini` drops to 37 credits.
+
+Additional routes are reachable via [exact addressing](#advanced-exact-route-addressing): `piapi:seedance-2` (pro: $0.10 / $0.20 / $0.50 per second at 480p / 720p / 1080p), `piapi:seedance-2-fast` ($0.08 / $0.16 per second), and the fast/mini less-restriction variants at +10% over their strict tiers.
+
+Estimates are exact when you pass a numeric `duration`. One exception: `duration: "auto"` (fal routes) makes the length unknowable upfront, so the estimate reserves the worst case (~479 credits at 720p) and the charge equals the reservation. Pass an explicit duration when cost matters.
 
 Check the price and route before submitting:
 
@@ -271,12 +268,65 @@ curl -s -X POST https://api.varg.ai/v2/estimate \
 ```
 
 <Note>
-**Migrating from preview names.** The legacy `seedance-2-preview` and `seedance-2-fast-preview` names still work (they redirect upstream) but are deprecated — use `seedance_2` or an exact `model_key`. The old flat pricing (250/150 credits per generation) no longer applies; all routes now bill per second as shown above.
+**Migrating from preview names.** The legacy `seedance-2-preview` and `seedance-2-fast-preview` names still work (they redirect upstream) but are deprecated — use `seedance_2`, `seedance_2_mini`, or `seedance_2_less_restriction`. The old flat pricing (250/150 credits per generation) no longer applies; all routes now bill per second as shown above.
 </Note>
+
+## Advanced: exact route addressing
+
+Most requests should just use a varg name — each name auto-routes across one or more provider routes by priority and input shape. For `seedance_2`:
+
+- **No files** → `fal:bytedance/seedance-2.0/text-to-video`
+- **Files present** → `fal:bytedance/seedance-2.0/fast/image-to-video` (first image becomes the start frame)
+
+Every route also has a permanent `model_key`, listed in [`GET /v2/models?tool=video`](https://api.varg.ai/v2/models?tool=video) (public, no auth). Passing a `model_key` in `model` pins that exact route. Three address forms, from loose to exact:
+
+```json
+{ "model": "seedance_2" }                                          // canonical — varg picks the route
+{ "model": "piapi:seedance_2" }                                    // provider prefix — restrict to PiAPI routes
+{ "model": "fal:bytedance/seedance-2.0/fast/reference-to-video" }  // exact model_key — pin one route
+```
+
+The main reason to pin a route: **reference-to-video is not reachable by auto-routing**.
+
+```bash
+curl -X POST https://api.varg.ai/v2/video \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "fal:bytedance/seedance-2.0/fast/reference-to-video",
+    "prompt": "@Image1 walks through the scene from @Image2 while @Audio1 plays",
+    "files": [
+      { "url": "https://example.com/character.jpg" },
+      { "url": "https://example.com/background.jpg" },
+      { "url": "https://example.com/theme.mp3" }
+    ],
+    "duration": 5
+  }'
+```
+
+Full route list:
+
+| Priority | model_key | Mode | Pricing (per second) |
+|----------|-----------|------|----------------------|
+| 1 | `fal:bytedance/seedance-2.0/text-to-video` | Text-to-video, standard tier, up to 4k | $0.135 (480p), $0.3034 (720p), $0.682 (1080p), $1.556 (4k) |
+| 2 | `fal:bytedance/seedance-2.0/fast/image-to-video` | Image-to-video (start + optional end frame), fast tier | $0.108 (480p), $0.2419 (720p) |
+| 3 | `fal:bytedance/seedance-2.0/fast/reference-to-video` | Reference-to-video (up to 9 images, 3 videos, 3 audio refs) | $0.108 (480p), $0.2419 (720p) |
+| 10 | `piapi:seedance-2` | Pro tier, t2v / i2v / omni | $0.10 (480p), $0.20 (720p), $0.50 (1080p) |
+| 11 | `piapi:seedance-2-fast` | Fast tier | $0.08 (480p), $0.16 (720p) |
+| 12 | `piapi:seedance-2-mini` | Mini tier (served by `seedance_2_mini`) | $0.07 (480p), $0.14 (720p) |
+| 20 | `piapi:seedance-2-less-restriction` | Pro, permissive review (served by `seedance_2_less_restriction`) | Pro +10% |
+| 21 | `piapi:seedance-2-fast-less-restriction` | Fast, permissive review | Fast +10% |
+| 22 | `piapi:seedance-2-mini-less-restriction` | Mini, permissive review | Mini +10% |
+
+`model_key` values are a permanent public contract — safe to hardcode.
+
+<Tip>
+Not sure which route your request will hit? Send the same body to `POST /v2/estimate` — the response includes `resolved_model_key` and the exact price, without creating a job.
+</Tip>
 
 ## Tips
 
-- **Cost-sensitive? Pin a PiAPI key.** `piapi:seedance-2-mini` at 480p is the cheapest path (5s = 37 credits).
+- **Cost-sensitive? Use `seedance_2_mini`.** 5s at 480p is 37 credits — the cheapest Seedance path (`provider_options: {"piapi": {"input": {"resolution": "480p"}}}`).
 - **Run `POST /v2/estimate` first** — it shows the `resolved_model_key` and price without creating a job or reserving credits.
 - **Image-to-video produces better results** than text-to-video. Generate a reference image first with `nano-banana-pro`, then animate it.
 - **Use `@Image1` / `@Video1` / `@Audio1` syntax** in reference mode to control which input maps to which element of the scene.
