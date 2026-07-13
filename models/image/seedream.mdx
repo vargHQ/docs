@@ -1,19 +1,112 @@
 ---
 title: "Seedream"
 sidebarTitle: "Seedream"
-description: "ByteDance's image editing model for precise visual modifications"
+description: "ByteDance's image models — Seedream 5 Lite for text-to-image with reference images, Seedream V4.5 for precise image editing"
 icon: "pen-to-square"
 ---
 
 ## Overview
 
+varg offers two Seedream models from ByteDance:
+
+- **Seedream 5 Lite** (`seedream_5_lite`) — text-to-image generation with up to 10 reference images, at 2K or 3K resolution.
+- **Seedream V4.5 Edit** (`seedream-v4.5/edit`) — precise editing of existing images.
+
+| Model | Mode | ~Cost |
+|-------|------|-------|
+| `seedream_5_lite` | Text-to-image + references | 4 credits (2K), 6 credits (3K) |
+| `seedream-v4.5/edit` | Image editing | 10 credits |
+
+## Seedream 5 Lite
+
+Seedream 5 Lite generates images from text, optionally guided by up to 10 reference images addressed with `@image1`, `@image2`, etc. in the prompt. The canonical name `seedream_5_lite` routes to `piapi:seedream-5-lite`.
+
+### Quick start
+
+<CodeGroup>
+```typescript SDK
+import { createVarg } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const result = await varg.imageModel("seedream_5_lite").generate({
+  prompt: "a cozy mountain cabin at dusk, warm light in the windows, cinematic",
+  aspectRatio: "16:9",
+})
+
+console.log(result.image.url)
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedream_5_lite",
+    "prompt": "a cozy mountain cabin at dusk, warm light in the windows, cinematic",
+    "aspect_ratio": "16:9"
+  }'
+```
+</CodeGroup>
+
+### Reference images
+
+Pass up to 10 reference images in `files` and address them in the prompt:
+
+```bash
+curl -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "seedream_5_lite",
+    "prompt": "@image1 standing in the environment of @image2, golden hour lighting",
+    "files": [
+      { "url": "https://example.com/character.jpg" },
+      { "url": "https://example.com/location.jpg" }
+    ]
+  }'
+```
+
+### Parameters
+
+<ResponseField name="prompt" type="string" required>
+  Text description of the image. Reference input images with `@image1`, `@image2`, etc.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  Supported values: `21:9`, `16:9`, `4:3`, `1:1`, `3:4`, `9:16`.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+  Up to 10 reference images as `{ url: string }` objects.
+</ResponseField>
+
+<ResponseField name="provider_options" type="object">
+  Resolution defaults to 2K. Request 3K with `{"piapi": {"input": {"size": "3K"}}}`. Output format defaults to `jpeg`; set `png` via `{"piapi": {"input": {"output_format": "png"}}}`.
+</ResponseField>
+
+```json
+{
+  "model": "seedream_5_lite",
+  "prompt": "detailed isometric city map, pastel colors",
+  "provider_options": { "piapi": { "input": { "size": "3K" } } }
+}
+```
+
+### Less-restriction variant
+
+The route `piapi:seedream-5-lite-less-restriction` runs the same model with a more permissive content review at a small premium (~7 credits at 2K). It is explicit opt-in — its schema is identical to the strict route, so auto-routing never selects it; you must address it by exact `model_key`. Content involving minors, real-person identity or faces, graphic violence, and hate remains blocked. On rejection the job is not retried and your credits are refunded.
+
+### Pricing
+
+| Route | 2K | 3K |
+|-------|----|----|
+| `piapi:seedream-5-lite` | ~4 credits | ~6 credits |
+| `piapi:seedream-5-lite-less-restriction` | ~7 credits | — |
+
+## Seedream V4.5 Edit
+
 Seedream V4.5 is ByteDance's image editing model, designed for precise visual modifications to existing images.
-
-| Model ID | Mode | Credits | ~Cost |
-|----------|------|---------|-------|
-| `seedream-v4.5/edit` | Image editing | 10 | $0.10 |
-
-## Quick start
 
 <CodeGroup>
 ```typescript SDK
@@ -41,7 +134,7 @@ curl -X POST https://api.varg.ai/v2/image \
 ```
 </CodeGroup>
 
-## Parameters
+### Parameters
 
 <ResponseField name="prompt" type="string" required>
   Text description of the edit to apply to the input image.
@@ -51,7 +144,7 @@ curl -X POST https://api.varg.ai/v2/image \
   Array with the source image: `[{ url: "image.jpg" }]`.
 </ResponseField>
 
-## Pricing
+### Pricing
 
 | Model | Credits | USD |
 |-------|---------|-----|
@@ -59,8 +152,10 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Tips
 
-- **Best for targeted edits** — sky replacement, color changes, adding/removing elements.
-- **Pair with Seedance 2** for a full ByteDance pipeline: edit images with Seedream, animate with Seedance.
+- **Seedream 5 Lite for generation, V4.5 for editing** — generate new images with `seedream_5_lite`, then refine existing ones with `seedream-v4.5/edit`.
+- **Use `@imageN` syntax** with Seedream 5 Lite to control which reference maps to which element of the scene.
+- **Default 2K is enough for most uses** — reserve 3K for print or heavy cropping.
+- **Pair with Seedance 2** for a full ByteDance pipeline: generate or edit images with Seedream, animate with Seedance.
 
 ## Related models
 
@@ -69,6 +164,6 @@ curl -X POST https://api.varg.ai/v2/image \
     More versatile editing at half the cost (5 credits).
   </Card>
   <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
-    ByteDance's video model — animate your edited images.
+    ByteDance's video model — animate your Seedream images.
   </Card>
 </CardGroup>

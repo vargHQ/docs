@@ -135,21 +135,71 @@ Media inputs are always passed **by URL** — upload local files first via [`POS
 
 ## Model resolution
 
-Specify a bare model name and varg picks the provider, or pin an exact provider with a prefix:
+The `model` field accepts three address forms, from loose to exact:
 
 ```json
-{ "model": "flux_schnell" }        // varg picks the provider
-{ "model": "fal:flux_schnell" }    // pinned to fal
+{ "model": "seedance_2" }                                          // canonical — varg picks the route
+{ "model": "fal:seedance_2" }                                      // provider prefix — routes filtered to fal
+{ "model": "fal:bytedance/seedance-2.0/fast/reference-to-video" }  // exact model_key — pins one route
 ```
+
+1. **Canonical name** — varg auto-routes by priority and input shape. If your request includes `files`, routes that map files are preferred; the first route whose schema accepts your input wins.
+2. **Provider prefix** — same auto-routing, restricted to routes on that provider.
+3. **Exact `model_key`** — pins one specific route. `model_key` values are a permanent public contract, listed in [`GET /v2/models`](#model-catalog), and safe to hardcode.
 
 Two guarantees:
 
-1. **No silent substitution.** varg only picks *which provider* serves the model you named — never a different model family.
-2. **Transparent routing.** The job records which provider model actually ran (`provider`, `provider_model` fields).
+1. **No silent substitution.** varg only picks *which route* serves the model you named — never a different model family.
+2. **Transparent routing.** The job records which provider model actually ran (`provider`, `provider_model` fields), and `POST /v2/estimate` returns the `resolved_model_key` before you submit.
 
 Within a model, input shape can select a variant automatically: sending an image in `files` to `kling_v3` routes to its image-to-video endpoint. Same family, same pricing rules.
 
 Model ids use underscores (`kling_v3`, `flux_schnell`). Dashed spellings (`kling-v3`) are accepted and normalized automatically. Browse all models and prices at [`GET /v2/pricing`](https://api.varg.ai/v2/pricing) (public, no auth).
+
+## Model catalog
+
+`GET /v2/models` (public, no auth) returns the full catalog: every model with its routes, pricing, and operational hints. Filter by tool with `?tool=video`.
+
+```bash
+curl -s "https://api.varg.ai/v2/models?tool=video"
+```
+
+```json
+{
+  "version": "v1",
+  "data": [
+    {
+      "model": "seedance_2",
+      "tool": "video",
+      "routes": [
+        {
+          "model_key": "fal:bytedance/seedance-2.0/text-to-video",
+          "provider": "fal",
+          "modality": ["text-to-video"],
+          "output_type": "video",
+          "description": "Seedance 2.0 standard tier, up to 4k",
+          "priority": 1,
+          "accepts_files": false,
+          "pricing": {
+            "pricing_id": "ppr_...",
+            "rule": { "type": "per_second_conditional", "param": "duration", "rates": ["..."] },
+            "user_price_estimate_cents": 479
+          },
+          "ops": {
+            "delivery": "webhook",
+            "poll_interval_ms": 5000,
+            "estimated_duration_ms": 180000,
+            "max_timeout_ms": 1800000
+          },
+          "schema_url": "/v2/tools/video?model=fal:bytedance/seedance-2.0/text-to-video"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Each route's `model_key` can be used directly in the `model` field to pin that route.
 
 ## Discovering schemas at runtime
 
@@ -186,9 +236,11 @@ curl -s -X POST https://api.varg.ai/v2/tools/image/call \
 curl -s -X POST https://api.varg.ai/v2/estimate \
   -H "Authorization: Bearer $VARG_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model": "kling_v3", "prompt": "cat", "duration": 5}'
-# {"valid": true, "model": "kling_v3", "tool": "video",
-#  "pricing": {"user_price_cents": 221, ...}}
+  -d '{"model": "seedance_2", "prompt": "cat", "duration": 5}'
+# {"valid": true, "model": "seedance_2", "tool": "video",
+#  "resolved_model_key": "fal:bytedance/seedance-2.0/text-to-video",
+#  "pricing": {"provider_cost_cents": 152, "user_price_cents": 160,
+#              "markup_percent": 5, "pricing_id": "ppr_..."}}
 
 # Check your balance
 curl -s https://api.varg.ai/v2/billing/balance \
@@ -263,6 +315,10 @@ All errors use one envelope:
 | 422 | `invalid_request` | Body failed schema validation (details included) |
 | 429 | `rate_limited` | Too many requests — honor `Retry-After` |
 | 503 | `no_pricing` | Model temporarily has no active pricing |
+
+<Note>
+`model_not_found` errors include suggestions in `details`: `did_you_mean` lists close model names, and `models_url` points to `/v2/models` for the full catalog.
+</Note>
 
 ## Rate limits
 

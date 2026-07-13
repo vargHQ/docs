@@ -74,8 +74,8 @@ Set up Cursor to create AI videos with varg.
   ## Common Models (via varg API)
   - Images: varg.imageModel("nano-banana-pro") or varg.imageModel("flux-pro")
   - Video: varg.videoModel("kling-v3") or varg.videoModel("wan-2.5")
-  - Video (premium): varg.videoModel("seedance-2-preview") — ByteDance, 250cr, duration 5 or 10 only
-  - Video (fast): varg.videoModel("seedance-2-fast-preview") — ByteDance, 150cr, duration 5 or 10 only
+  - Video (premium): varg.videoModel("seedance_2") — ByteDance, per-second billing, duration 4-15s
+  - Video (budget): varg.videoModel("piapi:seedance-2-mini") — ByteDance cheap tier via exact model_key, duration 4-15s
   - Speech: varg.speechModel("eleven_v3")
   - Music: varg.musicModel()
   - Lipsync: varg.videoModel("sync-v2-pro")

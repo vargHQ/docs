@@ -27,7 +27,7 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Image (characters) | Soul | `varg.imageModel("soul")` | 15 | [Details](/models/image/soul) |
 | Image (cheapest) | Grok Imagine | `varg.imageModel("grok-imagine-image")` | 3 | [Details](/models/image/grok-imagine-image) |
 | Video (best) | Kling V3 | `varg.videoModel("kling-v3")` | 150 | [Details](/models/video/kling-v3) |
-| Video (premium) | Seedance 2 | `varg.videoModel("seedance-2-preview")` | 250 | [Details](/models/video/seedance-2) |
+| Video (premium) | Seedance 2 | `varg.videoModel("seedance_2")` | 160 (5s@720p) | [Details](/models/video/seedance-2) |
 | Video (budget) | Wan 2.5 | `varg.videoModel("wan-2.5")` | 80 | [Details](/models/video/wan-2) |
 | Video (cheapest) | LTX | `varg.videoModel("ltx-2-19b-distilled")` | 50 | [Details](/models/video/ltx) |
 | Lipsync (simple) | VEED Fabric | `varg.videoModel("veed-fabric-1.0")` | 100 | [Details](/models/lipsync/veed-fabric) |
@@ -47,8 +47,7 @@ For detailed documentation, parameters, and examples for each model, see the **[
 
 | Model | Code | Duration | Credits | Docs |
 |-------|------|----------|---------|------|
-| Seedance 2 | `varg.videoModel("seedance-2-preview")` | 5, 10, or 15s | 250 | [Details](/models/video/seedance-2) |
-| Seedance 2 Fast | `varg.videoModel("seedance-2-fast-preview")` | 5, 10, or 15s | 150 | [Details](/models/video/seedance-2) |
+| Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | per-second, 160 (5s@720p) | [Details](/models/video/seedance-2) |
 | Kling V3 Pro | `varg.videoModel("kling-v3")` | 3-15s (int) | 150 | [Details](/models/video/kling-v3) |
 | Kling V3 Standard | `varg.videoModel("kling-v3-standard")` | 3-15s (int) | 100 | [Details](/models/video/kling-v3) |
 | Sora 2 | `varg.videoModel("sora-2")` | varies | 100 | [Details](/models/video/sora-2) |
@@ -62,6 +61,10 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | LTX | `varg.videoModel("ltx-2-19b-distilled")` | varies | 50 | [Details](/models/video/ltx) |
 | HeyGen Avatar | `varg.videoModel("heygen-avatar")` | varies | 300 | — |
 | HeyGen Avatar IV | `varg.videoModel("heygen-avatar-iv")` | varies | 300 | — |
+
+<Note>
+Seedance 2 bills per second and spans 9 routes; estimates are exact when you pass a numeric `duration` (`"auto"` reserves the worst case). Pin an exact key like `piapi:seedance-2` (5s@720p = 105 credits) or `piapi:seedance-2-mini` (5s@480p = 37 credits, cheapest) for the lower tiers. See [Seedance 2](/models/video/seedance-2) for the full route table.
+</Note>
 
 ### Image Models
 
@@ -84,6 +87,7 @@ For detailed documentation, parameters, and examples for each model, see the **[
 | Qwen Angles | `varg.imageModel("qwen-angles")` | 8 | [Details](/models/image/qwen) |
 | Qwen Image 2 | `varg.imageModel("qwen-image-2")` | 8 | [Details](/models/image/qwen) |
 | Reve | `varg.imageModel("reve")` | 5 | — |
+| Seedream 5 Lite | `varg.imageModel("seedream_5_lite")` | 4 | [Details](/models/image/seedream) |
 | Seedream V4.5 Edit | `varg.imageModel("seedream-v4.5/edit")` | 10 | [Details](/models/image/seedream) |
 | Soul | `varg.imageModel("soul")` | 15 | [Details](/models/image/soul) |
 
