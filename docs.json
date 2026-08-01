@@ -128,7 +128,7 @@
       "groups": [
         {
           "group": "Overview",
-          "pages": ["api/index", "render-api/index"]
+          "pages": ["api/index", "api/folders", "render-api/index"]
         },
         {
           "group": "Generation",

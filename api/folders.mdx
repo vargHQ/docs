@@ -1,0 +1,142 @@
+---
+title: "Folders"
+description: "Group files into folders and file generated output automatically"
+---
+
+A folder groups files. It is the same object the dashboard calls a **folder** and the API calls a **workspace** — `/v2/workspaces` is the endpoint, "folder" is the word in the UI.
+
+Two things make folders useful beyond tidiness:
+
+- **Generated output files itself.** Send a folder on a generation request and every output lands in that folder — no follow-up call.
+- **Every file filter works inside a folder.** `?workspace=` composes with search, kind, tool and favorites, so the same query means the same thing whether you scope it to a folder or not.
+
+A file can be in more than one folder, and a folder holds files from a single account.
+
+## Create a folder
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/workspaces \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Campaign assets"}'
+# 201
+# {
+#   "workspace": {
+#     "id": "9f3b...",
+#     "name": "Campaign assets",
+#     "slug": "campaign-assets-e858d79e",
+#     "visibility": "private",
+#     "team_id": null,
+#     "created_at": "2026-08-01T10:00:00.000Z",
+#     "updated_at": "2026-08-01T10:00:00.000Z",
+#     "file_count": 0
+#   }
+# }
+```
+
+When you omit `slug` it is derived from the name and given a short random suffix, so two folders called "Campaign assets" do not collide. Pass `slug` yourself to choose it.
+
+**Every `/v2/workspaces/{id}` route accepts a uuid or a slug**, so you can keep using the readable one:
+
+```bash
+curl -s https://api.varg.ai/v2/workspaces/campaign-assets \
+  -H "Authorization: Bearer $VARG_API_KEY"
+# {"workspace": {..., "file_count": 12}}
+```
+
+`GET /v2/workspaces` returns `{"data": [...], "nextCursor": ...}` **without** `file_count` — it would cost one count per row. Fetch a single folder when you need it.
+
+## File generated output into a folder
+
+Send `X-Workspace-Id` on any job-creating request. The output is linked to the folder when the job completes:
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "X-Workspace-Id: campaign-assets" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "nano_banana_pro", "prompt": "product on a marble table"}'
+```
+
+This works on every route that creates a job — the sugar routes (`/v2/image`, `/v2/video`, `/v2/speech`, `/v2/music`, `/v2/ffmpeg`), `POST /v2/tools/{tool_key}/call`, `/v2/render` and `/v2/pipeline`.
+
+<Note>
+An unknown folder answers **404** and no job is created. That is deliberate: silently filing your output somewhere else is harder to notice than an error.
+</Note>
+
+If you cannot set headers, send `workspace_id` as a top-level body field instead. Multipart uploads accept a `workspace_id` form field for the same reason.
+
+The folder is **not** part of the generation input, so it never affects the cache key — the same prompt filed into two folders is still one billable generation.
+
+### Renders put their assets in the folder too
+
+`POST /v2/render` fans out into sub-generations, and those inherit the render's folder. So a render started in a folder puts **both** its final output and the assets it produced along the way there — the folder shows the whole render, not just the result.
+
+To tell them apart, ask [`POST /v2/lineage`](/api#files-and-lineage) for a file: an asset produced inside a render carries a `parent_job_id`, and `root_job_id` points at the render you started. `/v2/pipeline` behaves the same way.
+
+## List a folder's files
+
+```bash
+curl -s "https://api.varg.ai/v2/workspaces/campaign-assets/files?limit=50" \
+  -H "Authorization: Bearer $VARG_API_KEY"
+# {"data": [...], "nextCursor": 50}
+```
+
+Newest-filed first — ordered by when the file entered the folder, not when it was created. Moving an old file into a folder puts it at the top, which is where you look for it.
+
+## Filter files by folder
+
+`GET /v2/files` takes `?workspace=` and composes it with every other filter:
+
+```bash
+# videos in one folder
+curl -s "https://api.varg.ai/v2/files?workspace=campaign-assets&kind=video" \
+  -H "Authorization: Bearer $VARG_API_KEY"
+
+# files in no folder at all
+curl -s "https://api.varg.ai/v2/files?workspace=unfiled" \
+  -H "Authorization: Bearer $VARG_API_KEY"
+```
+
+`unfiled` is a reserved value meaning "files in no folder" — useful for finding what still needs sorting.
+
+Filtering happens in the database, not on the returned page, so `kind=video` inside a folder means every video in that folder rather than the videos among the most recent 50.
+
+## Move files in and out
+
+```bash
+# add up to 100 files at once
+curl -s -X POST https://api.varg.ai/v2/workspaces/campaign-assets/files \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"file_ids": ["file_abc123", "file_def456"]}'
+# {"linked": ["file_abc123"], "already_linked": ["file_def456"], "not_found": []}
+
+# remove one file from the folder
+curl -s -X DELETE https://api.varg.ai/v2/workspaces/campaign-assets/files/file_abc123 \
+  -H "Authorization: Bearer $VARG_API_KEY"
+```
+
+Adding files reports each id separately instead of failing the batch, so one bad id does not lose the other 99.
+
+<Warning>
+Removing a file from a folder does **not** delete the file. It stays in your account and in any other folder it belongs to. To delete it, use `DELETE /v2/files/{id}`.
+</Warning>
+
+## Endpoints
+
+| Method | Path | What it does |
+|--------|------|--------------|
+| `GET` | `/v2/workspaces` | List your folders |
+| `POST` | `/v2/workspaces` | Create a folder |
+| `GET` | `/v2/workspaces/{id}` | One folder, including `file_count` |
+| `PATCH` | `/v2/workspaces/{id}` | Rename or re-slug |
+| `GET` | `/v2/workspaces/{id}/files` | The folder's files |
+| `POST` | `/v2/workspaces/{id}/files` | Put files in the folder |
+| `DELETE` | `/v2/workspaces/{id}/files/{file_id}` | Take a file out of the folder |
+
+`{id}` is a uuid or a slug on all of them.
+
+<Note>
+There is no `DELETE /v2/workspaces/{id}`. Folders are shared with the dashboard, where deleting one also affects the projects and members attached to it, so folder deletion lives there until those semantics are settled. Empty a folder with the per-file `DELETE` above.
+</Note>
