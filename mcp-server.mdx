@@ -4,7 +4,7 @@ description: "Connect Claude, ChatGPT, VS Code, Cursor, and other AI tools to va
 icon: "plug"
 ---
 
-Connect your AI tools to varg.ai for image, video, speech, and music generation — no code required. The varg MCP server gives any MCP-compatible client access to 19 tools with inline media previews.
+Connect your AI tools to varg.ai for image, video, speech, and music generation — no code required. The varg MCP server gives any MCP-compatible client the full varg catalog — every model, every option — with inline media previews.
 
 ## Connect
 
@@ -162,39 +162,75 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
 
 ## Available tools
 
-The MCP server exposes 23 tools:
+### Generation
+
+Generation goes through three tools rather than one per capability. varg has hundreds of models and each accepts its own options; a fixed tool per capability could only ever expose the handful of fields they all share, so anything model-specific was unreachable. Instead your assistant discovers the catalog at the moment it needs it.
 
 | Tool | Description |
 |------|-------------|
-| `generate_image` | Generate images with FLUX, Recraft, Seedream, Nano Banana, and more |
-| `generate_video` | Generate videos with Kling v3, Minimax, Seedance, Sora, and more |
-| `generate_speech` | Text-to-speech with ElevenLabs (50+ voices) |
-| `generate_music` | Generate background music with MiniMax Music |
-| `probe_media` | Inspect a video/audio file — duration, dimensions, codec, fps, bitrate |
-| `trim_video` | Cut a segment from a video by start/end time or start/duration |
-| `resize_video` | Scale a video to new dimensions (contain, cover, or stretch) |
-| `slice_video` | Split a video into segments with first-frame thumbnails |
-| `run_ffmpeg` | Run any FFmpeg command in the cloud (arbitrary filters, concat, extract audio, etc.) |
-| `list_models` | List all available AI models with pricing |
-| `check_balance` | Check your credit balance |
-| `list_templates` | Browse video templates |
-| `get_template` | Get template details and variables |
-| `render_template` | Render a video from a template |
-| `get_job` | Check generation job status |
-| `list_voices` | List available TTS voices |
+| `list_tools` | List capabilities: `image`, `video`, `speech`, `music`, `transcription`, `ffmpeg`, `render`, `pipeline` |
+| `get_tool` | Get the input schema for a capability — with `model` set, the exact schema for that model, including provider-specific options |
+| `call_tool` | Run a capability. Returns a job id immediately; pass `wait: true` to block until the result is ready |
 
-Plus tools for lipsync, upscaling, transcription, and file uploads.
+```
+call_tool({
+  tool: "video",
+  input: { model: "kling-v3", prompt: "a fox in snow", duration: 5, aspect_ratio: "16:9" }
+})
+```
+
+Your assistant normally calls `list_tools` once, `get_tool` when it needs a model's specifics, then `call_tool`. A model added to varg shows up immediately — there is no MCP release to wait for.
+
+### Jobs
+
+| Tool | Description |
+|------|-------------|
+| `get_job` | Check a job and collect its result |
+| `list_jobs` | List your recent jobs |
+| `cancel_job` | Stop a running job before it spends more credits |
+
+### Rendering and templates
+
+| Tool | Description |
+|------|-------------|
+| `render_video` | Render a multi-scene video from TSX using varg's component library |
+| `list_templates` | Browse and search published templates, or list your own |
+| `get_template` | Get a template's details and TSX source |
+| `render_template` | Render a template as-is |
+| `delete_template` | Withdraw one of your own templates |
+
+<Note>
+  Templates render as published — there is no variable substitution. To customise one, read its source with `get_template`, edit the TSX, and pass it to `render_video`.
+</Note>
+
+### Catalog and cost
+
+| Tool | Description |
+|------|-------------|
+| `list_models` | All models across capabilities, with routes and price estimates |
+| `estimate_cost` | Price a generation **before** running it |
+| `search_presets` | Find voices and other presets. Describe what you want (`intent: "warm female narrator"`) for ranked suggestions |
+| `check_balance` | Your remaining credits |
+
+### Files and folders
+
+| Tool | Description |
+|------|-------------|
+| `upload_file` | Upload from a URL or base64 and get a hosted URL |
+| `list_files` / `get_file` / `delete_file` | Manage your files |
+| `get_lineage` | Recover how a file was made — job, tool, model, and exact input |
+| `list_workspaces` / `create_workspace` | Folders to keep a session's output together |
 
 ## How it works
 
 ```
 Your AI tool (Claude, ChatGPT, VS Code, Cursor)
     │
-    │  OAuth 2.1 (automatic)
+    │  OAuth 2.1 + PKCE
     ▼
-mcp.varg.ai (MCP server)
+mcp.varg.ai (MCP server — resource server)
     │
-    │  API key (managed for you)
+    │  your access token, forwarded
     ▼
 api.varg.ai (varg API, /v2)
     │
@@ -202,22 +238,28 @@ api.varg.ai (varg API, /v2)
 AI providers (fal, ElevenLabs, Higgsfield, HeyGen, PiAPI, etc.)
 ```
 
-When you connect for the first time, the MCP server walks you through an OAuth flow:
+Connecting for the first time runs a standard OAuth 2.1 authorization code flow with PKCE:
 
-1. You log in to your varg.ai account (or create one)
-2. You approve the connection
-3. An API key is created automatically and stored securely on the server
-4. All subsequent requests use this key — no manual key management needed
+1. Your client discovers the authorization server from `mcp.varg.ai`
+2. It registers itself automatically — no client id to copy
+3. You log in to varg.ai and approve the connection on a consent screen
+4. Your client receives a short-lived access token and a refresh token, and renews on its own
+
+**No API key is created.** The connection is a grant you can see and revoke under **Settings → Connected Apps**, separately from any API keys you manage yourself. Revoking stops the client renewing; whatever token it holds expires shortly after.
+
+A connected app can generate media and spend your credits. It cannot create API keys, change your account settings, or reach admin functions — those are restricted to your own signed-in sessions.
 
 ## Inline media previews
 
-Tools that generate media return inline previews directly in your chat:
+`call_tool`, `render_video`, and `render_template` return an inline preview in your chat. It shows progress while the job runs, then picks a player from the result:
 
 - **Images** — displayed inline with click-to-open fullscreen
 - **Videos** — embedded player with play/pause controls
 - **Audio** — compact player with progress bar and seek
 
-These work in Claude Desktop, claude.ai, and VS Code (via MCP Apps).
+Multi-output jobs (an ffmpeg slice, a multi-image model) preview the first file and report how many others there are.
+
+These work in Claude Desktop, claude.ai, and VS Code (via MCP Apps). In clients without MCP Apps support the tools still return the result URLs as normal text.
 
 ## Pricing
 
