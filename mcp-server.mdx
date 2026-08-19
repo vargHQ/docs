@@ -160,11 +160,30 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
   </Tab>
 </Tabs>
 
+On the consent screen you also pick **which account this connection works in** — your personal one or a team. Each client you connect keeps its own. See [Which account it works in](#which-account-it-works-in).
+
 ## Available tools
 
 ### Generation
 
-Generation goes through three tools rather than one per capability. varg has hundreds of models and each accepts its own options; a fixed tool per capability could only ever expose the handful of fields they all share, so anything model-specific was unreachable. Instead your assistant discovers the catalog at the moment it needs it.
+Start here. One tool per thing you want, with defaults chosen for you — describe the result and you get it in a single call.
+
+| Tool | Description |
+|------|-------------|
+| `generate_image` | An image from a description. Pass `reference_image` to edit an existing one instead |
+| `generate_video` | A video from a prompt, from an image (`from_image`), or from footage (`from_video`). Set `with_audio` for native sound |
+| `generate_speech` | Text to speech, in any language |
+| `search_voices` | Find a voice by name, by metadata, or by describing one (`intent: "warm female narrator"`) |
+
+```
+generate_video({ prompt: "a fox in snow, cinematic", duration: 5, aspect_ratio: "16:9" })
+```
+
+Images and speech are fast, so they block until ready. Video returns a `job_id` immediately — pass `wait: true` to block instead.
+
+### The full catalog
+
+The tools above cover the common cases with one model each. varg has hundreds, and each accepts its own options; a fixed tool per capability could only ever expose the fields they all share. So anything model-specific goes through the registry, where your assistant discovers the catalog at the moment it needs it.
 
 | Tool | Description |
 |------|-------------|
@@ -179,7 +198,7 @@ call_tool({
 })
 ```
 
-Your assistant normally calls `list_tools` once, `get_tool` when it needs a model's specifics, then `call_tool`. A model added to varg shows up immediately — there is no MCP release to wait for.
+Your assistant calls `list_tools` once, `get_tool` when it needs a model's specifics, then `call_tool`. A model added to varg shows up immediately — there is no MCP release to wait for.
 
 ### Jobs
 
@@ -194,9 +213,9 @@ Your assistant normally calls `list_tools` once, `get_tool` when it needs a mode
 | Tool | Description |
 |------|-------------|
 | `render_video` | Render a multi-scene video from TSX using varg's component library |
-| `list_templates` | Browse and search published templates, or list your own |
+| `find_templates` | Browse and search published templates, or list your own with `mine: true` |
 | `get_template` | Get a template's details and TSX source |
-| `render_template` | Render a template as-is |
+| `use_template` | Render a template as-is |
 | `delete_template` | Withdraw one of your own templates |
 
 <Note>
@@ -210,7 +229,7 @@ Your assistant normally calls `list_tools` once, `get_tool` when it needs a mode
 | `list_models` | All models across capabilities, with routes and price estimates |
 | `estimate_cost` | Price a generation **before** running it |
 | `search_presets` | Find voices and other presets. Describe what you want (`intent: "warm female narrator"`) for ranked suggestions |
-| `check_balance` | Your remaining credits |
+| `check_balance` | Remaining credits on the account this connection works in |
 
 ### Files and folders
 
@@ -220,6 +239,43 @@ Your assistant normally calls `list_tools` once, `get_tool` when it needs a mode
 | `list_files` / `get_file` / `delete_file` | Manage your files |
 | `get_lineage` | Recover how a file was made — job, tool, model, and exact input |
 | `list_workspaces` / `create_workspace` | Folders to keep a session's output together |
+
+Folders belong to one account, so `list_workspaces` returns the ones in whichever team the connection works in. A personal folder is not visible from a team connection, and the reverse.
+
+### Teams
+
+| Tool | Description |
+|------|-------------|
+| `list_teams` | The teams you can work in, and which one this connection uses |
+| `get_current_team` | Where this connection is working right now, and whether that is still valid |
+| `set_team` | Point this connection at a team, or back at your personal account |
+
+See [Which account it works in](#which-account-it-works-in).
+
+## Which account it works in
+
+Each connection is bound to one account — your personal one, or a team you belong to. Generations are billed to that account's balance and files land in its library.
+
+The binding is **per connection**, not per user. Claude Desktop, Cursor, and VS Code each register separately, so each gets its own. One agent can work in Marketing while another works in Product.
+
+You choose when you connect. The consent screen has a **Works in** picker listing your teams, defaulting to your personal account; if you are in no teams, it shows Personal and there is nothing to pick.
+
+To change it later, ask the assistant:
+
+```
+"switch to the Marketing team"     → set_team
+"which team are you working in?"   → get_current_team
+```
+
+`set_team` takes effect immediately, including for work already running, and is remembered for future sessions. It chooses among teams you are already in — it cannot grant you access to a new one. It also takes an optional `workspace_id`, the folder new output is filed into when a call does not name one. **Settings → Connected Apps** shows each connection's account read-only.
+
+<Note>
+  If you are removed from a team a connection is bound to, that connection stops running anything and says so. It does not quietly fall back to your personal account — that would spend the wrong balance. Use `list_teams` and `set_team` to move it, or ask a team owner to restore your membership.
+</Note>
+
+<Info>
+  This applies to OAuth connections. In local stdio mode (`npx @vargai/mcp`) the account is whichever one your API key belongs to.
+</Info>
 
 ## How it works
 
@@ -242,16 +298,16 @@ Connecting for the first time runs a standard OAuth 2.1 authorization code flow 
 
 1. Your client discovers the authorization server from `mcp.varg.ai`
 2. It registers itself automatically — no client id to copy
-3. You log in to varg.ai and approve the connection on a consent screen
+3. You log in to varg.ai, pick which account it works in, and approve on a consent screen
 4. Your client receives a short-lived access token and a refresh token, and renews on its own
 
 **No API key is created.** The connection is a grant you can see and revoke under **Settings → Connected Apps**, separately from any API keys you manage yourself. Revoking stops the client renewing; whatever token it holds expires shortly after.
 
-A connected app can generate media and spend your credits. It cannot create API keys, change your account settings, or reach admin functions — those are restricted to your own signed-in sessions.
+A connected app can generate media and spend credits from the account it is bound to. It cannot create API keys, change your account settings, or reach admin functions — those are restricted to your own signed-in sessions. Membership is re-checked on every request, so a connection bound to a team you have left can spend nothing.
 
 ## Inline media previews
 
-`call_tool`, `render_video`, and `render_template` return an inline preview in your chat. It shows progress while the job runs, then picks a player from the result:
+`generate_image`, `generate_video`, `generate_speech`, `call_tool`, `get_job`, `render_video`, and `use_template` return an inline preview in your chat. It shows progress while the job runs, then picks a player from the result:
 
 - **Images** — displayed inline with click-to-open fullscreen
 - **Videos** — embedded player with play/pause controls
@@ -292,7 +348,7 @@ varg uses a credit system. 1 credit = $0.01 USD.
 | FFmpeg (custom command) | 5 | $0.05 |
 | Probe Media | 5 | $0.05 |
 
-Cached results are free. Use `check_balance` to see your remaining credits.
+Cached results are free. Use `check_balance` to see the remaining credits of the account the connection works in.
 
 <CardGroup cols={2}>
   <Card title="Get API Key" icon="key" href="https://app.varg.ai">
