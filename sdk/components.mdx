@@ -26,7 +26,7 @@ const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
 | `<Render>` | Root container | `width`, `height`, `fps` |
 | `<Clip>` | Time segment | `duration`, `transition` |
 | `<Image>` | AI or static image | `prompt`, `src`, `zoom` |
-| `<Video>` | AI or source video | `prompt`, `src`, `volume` |
+| `<Video>` | AI or source video | `prompt`, `src`, `duration`, `keepAudio` |
 | `<Speech>` | Text-to-speech | `voice`, `children` |
 | `<Music>` | Background music | `prompt`, `volume`, `loop` |
 | `<Title>` | Text overlay | `position`, `color` |
@@ -74,7 +74,7 @@ Time segment container. Clips play sequentially.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `duration` | `number` | Required | Duration in seconds |
+| `duration` | `number` or `"auto"` | Auto | Clip timeline duration in seconds. When omitted or set to `"auto"`, the renderer derives it from the base video when possible |
 | `transition` | `object` | `undefined` | Transition to next clip |
 | `cutFrom` | `number` | `0` | Start time offset |
 | `cutTo` | `number` | `undefined` | End time offset |
@@ -180,9 +180,13 @@ const voiceover = Speech({ ... });
 | `prompt` | `string` or `object` | - | Generation prompt |
 | `src` | `string` | - | Source video path |
 | `model` | `VideoModel` | `varg.videoModel("kling-v3")` | AI model |
+| `duration` | `number` | `5` | Requested duration for generated video. Use `Clip.duration` to control composition timing |
 | `volume` | `number` | `1` | Audio volume (0-1) |
+| `keepAudio` | `boolean` | `true` | Preserve the video's source audio. Set to `false` to mute it |
 | `cutFrom` | `number` | `0` | Start trim |
 | `cutTo` | `number` | - | End trim |
+
+`Video.duration` controls AI generation length. `Clip.duration` controls how long the clip appears in the final composition. For source videos, use `Clip.duration`, `cutFrom`, and `cutTo` for timeline and trimming behavior.
 
 **Prompt formats:**
 
@@ -326,7 +330,9 @@ Positioned layer on top of content.
 | `top` | `number` | `0` | Y position |
 | `width` | `number` | - | Width |
 | `height` | `number` | - | Height |
-| `keepAudio` | `boolean` | `true` | Keep overlay audio |
+| `keepAudio` | `boolean` | `true` | Preserve audio from a video child. Set to `false` to mute it |
+
+For a video directly inside a `Clip`, set `keepAudio` on `Video`. For a video inside an `Overlay`, set `keepAudio` on `Overlay`.
 
 ### Split
 
