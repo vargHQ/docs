@@ -33,6 +33,8 @@ The API vocabulary has three levels:
 
 Tools: `image`, `video`, `speech`, `music`, `transcription`, `ffmpeg`, `render`, `pipeline`. Discover them at runtime via [`GET /v2/tools`](#discovering-schemas-at-runtime).
 
+Some parameters — vendor voice ids, style ids, avatar ids — are values you cannot guess and that silently fail when placed at the wrong path. The [Presets catalogue](/api/presets) (`/v2/presets`) browses, filters, and safely applies those values for you.
+
 ## Quick start
 
 Every generation is an **async job**: create it, poll until terminal, read the output URL.

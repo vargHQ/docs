@@ -163,6 +163,56 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 | `antoni` | Male | Calm |
 | `arnold` | Male | Authoritative |
 
+<Note>
+This table is a shortcut and drifts. For the live, complete, searchable voice catalogue use the [Presets API](/api/presets) — `GET /v2/presets?type=voice` returns every voice with metadata (gender, accent, tone, use_case), and `POST /v2/presets/recommend` turns a free-text intent into a ranked list. Agents should prefer `/recommend` over hardcoding this table.
+</Note>
+
+### Picking a voice by intent (agents)
+
+`POST /v2/presets/recommend` is built for agents: describe the voice you want in prose and get ranked matches with explanations.
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/presets/recommend \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "intent": "deep male voice for narration", "type": "voice", "limit": 5 }'
+```
+
+```json
+{
+  "count": 3,
+  "data": [
+    {
+      "id": "preset_5f4dcc3b5aa7",
+      "name": "Brian",
+      "type": "voice",
+      "namespace": "elevenlabs",
+      "confidence": 0.95,
+      "why": [
+        { "field": "name", "keyword": "brian", "weight": 3 },
+        { "field": "metadata", "axis": "tone", "value": "deep", "weight": 2 },
+        { "field": "metadata", "axis": "gender", "value": "male", "weight": 2 }
+      ]
+    }
+  ]
+}
+```
+
+Then apply the picked preset to a speech request in one call — `/apply` puts the voice id at the right path and checks it survives the model's schema:
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/presets/apply \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": { "model": "eleven_multilingual_v2", "text": "Hello world" },
+    "presets": ["preset_5f4dcc3b5aa7"]
+  }'
+# → { "payload": { "model": "eleven_multilingual_v2", "text": "Hello world", "voice": "preset_5f4dcc3b5aa7" }, "applied": ["preset_5f4dcc3b5aa7"], "rejected": [] }
+```
+
+Send `payload` straight to `POST /v2/speech`. See [Presets](/api/presets) for the full catalogue, filters, and the apply/recommend endpoints.
+
 ## Import Statement (Local Render)
 
 ```tsx
@@ -445,7 +495,7 @@ bunx vargai render video.tsx --no-cache     # Skip cache
 | Image | nano_banana_2 | 68 |
 | Image | nano_banana_pro | 126 |
 | Video 5s | sora_2 | 105 |
-| Video 5s | wan_2.5 | 158 |
+| Video 5s | wan_2_5 | 158 |
 | Video 5s | kling_v3 | 221 |
 | Video 5s | seedance_2_mini (cheapest Seedance tier) | 74 |
 | Video 5s | seedance_2 via `piapi:seedance-2` (advanced route pin) | 105 |

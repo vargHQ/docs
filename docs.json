@@ -131,6 +131,10 @@
           "pages": ["api/index", "api/folders", "render-api/index"]
         },
         {
+          "group": "Presets",
+          "pages": ["api/presets"]
+        },
+        {
           "group": "Generation",
           "pages": [
             "POST /image",

@@ -1,0 +1,298 @@
+---
+title: "Presets"
+description: "Browse and apply reusable parameter values — voices, styles, avatars, characters"
+---
+
+Presets are reusable parameter **values** a caller cannot guess — an ElevenLabs voice id, a Higgsfield style id, a Recraft style enum, a HeyGen avatar id. The presets catalogue is a browsable, searchable, self-describing list of those values, plus the rules that say where each one goes in a varg request.
+
+## Why presets exist
+
+Two problems they solve:
+
+- **The values are not guessable.** A voice is `"preset_5f4dcc3b5aa7"`, a Higgsfield style is a UUID. They live in vendor docs that drift, and the varg API used to ship five hardcoded copies of the ElevenLabs voice list that had already diverged.
+- **A value at the wrong path is silently dropped.** `provider_options` is deep-merged into the request body and zod strips unknown keys, so a value placed at `provider_options.higgsfield.style_id` (next to `params`) instead of `provider_options.higgsfield.params.style_id` (inside it) is accepted, ignored, and the job runs and bills without the preset applied. No error anywhere.
+
+Presets fix both: the catalogue gives you the value, and `POST /v2/presets/apply` puts it at the correct path and verifies it survives the model's schema before returning.
+
+## What is in the catalogue today
+
+| Type | Namespace | Count | Lands in |
+|------|-----------|-------|----------|
+| `voice` | `elevenlabs` | 21 curated | `speech` tool, `voice` field |
+| `voice` | `heygen` | — | `video` tool, `provider_options.heygen.voice_id` |
+| `style` | `higgsfield` | 5 | `image` tool, `provider_options.higgsfield.params.style_id` |
+| `style` | `fal` (Recraft) | 2 | `image` tool, `provider_options.fal.style` |
+| `avatar` | `heygen` | — | `video` tool, `provider_options.heygen.avatar_id` |
+| `character` | `varg` | 29 curated | `image` / `video` tool, `files.0.url` |
+
+Counts grow with every vendor sync. Browse the live catalogue at any time with `GET /v2/presets`.
+
+## Authentication
+
+Browsing (`GET /v2/presets`, `GET /v2/presets/filters`, `GET /v2/presets/:id`) is **public** — no auth required. A Bearer token widens the results to include your account's private presets (when those exist). `POST /v2/presets/apply` and `POST /v2/presets/recommend` require a Bearer token.
+
+## Browse the catalogue
+
+```bash
+curl -s "https://api.varg.ai/v2/presets?type=voice&namespace=elevenlabs&limit=5"
+```
+
+```json
+{
+  "count": 21,
+  "data": [
+    {
+      "id": "preset_5f4dcc3b5aa7",
+      "kind": "provider_value",
+      "type": "voice",
+      "namespace": "elevenlabs",
+      "name": "Brian",
+      "description": "Deep, professional male voice",
+      "preview_url": "https://s3.varg.ai/presets/voice/brian.mp3",
+      "metadata": {
+        "gender": "male",
+        "accent": "american",
+        "tone": ["deep", "professional"],
+        "use_case": ["narration", "audiobook"]
+      },
+      "status": "active"
+    }
+  ]
+}
+```
+
+`count` is the full match count; `data` is the (possibly truncated) page — so you can tell "5 results" from "5 of 300" without a second call.
+
+### Filters
+
+| Param | Example | What it does |
+|-------|---------|--------------|
+| `type` | `?type=voice` | Filter by parameter type (`voice`, `style`, `avatar`, `character`) |
+| `namespace` | `?namespace=elevenlabs` | Filter by whose id system minted the value |
+| `tool` | `?tool=speech` | Only presets that have a mapping for this tool |
+| `q` | `?q=narration` | Free-text search over `name` + `description` |
+| `limit` | `?limit=200` | Max results (default 50, max 200) |
+| _anything else_ | `?gender=male&accent=british` | Treated as a **metadata axis** filter |
+
+The last row is what makes the catalogue self-describing: any query param that isn't reserved is matched against preset `metadata`. You don't need to learn a separate filter syntax — discover the axes with `GET /v2/presets/filters` and filter by them directly.
+
+```bash
+# deep male voices for narration
+curl -s "https://api.varg.ai/v2/presets?type=voice&gender=male&tone=deep"
+```
+
+## Discover filter axes
+
+```bash
+curl -s "https://api.varg.ai/v2/presets/filters?type=voice"
+```
+
+```json
+{
+  "gender": { "male": 12, "female": 9 },
+  "accent": { "american": 8, "british": 6, "african_american": 4 },
+  "tone": { "deep": 7, "calm": 5, "energetic": 4 },
+  "use_case": { "narration": 10, "audiobook": 8, "podcast": 6 }
+}
+```
+
+The axes are **derived from the stored rows**, never hand-maintained — a hand-written list drifts from what is stored and then filters quietly return nothing. Counts are of presets, so a count reads directly as "how many results `?tone=deep` would return".
+
+Scope with `?type=voice` since voices and styles have different axes (`gender`/`accent` vs `era`), and a merged list would be half-empty for both.
+
+## Get one preset with fragments
+
+```bash
+curl -s https://api.varg.ai/v2/presets/preset_5f4dcc3b5aa7
+```
+
+```json
+{
+  "id": "preset_5f4dcc3b5aa7",
+  "kind": "provider_value",
+  "type": "voice",
+  "namespace": "elevenlabs",
+  "name": "Brian",
+  "description": "Deep, professional male voice",
+  "preview_url": "https://s3.varg.ai/presets/voice/brian.mp3",
+  "metadata": { "gender": "male", "tone": ["deep"] },
+  "status": "active",
+  "tools": {
+    "speech": { "voice": "preset_5f4dcc3b5aa7" }
+  }
+}
+```
+
+The `tools` object is the point of this endpoint: a ready-to-merge fragment for each tool this preset can be delivered into, keyed by tool name. Read `tools.speech` directly and merge it into your request body — no need to call `/apply` for a single preset.
+
+## Apply presets to a request
+
+`POST /v2/presets/apply` takes the request body you intend to send to a generation endpoint, merges one or more presets into it, and returns the finished payload plus a per-preset report.
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/presets/apply \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": { "model": "eleven_multilingual_v2", "text": "Hello world" },
+    "presets": ["preset_5f4dcc3b5aa7"]
+  }'
+```
+
+```json
+{
+  "payload": {
+    "model": "eleven_multilingual_v2",
+    "text": "Hello world",
+    "voice": "preset_5f4dcc3b5aa7"
+  },
+  "applied": ["preset_5f4dcc3b5aa7"],
+  "rejected": []
+}
+```
+
+Then send `payload` straight to `POST /v2/speech` — the preset is already in the right place.
+
+### Tool is inferred from the model
+
+You do not pass a `tool` field. A varg model id uniquely determines its tool, so `/apply` looks it up from `payload.model` and routes the preset accordingly. Asking for the tool would add a field that can be wrong and a mismatch case with no sensible resolution.
+
+### Partial success
+
+Apply what it can, report the rest — one round-trip surfaces every problem:
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/presets/apply \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": { "model": "eleven_multilingual_v2", "text": "hi" },
+    "presets": ["preset_5f4dcc3b5aa7", "preset_unknown", "preset_hf_anime"]
+  }'
+```
+
+```json
+{
+  "payload": {
+    "model": "eleven_multilingual_v2",
+    "text": "hi",
+    "voice": "preset_5f4dcc3b5aa7"
+  },
+  "applied": ["preset_5f4dcc3b5aa7"],
+  "rejected": [
+    { "id": "preset_unknown", "reason": "unknown_preset", "message": "'preset_unknown' is not in the preset catalogue" },
+    { "id": "preset_hf_anime", "reason": "incompatible", "message": "'preset_hf_anime' (style/fal) has no mapping for tool 'speech'", "available_tools": ["image"] }
+  ]
+}
+```
+
+**Status codes:** `200` when anything applied, `422` when nothing applied (the request achieved nothing, so it is not a success), `400` when the body is malformed, `422` when the model is unknown.
+
+### Rejection reasons
+
+| Reason | Meaning |
+|--------|---------|
+| `unknown_preset` | The id is not in the catalogue |
+| `incompatible` | The preset exists but has no mapping for the tool your model uses (`available_tools` lists where it *does* work) |
+| `catalogue_error` | The mapping data is broken — an unmapped param, an empty value, or a malformed path |
+| `not_accepted_by_model` | The preset would be silently dropped by this specific model's schema (see below) |
+
+### Model validation prevents silent drops
+
+A namespace covers many models, and they do not all accept the same fields. Every fal image model shares `namespace = fal`, but only Recraft has a `style` field:
+
+```
+recraft_v3   + provider_options.fal.style  →  kept
+flux_schnell + provider_options.fal.style  →  stripped by zod
+```
+
+So `/apply` parses the merged body against the **model's real schema** and checks the value survived. If it did not, the preset is rejected with `not_accepted_by_model` and a message like:
+
+> `'flux_schnell' does not accept this preset: the value is dropped at 'provider_options.fal.style'. The mapping covers fal styles in general, but this particular model has no such field — it would generate without the preset and still bill.`
+
+The check runs **before** the fragment is committed, so a dropped value never appears in the returned payload.
+
+## Recommend by intent
+
+`POST /v2/presets/recommend` is the implicit-usage surface: describe what you want in prose, get ranked presets back. Built for AI agents and planners.
+
+```bash
+curl -s -X POST https://api.varg.ai/v2/presets/recommend \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "intent": "deep male voice for narration",
+    "type": "voice",
+    "limit": 5
+  }'
+```
+
+```json
+{
+  "count": 3,
+  "data": [
+    {
+      "id": "preset_5f4dcc3b5aa7",
+      "kind": "provider_value",
+      "type": "voice",
+      "namespace": "elevenlabs",
+      "name": "Brian",
+      "description": "Deep, professional male voice",
+      "preview_url": "https://s3.varg.ai/presets/voice/brian.mp3",
+      "metadata": { "gender": "male", "tone": ["deep"] },
+      "status": "active",
+      "confidence": 0.95,
+      "why": [
+        { "field": "name", "keyword": "brian", "weight": 3 },
+        { "field": "metadata", "axis": "tone", "value": "deep", "weight": 2 },
+        { "field": "metadata", "axis": "gender", "value": "male", "weight": 2 }
+      ]
+    }
+  ]
+}
+```
+
+Optional narrowing: `type`, `namespace`, `tool`, `limit` (default 10, max 50).
+
+Scoring is keyword overlap over curated metadata — no embeddings. `name` is the strongest signal (weight 3), then `description` and `metadata` values (weight 2), then `metadata` keys (weight 1). Each result includes a `confidence` (0–1) and a human-readable `why` so an agent can explain its pick.
+
+## End-to-end example: styled image
+
+```bash
+# 1. Find a Higgsfield style
+curl -s "https://api.varg.ai/v2/presets?type=style&namespace=higgsfield"
+
+# 2. Apply it to an image request
+curl -s -X POST https://api.varg.ai/v2/presets/apply \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": { "model": "soul", "prompt": "a warrior in anime style" },
+    "presets": ["preset_hf_anime"]
+  }'
+# → { "payload": { "model": "soul", "prompt": "...", "provider_options": { "higgsfield": { "params": { "style_id": "..." } } } }, "applied": [...], "rejected": [] }
+
+# 3. Send the finished payload to the image endpoint
+curl -s -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "model": "soul", "prompt": "a warrior in anime style", "provider_options": { "higgsfield": { "params": { "style_id": "..." } } } }'
+```
+
+## Endpoints
+
+| Method | Path | Auth | What it does |
+|--------|------|------|--------------|
+| `GET` | `/v2/presets` | optional | Browse + filter the catalogue |
+| `GET` | `/v2/presets/filters` | optional | Discover which metadata axes exist and their values |
+| `GET` | `/v2/presets/{id}` | optional | One preset + ready-to-merge `tools` fragments |
+| `POST` | `/v2/presets/apply` | required | Merge presets into a request body, with partial-success reporting |
+| `POST` | `/v2/presets/recommend` | required | Rank presets by a free-text intent description |
+
+## Tips
+
+- **Use `id`, never `key`.** The `key` slug is only unique within `(kind, type)` and is not exposed in the API. Every endpoint takes the globally-unique `id`.
+- **Presets are optional.** You can still pass `provider_options` by hand — presets are the safe path, not the only path.
+- **Call `/filters` first.** It tells you what you can filter by, so you don't guess metadata axis names.
+- **Use `/recommend` for agents.** It turns "I want a calm female British voice" into a ranked list with explanations — no need to teach an agent the metadata vocabulary.
+- **One `/apply` call per request.** Pass all the presets you want at once; partial success means you learn about every problem in one round-trip.

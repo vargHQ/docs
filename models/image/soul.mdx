@@ -59,6 +59,10 @@ Soul supports 80+ style presets. Common ones:
 
 Explore all styles through the Higgsfield API — each produces distinctly different character aesthetics.
 
+<Note>
+The [Presets catalogue](/api/presets) (`GET /v2/presets?type=style&namespace=higgsfield`) lists every Higgsfield style with searchable metadata, and `POST /v2/presets/apply` puts the style id at the correct path (`provider_options.higgsfield.params.style_id`) and verifies it survives the model's schema — so a misplaced value never silently generates without the style.
+</Note>
+
 ## Parameters
 
 <ResponseField name="prompt" type="string" required>
