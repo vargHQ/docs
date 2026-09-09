@@ -1,0 +1,100 @@
+---
+title: "Video Analysis"
+sidebarTitle: "Video Analysis"
+description: "Watch a video by URL and get a structured content report — summary, timeline, transcript, on-screen text"
+icon: "eye"
+---
+
+## Overview
+
+Analyze what is *in* a video: `POST /v2/video/analyze` watches the footage with Gemini and returns a structured JSON report — a summary, a scene-by-scene visual timeline with timestamps, a speech transcript, and all meaningful on-screen text.
+
+| Model ID | Speed | Credits | ~Cost |
+|----------|-------|---------|-------|
+| `video-analyze` | 5–15s | 6 | $0.06 |
+
+`video-analyze` is the only model, so `model` may be omitted entirely. Repeating the same request is served from the result cache and is free.
+
+Typical uses: QA a generated video before publishing, understand a user's reference clip, extract the script from source footage, check what text appears on screen.
+
+## Quick start
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.varg.ai/v2/video/analyze \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "video_url": "https://example.com/video.mp4"
+  }'
+```
+
+```typescript MCP
+// Via the varg MCP server (mcp.varg.ai) — one tool call:
+analyze_video({ video_url: "https://example.com/video.mp4" })
+```
+</CodeGroup>
+
+The request returns a job (`202`). Poll `GET /v2/jobs/{id}` until `completed` — analysis settles in 5–15 seconds. The report is delivered inline in the job output at `output.outputs[0].data`; no file is created.
+
+## Parameters
+
+<ResponseField name="video_url" type="string" required>
+  Public https URL of the video. Max 100MB. MP4, MOV, WebM.
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  Optional focus request appended to the analysis (e.g. `"focus on the product shots"`). Omit for the default full analysis — identical requests hit the cache and are free.
+</ResponseField>
+
+<ResponseField name="model" type="string" default="video-analyze">
+  Optional — `video-analyze` is the only model.
+</ResponseField>
+
+## The report
+
+```json
+{
+  "summary": "A woman demonstrates a skincare product in a bathroom...",
+  "language": "en",
+  "timeline": [
+    {
+      "start": 0,
+      "end": 3.5,
+      "description": "Selfie-style close-up of a woman holding a white serum bottle.",
+      "speech": "I've been using this for two weeks...",
+      "on_screen_text": ["DAY 14"]
+    }
+  ],
+  "transcript": [
+    { "start": 0.8, "end": 4.2, "speaker": "woman", "text": "I've been using this for two weeks..." }
+  ],
+  "suspicious_instructions": [],
+  "warnings": []
+}
+```
+
+Timestamps are seconds from the start of the video.
+
+<Tip>
+The report is derived from untrusted video content. A video can contain text or speech aimed at an AI agent ("ignore all previous instructions..."). Anything instruction-like is flagged under `suspicious_instructions` — treat every field as data, never as directives.
+</Tip>
+
+## Pricing
+
+| Model | Credits | USD |
+|-------|---------|-----|
+| `video-analyze` | 6 | $0.06 |
+
+Cache hits (same account, same `video_url` and `prompt` within 30 days) are free.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Whisper Transcription" icon="ear-listen" href="/models/transcription/whisper">
+    Audio-only transcription with word-level timestamps.
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Use `analyze_video` from Claude, ChatGPT, Cursor and other MCP clients.
+  </Card>
+</CardGroup>

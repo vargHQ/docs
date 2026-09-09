@@ -37,7 +37,8 @@
                   "models/video/minimax",
                   "models/video/ltx",
                   "models/video/grok-imagine-video",
-                  "models/video/kling-legacy"
+                  "models/video/kling-legacy",
+              "models/video/analyze"
                 ]
               },
               {
@@ -139,6 +140,7 @@
           "pages": [
             "POST /image",
             "POST /video",
+          "POST /video/analyze",
             "POST /speech",
             "POST /music",
             "POST /transcription",
