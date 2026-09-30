@@ -86,6 +86,7 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
     {
       "mcpServers": {
         "varg": {
+          "type": "http",
           "url": "https://mcp.varg.ai/mcp"
         }
       }
@@ -95,7 +96,7 @@ Connect your AI tools to varg.ai for image, video, speech, and music generation 
     Or add via the CLI:
 
     ```bash
-    claude mcp add varg --url https://mcp.varg.ai/mcp
+    claude mcp add --transport http varg https://mcp.varg.ai/mcp
     ```
 
     Claude Code will prompt you to authorize on first use.
