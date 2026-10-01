@@ -1,0 +1,153 @@
+---
+title: "Ideogram 4.5"
+sidebarTitle: "Ideogram"
+description: "Posters, logos and designs with accurate text — text-to-image and editing with references, masks and a high-precision mode"
+icon: "font"
+---
+
+## Overview
+
+Ideogram 4.5 (`ideogram_v4_5`) is the model to use when the words in the image have to be right: posters, logos, signs, packaging, social cards. One model ID covers both modes:
+
+- **No files** → text-to-image (`fal:ideogram/v4.5`)
+- **With files** → editing (`fal:ideogram/v4.5/edit`). The first file is the image to edit, files 2–5 are references.
+
+Price depends on quality only — image size never changes it.
+
+| Quality | Text-to-image | Edit |
+|---------|---------------|------|
+| `very_low` | — | 2 credits |
+| `low` | 4 credits | 4 credits |
+| `medium` (default) | 7 credits | 7 credits |
+| `high` | 24 credits | 24 credits |
+
+Credits are per image; `num_images` (1–8) multiplies them. Edit precision, reference images and masks don't add cost.
+
+## Text-to-image
+
+<CodeGroup>
+```typescript SDK
+import { createVarg, generateImage } from "vargai/ai"
+
+const varg = createVarg({ apiKey: process.env.VARG_API_KEY! })
+
+const { image } = await generateImage({
+  model: varg.imageModel("ideogram_v4_5"),
+  prompt: "minimalist concert poster with bold text reading VARG LIVE 2026, orange and black",
+  aspectRatio: "3:4",
+  providerOptions: { fal: { quality: "medium" } },
+})
+```
+
+```bash cURL
+curl -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "ideogram_v4_5",
+    "prompt": "minimalist concert poster with bold text reading VARG LIVE 2026, orange and black",
+    "aspect_ratio": "3:4",
+    "provider_options": { "fal": { "quality": "medium" } }
+  }'
+```
+</CodeGroup>
+
+### Parameters
+
+<ResponseField name="prompt" type="string" required>
+  What to generate. Put the exact text you want rendered in quotes or spell it out.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string" default="1:1">
+  `1:1`, `4:3`, `3:4`, `16:9`, `9:16`. Other ratios fall back to `1:1` — use an exact size instead (below).
+</ResponseField>
+
+<ResponseField name="provider_options.fal" type="object">
+  Ideogram's own fields:
+
+  - `quality` — `low`, `medium` (default), `high`
+  - `num_images` — 1–8
+  - `seed` — integer
+  - `enable_prompt_expansion` — default `true`; set `false` to use your prompt verbatim
+  - `image_size` — a preset or one of Ideogram's exact sizes, e.g. `{"width": 1248, "height": 832}` (3:2) or `{"width": 1440, "height": 720}` (2:1)
+</ResponseField>
+
+## Editing
+
+Attach an image in `files`. The first file is the source; up to 4 more are used as references.
+
+```bash
+curl -X POST https://api.varg.ai/v2/image \
+  -H "Authorization: Bearer $VARG_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "ideogram_v4_5",
+    "prompt": "Restyle the poster using the colors and mood of the reference",
+    "files": [
+      { "url": "https://example.com/poster.png" },
+      { "url": "https://example.com/reference.jpg" }
+    ],
+    "provider_options": { "fal": { "quality": "low" } }
+  }'
+```
+
+### Masks and high precision
+
+- **Mask** — `mask_url` must match the source size. Black areas are edited, white areas are kept. With a mask, at most 3 references.
+- **High precision** — `edit_precision: "high"` restores every pixel you did not ask to change. Same price as `regular`.
+
+```json
+{
+  "model": "ideogram_v4_5",
+  "prompt": "Replace the year with the word TOUR in the same bold font",
+  "files": [{ "url": "https://example.com/poster.png" }],
+  "provider_options": {
+    "fal": {
+      "mask_url": "https://example.com/mask.png",
+      "edit_precision": "high",
+      "quality": "medium"
+    }
+  }
+}
+```
+
+### Parameters
+
+<ResponseField name="files" type="array" required>
+  1 source image plus up to 4 references, as `{ url }` objects. More than 4 references returns a 422.
+</ResponseField>
+
+<ResponseField name="aspect_ratio" type="string">
+  Omit to keep the source size (the default). Presets only apply to unmasked, regular-precision edits.
+</ResponseField>
+
+<ResponseField name="provider_options.fal" type="object">
+  - `quality` — `very_low`, `low`, `medium` (default), `high`
+  - `edit_precision` — `regular` (default) or `high`
+  - `mask_url` — black edits, white preserves
+  - `num_images` — 1–8
+  - `seed` — integer
+</ResponseField>
+
+## Pinning a route
+
+`ideogram_v4_5` picks the route from the input. To force one, use the exact key: `"model": "fal:ideogram/v4.5"` or `"model": "fal:ideogram/v4.5/edit"`.
+
+Both routes reject unknown fields in `provider_options.fal` with a 422 before anything is charged.
+
+## Tips
+
+- **Start at `low`** to iterate on layout and wording, then re-run the winner at `medium` or `high`.
+- **Turn off prompt expansion** (`enable_prompt_expansion: false`) when you need the exact wording and nothing else.
+- **Fix one word with a mask** instead of regenerating the whole design.
+
+## Related models
+
+<CardGroup cols={2}>
+  <Card title="Recraft" icon="palette" href="/models/image/recraft">
+    Icons, illustrations and brand assets.
+  </Card>
+  <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
+    Versatile generation and reference editing.
+  </Card>
+</CardGroup>

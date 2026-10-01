@@ -46,6 +46,7 @@
                 "icon": "image",
                 "pages": [
                   "models/image/nano-banana",
+                  "models/image/ideogram",
                   "models/image/flux",
                   "models/image/phota",
                   "models/image/grok-imagine-image",
