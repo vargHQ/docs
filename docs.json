@@ -32,7 +32,6 @@
                 "pages": [
                   "models/video/seedance-2",
                   "models/video/kling-v3",
-                  "models/video/sora-2",
                   "models/video/wan-2",
                   "models/video/minimax",
                   "models/video/ltx",
@@ -213,7 +212,7 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/vargHQ/varg",
+          "href": "https://github.com/vargHQ/sdk",
           "icon": "github"
         },
         {
@@ -256,5 +255,11 @@
       "x": "https://x.com/vaborsh",
       "github": "https://github.com/vargHQ"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/models/video/sora-2",
+      "destination": "/models"
+    }
+  ]
 }
