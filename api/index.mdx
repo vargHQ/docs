@@ -211,18 +211,20 @@ Each route's `model_key` can be used directly in the `model` field to pin that r
 
 ## Discovering schemas at runtime
 
-Agents and dynamic clients can discover the full API without reading docs:
+Agents and dynamic clients can discover the full API without reading docs. The discovery reads are public — no key needed (with a key, they also list your team's private pipelines):
 
 ```bash
 # List all tools
-curl -s https://api.varg.ai/v2/tools -H "Authorization: Bearer $VARG_API_KEY"
+curl -s https://api.varg.ai/v2/tools
 
 # Get the image tool's input schema, output shape, and a worked example
-curl -s https://api.varg.ai/v2/tools/image -H "Authorization: Bearer $VARG_API_KEY"
+curl -s https://api.varg.ai/v2/tools/image
 
 # Get the explicit per-provider options for a specific model
-curl -s "https://api.varg.ai/v2/tools/image?model=flux_schnell" \
-  -H "Authorization: Bearer $VARG_API_KEY"
+curl -s "https://api.varg.ai/v2/tools/image?model=flux_schnell"
+
+# A tool's models with routes, prices, a real example and the input schema
+curl -s "https://api.varg.ai/v2/tools/image/models?limit=50"
 
 # Call any tool generically (same as POST /v2/image)
 curl -s -X POST https://api.varg.ai/v2/tools/image/call \
@@ -230,6 +232,8 @@ curl -s -X POST https://api.varg.ai/v2/tools/image/call \
   -H "Content-Type: application/json" \
   -d '{"model": "flux_schnell", "prompt": "a cat astronaut"}'
 ```
+
+Every model's schema is also published as a readable Markdown spec at `https://varg.ai/models/{model}.md` — see [Model specs for agents](/models/agent-specs).
 
 ## Pricing and billing
 
