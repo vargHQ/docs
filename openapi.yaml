@@ -653,6 +653,14 @@ paths:
                   value:
                     id: job_a1b2c3d4e5f6
                     status: completed
+                    stage: null
+                    attempts:
+                      - n: 1
+                        provider: fal
+                        model_key: "fal:flux_schnell"
+                        status: completed
+                        started_at: "2026-07-01T10:00:01Z"
+                        ended_at: "2026-07-01T10:00:09Z"
                     tool: image
                     input:
                       model: flux_schnell
@@ -707,11 +715,13 @@ paths:
                     type: string
                   status:
                     $ref: "#/components/schemas/JobStatus"
+                  stage:
+                    $ref: "#/components/schemas/JobStage"
                   provider_status:
                     type: [string, "null"]
                   progress_message:
                     type: [string, "null"]
-                    example: "stitching 3/8 (40%)"
+                    example: "uploading references to ByteDance (1/2)"
                   progress:
                     type: [number, "null"]
                     description: Numeric fraction 0..1 for a progress bar
@@ -785,7 +795,14 @@ paths:
       tags: [Jobs]
       operationId: cancelJob
       summary: Cancel a job
-      description: Abort a running job (best-effort at the provider). Returns 409 if the job is already terminal.
+      description: |
+        Abort a job. A job that is still queued, being sent, uploading
+        references or waiting for its next attempt is cancelled at once and
+        nothing is charged. A job that is already rendering is stopped at the
+        provider where the provider allows it; some providers (BytePlus)
+        refuse to stop a task that has started — then the call returns 409 and
+        the job completes and is charged as usual. A job that is already
+        terminal is returned unchanged.
       parameters:
         - $ref: "#/components/parameters/JobId"
       responses:
@@ -798,7 +815,7 @@ paths:
         "404":
           $ref: "#/components/responses/JobNotFound"
         "409":
-          description: Job is already terminal
+          description: The provider refused to stop a task that is already rendering — the job will complete and be charged
           content:
             application/json:
               schema:
@@ -1772,10 +1789,68 @@ components:
   schemas:
     JobStatus:
       type: string
-      enum: [queued, submitting, running, completed, failed, cancelled]
+      enum: [queued, running, completed, failed, cancelled]
       description: |
-        Lifecycle is `queued` then `submitting` then `running`, ending in a
-        terminal status (`completed`, `failed`, or `cancelled`).
+        The status only moves forward: `queued` → `running` → `completed`,
+        `failed` or `cancelled`. Everything a running job goes through —
+        sending to the provider, uploading references, switching to another
+        provider — is a `stage` of `running`; a job never goes back to
+        `queued`. (Older API builds also reported `submitting`; treat it as
+        `running`.)
+
+    JobStage:
+      type: [string, "null"]
+      enum: [queued, submitting, uploading_references, rendering, retrying, finalizing, null]
+      description: |
+        What the job is doing right now. `null` once the job is terminal.
+        - `queued` — waiting for a slot; no attempt yet
+        - `submitting` — being sent to the provider
+        - `uploading_references` — the provider is taking the reference files
+          into its asset library (`progress_message` shows `n/m`)
+        - `rendering` — the provider accepted the task and is generating
+        - `retrying` — an attempt failed (the provider refused, failed or rate
+          limited it); the job waits for its next attempt, usually on another
+          provider. See `attempts`.
+        - `finalizing` — the result is being saved and billed
+
+    JobAttempt:
+      type: object
+      description: |
+        One provider tried for this job. A job can have several — when a
+        provider refuses or fails, the job moves on to the next one. Reference
+        uploads and a resubmit at the same provider are part of one attempt.
+      properties:
+        n:
+          type: integer
+          example: 1
+        provider:
+          type: [string, "null"]
+          example: byteplus
+        model_key:
+          type: [string, "null"]
+          example: "byteplus:dreamina-seedance-2-5-260628"
+        status:
+          type: string
+          enum: [running, completed, failed, cancelled]
+        reason:
+          type: string
+          description: Why a failed attempt failed, in a few words
+          example: real person in the reference images
+        reason_code:
+          type: string
+          enum: [content_privacy, content_policy, quota, rate_limit, provider_error, timeout, expired, prompt_too_long]
+        references_uploaded:
+          type: integer
+          description: Reference files taken into the provider's asset library
+        resubmitted:
+          type: boolean
+          description: The provider refused the first submit and got the task again (with uploaded references)
+        started_at:
+          type: [string, "null"]
+          format: date-time
+        ended_at:
+          type: [string, "null"]
+          format: date-time
 
     JobOutput:
       type: object
@@ -1834,6 +1909,13 @@ components:
           example: job_a1b2c3d4e5f6
         status:
           $ref: "#/components/schemas/JobStatus"
+        stage:
+          $ref: "#/components/schemas/JobStage"
+        attempts:
+          type: array
+          description: Every provider tried for this job, oldest first. `provider` / `provider_model` are the newest one.
+          items:
+            $ref: "#/components/schemas/JobAttempt"
         tool:
           type: string
           example: image
