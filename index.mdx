@@ -20,6 +20,10 @@ claude "create a 10-second product video
   with captions and background music"
 ```
 
+<Tip>
+**No install?** Connect the varg MCP server (`https://mcp.varg.ai/mcp`) to Claude, ChatGPT, Cursor, or VS Code and generate images, video, speech, and music as native tools. See [MCP Server](/mcp-server).
+</Tip>
+
 Under the hood, the agent writes declarative JSX code like React components, and varg handles AI generation, caching, and video rendering. One API key, one API, all providers.
 
 <Accordion title="What the generated code looks like">
@@ -110,6 +114,9 @@ export default (
 <CardGroup cols={2}>
   <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
     Full setup in 2 minutes
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/mcp-server">
+    Native varg tools in Claude, ChatGPT, Cursor, and VS Code
   </Card>
   <Card title="Authentication" icon="key" href="/authentication">
     API keys, login, billing
