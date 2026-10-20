@@ -1,6 +1,6 @@
 ---
 title: "Presets"
-description: "Browse and apply reusable parameter values — voices, styles, avatars, characters"
+description: "Browse and apply reusable parameter values — voices, styles, avatars"
 ---
 
 Presets are reusable parameter **values** a caller cannot guess — an ElevenLabs voice id, a Higgsfield style id, a Recraft style enum, a HeyGen avatar id. The presets catalogue is a browsable, searchable, self-describing list of those values, plus the rules that say where each one goes in a varg request.
@@ -23,13 +23,12 @@ Presets fix both: the catalogue gives you the value, and `POST /v2/presets/apply
 | `style` | `higgsfield` | 5 | `image` tool, `provider_options.higgsfield.params.style_id` |
 | `style` | `fal` (Recraft) | 2 | `image` tool, `provider_options.fal.style` |
 | `avatar` | `heygen` | — | `video` tool, `provider_options.heygen.avatar_id` |
-| `character` | `varg` | 29 curated | `image` / `video` tool, `files.0.url` |
 
 Counts grow with every vendor sync. Browse the live catalogue at any time with `GET /v2/presets`.
 
 ## Authentication
 
-Browsing (`GET /v2/presets`, `GET /v2/presets/filters`, `GET /v2/presets/:id`) is **public** — no auth required. A Bearer token widens the results to include your account's private presets (when those exist). `POST /v2/presets/apply` and `POST /v2/presets/recommend` require a Bearer token.
+Browsing (`GET /v2/presets`, `GET /v2/presets/filters`, `GET /v2/presets/:id`) is **public** — no auth required. A Bearer token widens the results to include your account's private presets (when those exist). `POST /v2/presets/apply` and `POST /v2/presets/recommend` have no auth middleware either — they only read the token optionally, and a valid one widens the results the same way. A missing or invalid token is treated as anonymous, never rejected.
 
 ## Browse the catalogue
 
@@ -67,7 +66,7 @@ curl -s "https://api.varg.ai/v2/presets?type=voice&namespace=elevenlabs&limit=5"
 
 | Param | Example | What it does |
 |-------|---------|--------------|
-| `type` | `?type=voice` | Filter by parameter type (`voice`, `style`, `avatar`, `character`) |
+| `type` | `?type=voice` | Filter by parameter type (`voice`, `style`, `avatar`) |
 | `namespace` | `?namespace=elevenlabs` | Filter by whose id system minted the value |
 | `tool` | `?tool=speech` | Only presets that have a mapping for this tool |
 | `q` | `?q=narration` | Free-text search over `name` + `description` |
@@ -188,6 +187,8 @@ curl -s -X POST https://api.varg.ai/v2/presets/apply \
 
 **Status codes:** `200` when anything applied, `422` when nothing applied (the request achieved nothing, so it is not a success), `400` when the body is malformed, `422` when the model is unknown.
 
+The two `422`s have different bodies. When nothing applied, the body is the normal apply shape — `{ payload, applied: [], rejected: [...] }` — so read `rejected` for why. An unknown model is the standard error envelope instead.
+
 ### Rejection reasons
 
 | Reason | Meaning |
@@ -242,11 +243,7 @@ curl -s -X POST https://api.varg.ai/v2/presets/recommend \
       "metadata": { "gender": "male", "tone": ["deep"] },
       "status": "active",
       "confidence": 0.95,
-      "why": [
-        { "field": "name", "keyword": "brian", "weight": 3 },
-        { "field": "metadata", "axis": "tone", "value": "deep", "weight": 2 },
-        { "field": "metadata", "axis": "gender", "value": "male", "weight": 2 }
-      ]
+      "why": ["name", "tone=deep", "gender=male"]
     }
   ]
 }
@@ -254,7 +251,7 @@ curl -s -X POST https://api.varg.ai/v2/presets/recommend \
 
 Optional narrowing: `type`, `namespace`, `tool`, `limit` (default 10, max 50).
 
-Scoring is keyword overlap over curated metadata — no embeddings. `name` is the strongest signal (weight 3), then `description` and `metadata` values (weight 2), then `metadata` keys (weight 1). Each result includes a `confidence` (0–1) and a human-readable `why` so an agent can explain its pick.
+Scoring is keyword overlap over curated metadata — no embeddings. `name` is the strongest signal (weight 3), then `description` and `metadata` values (weight 2), then `metadata` keys (weight 1). Each result includes a `confidence` (0–1) and a `why` array of plain strings naming what matched, so an agent can explain its pick. Each string is a field name (`name`, `description`), an `axis=value` metadata hit (`tone=deep`), or `axis:<keyword>` when the keyword matched a metadata key (`axis:tone`).
 
 ## End-to-end example: styled image
 
@@ -286,8 +283,8 @@ curl -s -X POST https://api.varg.ai/v2/image \
 | `GET` | `/v2/presets` | optional | Browse + filter the catalogue |
 | `GET` | `/v2/presets/filters` | optional | Discover which metadata axes exist and their values |
 | `GET` | `/v2/presets/{id}` | optional | One preset + ready-to-merge `tools` fragments |
-| `POST` | `/v2/presets/apply` | required | Merge presets into a request body, with partial-success reporting |
-| `POST` | `/v2/presets/recommend` | required | Rank presets by a free-text intent description |
+| `POST` | `/v2/presets/apply` | optional | Merge presets into a request body, with partial-success reporting |
+| `POST` | `/v2/presets/recommend` | optional | Rank presets by a free-text intent description |
 
 ## Tips
 
