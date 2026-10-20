@@ -109,8 +109,8 @@ paths:
       summary: Generate a video
       description: |
         Create a video generation job. Handles text-to-video, image-to-video
-        (send a start frame in `files`), lipsync (`sync_v2`, `veed_fabric_1.0`,
-        `omnihuman_v1.5`, ...), video editing (`grok_imagine_edit`), avatars
+        (send a start frame in `files`), lipsync (`sync_v2`, `veed_fabric_1_0`,
+        `omnihuman_v1_5`, ...), video editing (`grok_imagine_edit`), avatars
         (`heygen_avatar`), and video upscaling (`topaz_video`, `seedvr_video`).
 
         When `files` contains an image and the model has an image-to-video
