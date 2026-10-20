@@ -4,7 +4,7 @@ description: "Connect Claude, ChatGPT, VS Code, Cursor, and other AI tools to va
 icon: "plug"
 ---
 
-Connect your AI tools to varg.ai for image, video, speech, and music generation — no code required. The varg MCP server gives any MCP-compatible client the full varg catalog — every model, every option — with inline media previews.
+Connect your AI tools to varg.ai for image, video, speech, and music generation — no code required. The varg MCP server gives any MCP-compatible client the full varg catalog — every model, every option — with inline media previews. It is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=ai.varg) as `ai.varg/mcp`.
 
 ## Connect
 
@@ -174,6 +174,7 @@ Start here. One tool per thing you want, with defaults chosen for you — descri
 | `generate_image` | An image from a description. Pass `reference_image` to edit an existing one instead |
 | `generate_video` | A video from a prompt, from an image (`from_image`), or from footage (`from_video`). Set `with_audio` for native sound |
 | `generate_speech` | Text to speech, in any language |
+| `generate_music` | A song with vocals, or an instrumental track with `instrumental: true`. 3 seconds to 10 minutes |
 | `analyze_video` | Watch a video by URL and get a structured report: summary, timeline with timestamps, transcript, on-screen text. 6¢, repeats are cached and free |
 | `search_voices` | Find a voice by name, by metadata, or by describing one (`intent: "warm female narrator"`) |
 
@@ -181,7 +182,7 @@ Start here. One tool per thing you want, with defaults chosen for you — descri
 generate_video({ prompt: "a fox in snow, cinematic", duration: 5, aspect_ratio: "16:9" })
 ```
 
-Images and speech are fast, so they block until ready. Video returns a `job_id` immediately — pass `wait: true` to block instead.
+Images, speech, and music block until ready. Video returns a `job_id` immediately — pass `wait: true` to block instead.
 
 ### The full catalog
 
@@ -309,7 +310,7 @@ A connected app can generate media and spend credits from the account it is boun
 
 ## Inline media previews
 
-`generate_image`, `generate_video`, `generate_speech`, `call_tool`, `get_job`, `render_video`, and `use_template` return an inline preview in your chat. It shows progress while the job runs, then picks a player from the result:
+`generate_image`, `generate_video`, `generate_speech`, `generate_music`, `call_tool`, `get_job`, `render_video`, and `use_template` return an inline preview in your chat. It shows progress while the job runs, then picks a player from the result:
 
 - **Images** — displayed inline with click-to-open fullscreen
 - **Videos** — embedded player with play/pause controls

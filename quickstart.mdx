@@ -3,9 +3,56 @@ title: "Quickstart"
 description: "Get up and running with varg in 2 minutes"
 ---
 
-## The fastest path: AI agent + skill
+## Fastest: connect the MCP server
 
-The recommended way to use varg is through an AI coding agent (Claude Code, Cursor, Windsurf, etc.) with the varg skill installed. The skill gives your agent full context on components, models, prompting, and rendering.
+Nothing to install and no API key to copy. Add the hosted varg MCP server to your AI tool and sign in with your varg account when the browser opens. Your assistant gets native tools for `generate_image`, `generate_video`, `generate_speech`, `generate_music`, and `render_video`, plus the full model catalog.
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http varg https://mcp.varg.ai/mcp
+    ```
+
+    Then run `/mcp` inside Claude Code to sign in.
+  </Tab>
+  <Tab title="Cursor">
+    Add to `.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "varg": {
+          "url": "https://mcp.varg.ai/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    ```bash
+    code --add-mcp '{"name":"varg","url":"https://mcp.varg.ai/mcp"}'
+    ```
+  </Tab>
+  <Tab title="Claude.ai / ChatGPT">
+    Open **Settings → Connectors**, choose **Add custom connector**, and paste:
+
+    ```
+    https://mcp.varg.ai/mcp
+    ```
+  </Tab>
+</Tabs>
+
+Then ask for what you want:
+
+*"Make a 5-second video of a fox running through snow, 16:9, and a 30-second ambient music track to go with it"*
+
+Setup for every client, the full tool list, and team billing: [MCP Server](/mcp-server). The server is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=ai.varg) as `ai.varg/mcp`.
+
+---
+
+## For full videos: AI agent + skill
+
+For finished multi-scene videos with captions, lipsync, music, and transitions, use an AI coding agent (Claude Code, Cursor, Windsurf, etc.) with the varg skill installed. The skill gives your agent full context on components, models, prompting, and rendering.
 
 <Steps>
   <Step title="Get your API key">

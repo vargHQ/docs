@@ -18,6 +18,7 @@
             "pages": [
               "index",
               "quickstart",
+              "mcp-server",
               "authentication",
               "byok"
             ]
@@ -100,12 +101,6 @@
               "templates/slideshow",
               "templates/talking-character",
               "templates/transformation"
-            ]
-          },
-          {
-            "group": "MCP",
-            "pages": [
-              "mcp-server"
             ]
           },
           {
