@@ -34,6 +34,14 @@ docs/
     └── cursor.mdx            # Cursor setup
 ```
 
+## API reference (`openapi.yaml`)
+
+The API Reference tab is generated from `openapi.yaml`, a copy of the spec that the
+API itself serves at `https://api.varg.ai/v2/openapi.json`. Do not edit it here.
+Edit `src/routes/openapi/openapi.yaml` in the api repo (vargHQ/api), whose tests fail
+when a route is missing from the spec. Then run `scripts/sync-openapi.sh` and add any
+new operation to the API Reference navigation in `docs.json`.
+
 ## Key Pages
 
 ### For AI Agents
