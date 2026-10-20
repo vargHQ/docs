@@ -1,0 +1,77 @@
+---
+title: "OpenAPI spec"
+description: "Machine-readable OpenAPI 3.1 description of the varg API — generate typed clients, import into Postman, or hand it to an AI agent"
+---
+
+The varg API publishes an OpenAPI 3.1 spec that covers every public `/v2` endpoint: generation, tools, jobs, files, folders, presets, templates, pricing, billing, analytics and account.
+
+| Format | URL |
+|--------|-----|
+| JSON | [`https://api.varg.ai/v2/openapi.json`](https://api.varg.ai/v2/openapi.json) |
+| YAML | [`https://api.varg.ai/v2/openapi.yaml`](https://api.varg.ai/v2/openapi.yaml) |
+| YAML (docs mirror) | [`https://docs.varg.ai/openapi.yaml`](https://docs.varg.ai/openapi.yaml) |
+
+The API serves the spec itself, so it always matches the deployed version. Fetching it needs no API key. Every page in this API Reference is generated from the same file.
+
+## Generate a typed client
+
+### TypeScript
+
+Generate types with [openapi-typescript](https://openapi-ts.dev), then call the API through [openapi-fetch](https://openapi-ts.dev/openapi-fetch/). Paths, bodies and responses are all type-checked:
+
+```bash
+bunx openapi-typescript https://api.varg.ai/v2/openapi.json -o varg.d.ts
+bun add openapi-fetch
+```
+
+```ts
+import createClient from "openapi-fetch";
+import type { paths } from "./varg";
+
+const varg = createClient<paths>({
+  baseUrl: "https://api.varg.ai/v2",
+  headers: { Authorization: `Bearer ${process.env.VARG_API_KEY}` },
+});
+
+// Create a video job (202), then poll it
+const { data: job, error } = await varg.POST("/video", {
+  body: { model: "kling_v3", prompt: "cat jumping over a fence", duration: 5 },
+});
+if (error) throw new Error(error.error?.message);
+
+const { data } = await varg.GET("/jobs/{id}", { params: { path: { id: job.id } } });
+console.log(data?.status, data?.output?.outputs?.[0]?.url);
+```
+
+### Python
+
+```bash
+uvx openapi-python-client generate --url https://api.varg.ai/v2/openapi.json
+```
+
+### Other languages
+
+[OpenAPI Generator](https://openapi-generator.tech) supports Go, Java, Kotlin, Ruby, PHP, C#, Rust and more:
+
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i https://api.varg.ai/v2/openapi.json -g go -o ./varg-go
+```
+
+## Model-specific inputs
+
+Each generation endpoint (`POST /video`, `POST /image`, ...) serves many models. The spec types the fields every model shares: `model`, `prompt`, `files`, `duration`, `aspect_ratio`, `provider_options`, `options`. The extra inputs and limits of one model come from its JSON Schema, which needs no API key:
+
+```bash
+curl -s "https://api.varg.ai/v2/tools/video?model=kling_v3"
+```
+
+The same information is also published as Markdown for agents at `https://varg.ai/models/<model>.md` (see [Model specs for agents](/models/agent-specs)).
+
+## Use it with AI agents and API tools
+
+- **AI agents and IDEs**: give the JSON URL to any tool that reads OpenAPI, for example ChatGPT actions, Cursor docs or an MCP OpenAPI bridge. For the hosted MCP server, see [MCP Server](/mcp-server).
+- **Postman and Insomnia**: *Import → Link* and paste `https://api.varg.ai/v2/openapi.json`.
+- **LLM context**: [`docs.varg.ai/llms.txt`](https://docs.varg.ai/llms.txt) lists every docs page as Markdown and links this spec.
+
+Authenticate with your API key as a Bearer token. See [Authentication](/authentication).
