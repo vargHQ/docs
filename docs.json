@@ -18,6 +18,7 @@
             "pages": [
               "index",
               "quickstart",
+              "mcp-server",
               "authentication",
               "byok"
             ]
@@ -26,13 +27,13 @@
             "group": "Models",
             "pages": [
               "models/index",
+              "models/agent-specs",
               {
                 "group": "Video",
                 "icon": "video",
                 "pages": [
                   "models/video/seedance-2",
                   "models/video/kling-v3",
-                  "models/video/sora-2",
                   "models/video/wan-2",
                   "models/video/minimax",
                   "models/video/ltx",
@@ -103,12 +104,6 @@
             ]
           },
           {
-            "group": "MCP",
-            "pages": [
-              "mcp-server"
-            ]
-          },
-          {
             "group": "AI Agents",
             "pages": [
               "ai-agents/index",
@@ -130,11 +125,18 @@
       "groups": [
         {
           "group": "Overview",
-          "pages": ["api/index", "api/folders", "render-api/index"]
+          "pages": ["api/index", "api/openapi", "api/folders", "render-api/index"]
         },
         {
           "group": "Presets",
-          "pages": ["api/presets"]
+          "pages": [
+            "api/presets",
+            "GET /presets",
+            "GET /presets/filters",
+            "GET /presets/{id}",
+            "POST /presets/apply",
+            "POST /presets/recommend"
+          ]
         },
         {
           "group": "Generation",
@@ -155,7 +157,9 @@
           "pages": [
             "GET /tools",
             "GET /tools/{tool_key}",
-            "POST /tools/{tool_key}/call"
+            "POST /tools/{tool_key}/call",
+            "GET /tools/{tool_key}/models",
+            "GET /models"
           ]
         },
         {
@@ -167,7 +171,10 @@
             "GET /jobs/{id}/price",
             "POST /jobs/{id}/refresh",
             "POST /jobs/{id}/cancel",
-            "POST /jobs/{id}/retry"
+            "POST /jobs/{id}/retry",
+            "GET /jobs/{id}/cost",
+            "POST /jobs/{id}/confirm",
+            "POST /jobs/{id}/rerun"
           ]
         },
         {
@@ -183,7 +190,40 @@
             "POST /files/{id}/feedback",
             "GET /files/{id}/feedback",
             "DELETE /files/{id}/feedback",
+            "POST /files/upload-session",
+            "PUT /files/upload/{session_id}",
+            "GET /resources/files",
+            "GET /resources/files/{id}",
+            "PATCH /resources/files/{id}",
+            "POST /resources/files/{id}/favorite",
             "POST /lineage"
+          ]
+        },
+        {
+          "group": "Folders",
+          "pages": [
+            "GET /workspaces",
+            "POST /workspaces",
+            "GET /workspaces/{id}",
+            "PATCH /workspaces/{id}",
+            "GET /workspaces/{id}/files",
+            "POST /workspaces/{id}/files",
+            "DELETE /workspaces/{id}/files/{file_id}"
+          ]
+        },
+        {
+          "group": "Templates",
+          "pages": [
+            "GET /templates",
+            "GET /templates/tags",
+            "GET /templates/{id}",
+            "POST /templates/{id}/use",
+            "POST /templates/{id}/render",
+            "POST /templates",
+            "DELETE /templates/{id}",
+            "GET /templates/my",
+            "GET /templates/favorites",
+            "POST /templates/{id}/favorite"
           ]
         },
         {
@@ -197,13 +237,30 @@
           ]
         },
         {
+          "group": "Analytics",
+          "pages": [
+            "GET /analytics/summary",
+            "GET /analytics/timeseries",
+            "GET /analytics/breakdown",
+            "GET /analytics/activity",
+            "GET /analytics/files",
+            "GET /analytics/meta"
+          ]
+        },
+        {
           "group": "Account",
           "pages": [
             "GET /me",
             "GET /api-keys",
             "POST /api-keys",
             "PATCH /api-keys/{id}",
-            "DELETE /api-keys/{id}"
+            "DELETE /api-keys/{id}",
+            "POST /api-keys/{id}/reveal",
+            "GET /api-keys/{id}/shares",
+            "POST /api-keys/{id}/shares",
+            "DELETE /api-keys/{id}/shares/{userId}",
+            "GET /me/connection",
+            "PUT /me/connection"
           ]
         }
       ]
@@ -213,7 +270,7 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/vargHQ/varg",
+          "href": "https://github.com/vargHQ/sdk",
           "icon": "github"
         },
         {
@@ -256,5 +313,11 @@
       "x": "https://x.com/vaborsh",
       "github": "https://github.com/vargHQ"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/models/video/sora-2",
+      "destination": "/models"
+    }
+  ]
 }

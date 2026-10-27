@@ -1,0 +1,83 @@
+---
+title: "Model specs for agents"
+sidebarTitle: "Specs for agents"
+description: "Every varg model as a Markdown spec and a public JSON Schema — inputs, limits, routes, prices and the exact REST and MCP call"
+icon: "robot"
+---
+
+Every model on varg has a machine-readable spec, generated from the live catalog: its inputs and their limits, provider options, routes, prices, and the exact request to send over REST or MCP. Point your agent at it and it calls any model without guessing field names.
+
+<CardGroup cols={2}>
+  <Card title="All models" icon="list" href="https://varg.ai/models/llms.txt">
+    `varg.ai/models/llms.txt` — every model, one line each, grouped by capability.
+  </Card>
+  <Card title="One model" icon="file-lines" href="https://varg.ai/models/kling_v3.md">
+    `varg.ai/models/{model}.md` — the full spec of one model.
+  </Card>
+  <Card title="Everything" icon="layer-group" href="https://varg.ai/models/llms-full.txt">
+    `varg.ai/models/llms-full.txt` — every spec in one file, for long-context agents.
+  </Card>
+  <Card title="JSON Schema" icon="brackets-curly" href="https://api.varg.ai/v2/tools/video?model=kling_v3">
+    `GET /v2/tools/{tool}?model={model}` — the exact input schema. No API key needed.
+  </Card>
+</CardGroup>
+
+The specs follow the [llms.txt](https://llmstxt.org) convention. They are regenerated within an hour of a catalog change, so they can be trusted over model IDs or prices remembered from training data.
+
+## Call a model
+
+The same request body works on the REST API and in MCP.
+
+<Tabs>
+  <Tab title="REST">
+    ```bash
+    curl -X POST https://api.varg.ai/v2/tools/video/call \
+      -H "Authorization: Bearer $VARG_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "model": "kling_v3", "prompt": "a fox trotting through fresh snow", "duration": 5 }'
+    ```
+
+    The call answers `202` with a job. Poll `GET /v2/jobs/{id}` until `status` is `completed`, then read `output.outputs[0].url` — or pass `options.webhook_url`.
+  </Tab>
+  <Tab title="MCP">
+    Connect `https://mcp.varg.ai/mcp` ([setup](/mcp-server)), then:
+
+    ```json
+    call_tool({
+      "tool": "video",
+      "input": { "model": "kling_v3", "prompt": "a fox trotting through fresh snow", "duration": 5 },
+      "wait": true
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## From the Playground
+
+Every model's page in the [Playground](https://varg.ai/dashboard/tools/playground) has the same surfaces:
+
+- **API** — the request the form would send right now, as cURL, JavaScript or Python.
+- **MCP** — the exact `call_tool` for those parameters, and the client setup.
+- **Ask {agent}** — hands the request to Claude Code, Claude, ChatGPT, Codex, Devin or Cursor with a ready prompt that links the model's spec.
+- **Schema** and **LLMs** — the JSON Schema and the Markdown spec.
+
+## Discover at runtime
+
+Agents can walk the catalog without a key:
+
+```bash
+# Every tool (video, image, speech, music, transcription, ffmpeg, render, …)
+curl -s https://api.varg.ai/v2/tools
+
+# A tool's models with routes, prices, a real example and the input schema
+curl -s "https://api.varg.ai/v2/tools/video/models?limit=50"
+
+# One model's exact schema, including provider-specific options
+curl -s "https://api.varg.ai/v2/tools/video?model=kling_v3"
+```
+
+Price a request before running it with [`POST /v2/estimate`](/api-reference/pricing/estimate-a-price-without-creating-a-job).
+
+<Note>
+Pipelines are private to the teams they belong to and never appear in the public specs. A signed-in caller with access sees them in `GET /v2/tools/pipeline/models`.
+</Note>

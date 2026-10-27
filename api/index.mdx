@@ -3,13 +3,15 @@ title: "varg API"
 description: "Unified REST API for AI media generation at api.varg.ai/v2"
 ---
 
-The varg API is a single REST API for AI media generation across 8 providers (Fal, ElevenLabs, Higgsfield, PiAPI, HeyGen, Together, Groq, Rendi). One API key, ~80 models, async jobs, stable output URLs at `s3.varg.ai`, and transparent credit billing.
+The varg API is a single REST API for AI media generation across providers such as fal, Google, OpenAI, ElevenLabs, Black Forest Labs, HeyGen, Higgsfield, PiAPI, Together, Groq and Rendi. One API key, 120+ models, async jobs, stable output URLs at `s3.varg.ai`, and transparent credit billing.
 
 ## Base URL
 
 ```
 https://api.varg.ai/v2
 ```
+
+The OpenAPI 3.1 spec is at [`https://api.varg.ai/v2/openapi.json`](https://api.varg.ai/v2/openapi.json). Use it to generate a typed client or import the API into Postman. See [OpenAPI spec](/api/openapi).
 
 ## Authentication
 
@@ -86,22 +88,46 @@ Creation responses include ready-made lifecycle URLs:
 ## Job lifecycle
 
 ```
-queued → submitting → running → completed | failed | cancelled
+queued → running → completed | failed | cancelled
 ```
 
-| Status | Meaning |
-|--------|---------|
-| `queued` | Accepted, waiting for a provider slot |
-| `submitting` | Being sent to the provider |
-| `running` | The provider is generating |
-| `completed` | Done — read `output.outputs[0].url` |
-| `failed` | Check the `error` field; retry with `POST /jobs/{id}/retry` |
-| `cancelled` | Aborted via `POST /jobs/{id}/cancel` |
+The status only moves forward. What a running job is doing right now is its `stage`:
 
-Poll `GET /v2/jobs/{id}` (full view) or `GET /v2/jobs/{id}/status` (lightweight, includes `progress` 0..1 and `progress_message`). A stuck job is guaranteed to reach a terminal status — the platform times out jobs after 30 minutes.
+| Status | Stage | Meaning |
+|--------|-------|---------|
+| `queued` | `queued` | Accepted, waiting for a provider slot |
+| `running` | `submitting` | Being sent to the provider |
+| `running` | `uploading_references` | The provider is taking your reference files into its asset library — `progress_message` shows `uploading references to ByteDance (1/2)` |
+| `running` | `rendering` | The provider is generating |
+| `running` | `retrying` | The provider refused or failed; the job is moving to the next provider (see `attempts`) |
+| `running` | `finalizing` | Saving the result |
+| `completed` | — | Done — read `output.outputs[0].url` |
+| `failed` | — | Check the `error` field; retry with `POST /jobs/{id}/retry` |
+| `cancelled` | — | Aborted via `POST /jobs/{id}/cancel` |
+
+When a provider refuses a request — a real person in the references, a content policy, a full queue — varg tries the next provider for the same model instead of failing the job. Every provider tried is listed in `attempts`, with a short `reason` and a `reason_code` for the ones that failed:
+
+```json
+{
+  "status": "running",
+  "stage": "rendering",
+  "progress_message": "rendering on piapi",
+  "attempts": [
+    { "n": 1, "provider": "byteplus", "model_key": "byteplus:dreamina-seedance-2-5-260628",
+      "status": "failed", "reason": "real person in the reference images",
+      "reason_code": "content_privacy", "started_at": "…", "ended_at": "…" },
+    { "n": 2, "provider": "piapi", "model_key": "piapi:seedance-2.5-less-restriction",
+      "status": "running", "started_at": "…", "ended_at": null }
+  ]
+}
+```
+
+`reason_code` is one of `content_privacy`, `content_policy`, `quota`, `rate_limit`, `provider_error`, `timeout`, `expired`, `prompt_too_long`.
+
+Poll `GET /v2/jobs/{id}` (full view) or `GET /v2/jobs/{id}/status` (lightweight: `status`, `stage`, `progress` 0..1 and `progress_message`). Treat `queued` and `running` as in progress. A stuck job is guaranteed to reach a terminal status: every attempt has a time limit, and a submit interrupted by a restart is retried automatically.
 
 <Tip>
-Instead of polling, set `options.webhook_url` in your request. When the job finishes, varg POSTs the job snapshot to your URL, signed with `X-Varg-Signature: v1=<hmac-sha256>`, with 8 retries and exponential backoff.
+Instead of polling, set `options.webhook_url` in your request. When the job finishes, varg POSTs the job snapshot (including `stage` and `attempts`) to your URL, signed with `X-Varg-Signature: v1=<hmac-sha256>`, with 8 retries and exponential backoff.
 </Tip>
 
 ## Request format
@@ -211,18 +237,20 @@ Each route's `model_key` can be used directly in the `model` field to pin that r
 
 ## Discovering schemas at runtime
 
-Agents and dynamic clients can discover the full API without reading docs:
+Agents and dynamic clients can discover the full API without reading docs. The discovery reads are public — no key needed (with a key, they also list your team's private pipelines):
 
 ```bash
 # List all tools
-curl -s https://api.varg.ai/v2/tools -H "Authorization: Bearer $VARG_API_KEY"
+curl -s https://api.varg.ai/v2/tools
 
 # Get the image tool's input schema, output shape, and a worked example
-curl -s https://api.varg.ai/v2/tools/image -H "Authorization: Bearer $VARG_API_KEY"
+curl -s https://api.varg.ai/v2/tools/image
 
 # Get the explicit per-provider options for a specific model
-curl -s "https://api.varg.ai/v2/tools/image?model=flux_schnell" \
-  -H "Authorization: Bearer $VARG_API_KEY"
+curl -s "https://api.varg.ai/v2/tools/image?model=flux_schnell"
+
+# A tool's models with routes, prices, a real example and the input schema
+curl -s "https://api.varg.ai/v2/tools/image/models?limit=50"
 
 # Call any tool generically (same as POST /v2/image)
 curl -s -X POST https://api.varg.ai/v2/tools/image/call \
@@ -230,6 +258,8 @@ curl -s -X POST https://api.varg.ai/v2/tools/image/call \
   -H "Content-Type: application/json" \
   -d '{"model": "flux_schnell", "prompt": "a cat astronaut"}'
 ```
+
+Every model's schema is also published as a readable Markdown spec at `https://varg.ai/models/{model}.md` — see [Model specs for agents](/models/agent-specs).
 
 ## Pricing and billing
 
@@ -247,8 +277,7 @@ curl -s -X POST https://api.varg.ai/v2/estimate \
   -d '{"model": "seedance_2", "prompt": "cat", "duration": 5}'
 # {"valid": true, "model": "seedance_2", "tool": "video",
 #  "resolved_model_key": "fal:bytedance/seedance-2.0/text-to-video",
-#  "pricing": {"provider_cost_cents": 152, "user_price_cents": 160,
-#              "markup_percent": 5, "pricing_id": "ppr_..."}}
+#  "pricing": {"user_price_cents": 160, "pricing_id": "ppr_..."}}
 
 # Check your balance
 curl -s https://api.varg.ai/v2/billing/balance \
@@ -318,7 +347,7 @@ All errors use one envelope:
 | 401 | `unauthorized` | Missing or invalid API key |
 | 402 | `insufficient_balance` | Balance too low to reserve the estimated cost |
 | 404 | `model_not_found`, `tool_not_found`, `job_not_found`, `file_not_found` | Unknown resource |
-| 409 | — | Job is already terminal (cancel/refresh) |
+| 409 | `conflict` | Cancel: the provider refused to stop a task that is already rendering — it completes and is charged as usual |
 | 413 | `file_too_large` | Upload over 200 MB |
 | 422 | `invalid_request` | Body failed schema validation (details included) |
 | 429 | `rate_limited` | Too many requests — honor `Retry-After` |

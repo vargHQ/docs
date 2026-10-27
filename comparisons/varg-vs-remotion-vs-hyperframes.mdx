@@ -139,7 +139,7 @@ The custom JSX runtime is deliberately not React. Components like `Image()`, `Vi
 
 | Strength | Notes |
 |---|---|
-| Generates the media itself | The only framework here that calls AI models (Kling, Sora, Veo, Seedance, Flux, nano-banana, ElevenLabs, OmniHuman, Sync) and produces the underlying clips, voices, and music. |
+| Generates the media itself | The only framework here that calls AI models (Kling, Veo, Seedance, Flux, nano-banana, ElevenLabs, OmniHuman, Sync) and produces the underlying clips, voices, and music. |
 | Caching is sacred | Content-addressed, R2-backed, 30-day TTL. Identical prompts are free on re-render, which is critical for the economics of iteration when each generation costs $0.05–$0.50+. |
 | One API key replaces seven | A single `VARG_API_KEY` fans out to fal, ElevenLabs, Higgsfield, HeyGen, PiAPI, Together, and Groq. No more juggling provider accounts and dashboards. |
 | Agent-native by design | The skill spec is cross-tool (Claude Code, Cursor, Windsurf, OpenCode). The CLI has structured `--json` and `--quiet` output. Action definitions ship as JSON schemas. OTP-based auth is built into the skill so agents can onboard users end-to-end. |

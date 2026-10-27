@@ -264,7 +264,7 @@ curl -s -X POST https://api.varg.ai/v2/estimate \
   -d '{"model": "seedance_2", "prompt": "a cat", "duration": 5}'
 # {"valid": true, "model": "seedance_2", "tool": "video",
 #  "resolved_model_key": "fal:bytedance/seedance-2.0/text-to-video",
-#  "pricing": {"provider_cost_cents": 152, "user_price_cents": 160, ...}}
+#  "pricing": {"user_price_cents": 160, "pricing_id": "ppr_..."}}
 ```
 
 <Note>
@@ -368,9 +368,6 @@ export default (
 <CardGroup cols={2}>
   <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
     Best overall video model. Supports 3-15s flexible duration.
-  </Card>
-  <Card title="Sora 2" icon="video" href="/models/video/sora-2">
-    OpenAI's video model. Good for cinematic shots.
   </Card>
   <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
     Budget-friendly video generation with good character motion.
