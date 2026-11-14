@@ -9,10 +9,10 @@ icon: "rotate"
 
 Qwen Image is Alibaba's image generation family. It includes a multi-angle model for generating different viewpoints of an object, and a general-purpose generation/editing model.
 
-| Model ID | Capability | Credits | ~Cost |
-|----------|-----------|---------|-------|
-| `qwen-angles` | Multi-angle from reference | 8 | $0.08 |
-| `qwen-image-2` | Text-to-image + editing | 8 | $0.08 |
+| Model ID | Capability | Price |
+|----------|-----------|-------|
+| `qwen-angles` | Multi-angle from reference | $0.08 an image |
+| `qwen-image-2` | Text-to-image + editing | not in the catalog on 14 November 2026 |
 
 ## Quick start
 
@@ -89,10 +89,14 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `qwen-angles` | 8 | $0.08 |
-| `qwen-image-2` | 8 | $0.08 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `qwen-angles` | $0.08 an image | [qwen_angles](https://varg.ai/models/qwen_angles) |
+| `qwen-image-2` | not in the catalog on 14 November 2026 | [all models](https://varg.ai/models) |
+
+`qwen-image-2` is not in the catalog on 14 November 2026. The Qwen models in it are [Qwen Image 3](https://varg.ai/models/qwen_image_3) (`qwen_image_3`) and [Qwen Angles](https://varg.ai/models/qwen_angles) (`qwen_angles`).
 
 ## Tips
 
@@ -104,7 +108,7 @@ curl -X POST https://api.varg.ai/v2/image \
 
 <CardGroup cols={2}>
   <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
-    More versatile for general editing. Same price range.
+    More versatile for general editing, from $0.06 an image (`nano-banana-2/edit`).
   </Card>
   <Card title="Phota" icon="camera" href="/models/image/phota">
     Identity-preserving generation with profile support.

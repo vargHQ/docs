@@ -9,10 +9,10 @@ icon: "wand-magic-sparkles"
 
 Wan 2.5 (by Alibaba) is a cost-effective video model with good motion quality, especially for character animation. It supports text-to-video, image-to-video, and optional audio input.
 
-| Model ID | Quality | Credits | ~Cost |
-|----------|---------|---------|-------|
-| `wan-2.5` | Standard | 80 | $0.80 |
-| `wan-2.5-preview` | Preview | 60 | $0.60 |
+| Model ID | Quality | Per second | From |
+|----------|---------|------------|------|
+| `wan-2.5` | Standard | $0.05 (480p) to $0.15 (1080p) | $0.25 a run |
+| `wan-2.5-preview` | Preview | $0.05 (480p) to $0.15 (1080p) | $0.25 a run |
 
 ## Quick start
 
@@ -93,17 +93,19 @@ curl -X POST https://api.varg.ai/v2/video \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `wan-2.5` | 80 | $0.80 |
-| `wan-2.5-preview` | 60 | $0.60 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
 
-One of the most affordable video models available.
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `wan-2.5` | $0.05 a second at 480p, $0.10 a second at 720p, $0.15 a second at 1080p; from $0.25 a run | [wan_2_5](https://varg.ai/models/wan_2_5) |
+| `wan-2.5-preview` | $0.05 a second at 480p, $0.10 a second at 720p, $0.15 a second at 1080p; from $0.25 a run | [wan_2_5_preview](https://varg.ai/models/wan_2_5_preview) |
+
+At 480p, the default resolution, it bills $0.05 a second, so a 5-second clip is 5 × $0.05 = $0.25.
 
 ## Tips
 
-- **Best value for character animation.** Wan handles human and cartoon motion well at a fraction of Kling/Seedance cost.
-- **Preview variant** is good for quick iteration at even lower cost.
+- **Good for character animation on a budget.** Wan handles human and cartoon motion well; at 480p it bills $0.05 a second, against $0.112 a second for Kling V3.
+- **Preview variant** costs the same as `wan-2.5` and is good for quick iteration.
 - **Combine with Soul** for consistent character generation — use Soul to create the character image, then Wan to animate.
 - **Audio input** can drive motion — provide an `audio_url` in provider options for music-driven animation.
 
@@ -111,12 +113,12 @@ One of the most affordable video models available.
 
 <CardGroup cols={2}>
   <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
-    Higher quality, more expensive. Best for hero content.
+    Higher quality, from $0.56 a run. Best for hero content.
   </Card>
   <Card title="Minimax" icon="minimize" href="/models/video/minimax">
-    Similar price point, different motion characteristics.
+    Different motion characteristics. Not in the catalog on 14 November 2026.
   </Card>
   <Card title="LTX" icon="bolt" href="/models/video/ltx">
-    Even cheaper at 50 credits. Fastest generation.
+    Flat $0.50 a run. Fastest generation.
   </Card>
 </CardGroup>

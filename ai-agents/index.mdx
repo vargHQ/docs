@@ -111,45 +111,47 @@ Cloud render uses `fal.*Model()` syntax — globals are auto-injected. Local ren
 
 ## All AI Models
 
+Prices below are from the live catalog on 14 November 2026 (1 credit = $0.01); today's price of every model is on [varg.ai/models](https://varg.ai/models).
+
 ### Image Models
 
-| Model | Code (varg API) | Best For | Credits |
-|-------|---------------|----------|---------|
-| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | Versatile, fast | 5 |
-| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | Image editing | 5 |
-| Flux Schnell | `varg.imageModel("flux-schnell")` | Fast generation | 5 |
-| Flux Pro | `varg.imageModel("flux-pro")` | High quality | 25 |
-| Recraft V3 | `varg.imageModel("recraft-v3")` | Graphic design | 15 |
-| Soul | `varg.imageModel("soul")` | Character consistency | 15 |
-| Background Remover | `varg.imageModel("background-remover")` | Remove backgrounds | 5 |
+| Model | Code (varg API) | Best For | Price |
+|-------|---------------|----------|-------|
+| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | Versatile, fast | from $0.14 an image |
+| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | Image editing | from $0.15 an image |
+| Flux Schnell | `varg.imageModel("flux-schnell")` | Fast generation | $0.003 a megapixel, from $0.01 |
+| Flux Pro | `varg.imageModel("flux-pro")` | High quality | $0.04 a megapixel, from $0.01 |
+| Recraft V3 | `varg.imageModel("recraft-v3")` | Graphic design | $0.10 an image |
+| Soul | `varg.imageModel("soul")` | Character consistency | $0.05 an image |
+| Background Remover | `varg.imageModel("background-remover")` | Remove backgrounds | not in the catalog on 14 November 2026; [`bria_guided_remove_background`](https://varg.ai/models/bria_guided_remove_background) is, $0.03 a run |
 
 ### Video Models
 
-| Model | Code (varg API) | Duration | Best For | Credits |
-|-------|---------------|----------|----------|---------|
-| Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | 150 |
-| Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | Excellent quality (ByteDance), exact per-second billing | 160 (5s@720p) |
-| Seedance 2 Mini | `varg.videoModel("seedance_2_mini")` | 4-15s (int) | Budget ByteDance, cheapest tier | 74 (5s@720p) |
-| Seedance 2 Less Restriction | `varg.videoModel("seedance_2_less_restriction")` | 4-15s (int) | Permissive content review, explicit opt-in | 116 (5s@720p) |
-| Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | 100 |
-| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters | 75 |
-| Minimax | `varg.videoModel("minimax")` | 5-10s | Alternative | 75 |
+| Model | Code (varg API) | Duration | Best For | Price |
+|-------|---------------|----------|----------|-------|
+| Kling V3 | `varg.videoModel("kling-v3")` | 3-15s (int) | Best quality | $0.112 a second, from $0.56 |
+| Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | Excellent quality (ByteDance), exact per-second billing | $1.517 (5s at 720p, fal text-to-video) |
+| Seedance 2 Mini | `varg.videoModel("seedance_2_mini")` | 4-15s (int) | Budget ByteDance, cheapest tier | $0.70 (5s at 720p, PiAPI) |
+| Seedance 2 Less Restriction | `varg.videoModel("seedance_2_less_restriction")` | 4-15s (int) | Permissive content review, explicit opt-in | $1.10 (5s at 720p) |
+| Kling V2.6 | `varg.videoModel("kling-v2.6")` | 5 or 10s | Quality | $0.112 a second, from $0.56 |
+| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | Characters | $0.05-$0.15 a second, from $0.25 |
+| Minimax | `varg.videoModel("minimax")` | 5-10s | Alternative | not in the catalog on 14 November 2026 |
 
 ### Lipsync Models
 
-| Model | Code (varg API) | Best For | Credits |
-|-------|---------------|----------|---------|
-| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | Lip sync | 100 |
-| Sync V2 | `varg.videoModel("sync-v2")` | Lip sync (fast) | 75 |
+| Model | Code (varg API) | Best For | Price |
+|-------|---------------|----------|-------|
+| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | Lip sync | $0.80 a run |
+| Sync V2 | `varg.videoModel("sync-v2")` | Lip sync (fast) | $0.50 a run |
 
 ### Audio Models
 
-| Model | Code (varg API) | Best For | Credits |
-|-------|---------------|----------|---------|
-| Eleven V3 | `varg.speechModel("eleven_v3")` | Best TTS | 25 |
-| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | Multi-language | 20 |
-| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | Fast TTS | 15 |
-| Music V1 | `varg.musicModel()` | Background music | 25 |
+| Model | Code (varg API) | Best For | Price |
+|-------|---------------|----------|-------|
+| Eleven V3 | `varg.speechModel("eleven_v3")` | Best TTS | $0.10 per 1,000 characters |
+| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | Multi-language | $0.10 per 1,000 characters |
+| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | Fast TTS | $0.05 per 1,000 characters |
+| Music V1 | `varg.musicModel()` | Background music | $0.15 a minute |
 
 ### Voices
 
@@ -460,7 +462,7 @@ curl -s -X POST https://api.varg.ai/v2/ffmpeg \
   }'
 ```
 
-All FFmpeg operations cost ~6 credits per call. Outputs land in `output.outputs[]` on the completed job.
+All FFmpeg operations cost $0.05 per call. Outputs land in `output.outputs[]` on the completed job.
 
 ## Common Errors and Solutions
 
@@ -488,27 +490,27 @@ bunx vargai render video.tsx --no-cache     # Skip cache
 
 ## Cost Reference
 
-1 credit = 1 cent. Cache hits are always free.
+1 credit = 1 cent. Cache hits are always free. Prices from the live catalog on 14 November 2026:
 
-| Action | Model | Credits |
-|--------|-------|---------|
-| Image | grok_imagine_image | 4 |
-| Image | flux_dev / flux_pro | 68 |
-| Image | nano_banana_2 | 68 |
-| Image | nano_banana_pro | 126 |
-| Video 5s | wan_2_5 | 158 |
-| Video 5s | kling_v3 | 221 |
-| Video 5s | seedance_2_mini (cheapest Seedance tier) | 74 |
-| Video 5s | seedance_2 via `piapi:seedance-2` (advanced route pin) | 105 |
-| Video 5s | seedance_2 (canonical, fal route, 720p) | 160 |
-| Video 5s | seedance_2 with `duration: "auto"` (reserves worst case) | 479 |
-| Speech | eleven_turbo_v2_5 | 105 |
-| Music | music_v1 | 79 |
-| Lipsync | sync_v2 | 53 |
-| Lipsync | sync_v2_pro | 84 |
-| FFmpeg (any op) | rendi_ffmpeg* | 6 |
+| Action | Model | Price |
+|--------|-------|-------|
+| Image | grok_imagine_image | $0.03 |
+| Image | flux_dev / flux_pro | $0.04 a megapixel, from $0.01 |
+| Image | nano_banana_2 | from $0.06 |
+| Image | nano_banana_pro | from $0.14 |
+| Video 5s | wan_2_5 | $0.25 at 480p, $0.50 at 720p, $0.75 at 1080p |
+| Video 5s | kling_v3 | $0.56 ($0.84 with audio) |
+| Video 5s | seedance_2_mini (cheapest Seedance tier) | $0.70 at 720p on PiAPI |
+| Video 5s | seedance_2 via `piapi:seedance-2` (advanced route pin) | $1.00 at 720p |
+| Video 5s | seedance_2 (canonical, fal route, 720p) | $1.517 |
+| Video 5s | seedance_2 with `duration: "auto"` (reserves worst case) | $4.56 at 720p (the route's ceiling, a 15 s clip) |
+| Speech | eleven_turbo_v2_5 | $0.05 per 1,000 characters |
+| Music | music_v1 | $0.15 a minute |
+| Lipsync | sync_v2 | $0.50 |
+| Lipsync | sync_v2_pro | $0.80 |
+| FFmpeg (any op) | rendi_ffmpeg* | $0.05 |
 
-Typical 3-clip video: $2-5. Discover models and routes (no auth): `GET https://api.varg.ai/v2/models` (filter with `?tool=video`). Live price catalog (no auth): `GET https://api.varg.ai/v2/pricing`. Price any request without running it: `POST https://api.varg.ai/v2/estimate` — the response includes `resolved_model_key`, the exact route the request would run on.
+A full video's price depends on the models, resolution and length you pick. Discover models and routes (no auth): `GET https://api.varg.ai/v2/models` (filter with `?tool=video`). Live price catalog (no auth): `GET https://api.varg.ai/v2/pricing`. Price any request without running it: `POST https://api.varg.ai/v2/estimate` — the response includes `resolved_model_key`, the exact route the request would run on.
 
 ## File Structure
 

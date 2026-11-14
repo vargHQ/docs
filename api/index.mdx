@@ -217,7 +217,7 @@ curl -s "https://api.varg.ai/v2/models?tool=video"
           "pricing": {
             "pricing_id": "ppr_...",
             "rule": { "type": "per_second_conditional", "param": "duration", "rates": ["..."] },
-            "user_price_estimate_cents": 479
+            "user_price_estimate_cents": 456
           },
           "ops": {
             "delivery": "webhook",
@@ -277,7 +277,7 @@ curl -s -X POST https://api.varg.ai/v2/estimate \
   -d '{"model": "seedance_2", "prompt": "cat", "duration": 5}'
 # {"valid": true, "model": "seedance_2", "tool": "video",
 #  "resolved_model_key": "fal:bytedance/seedance-2.0/text-to-video",
-#  "pricing": {"user_price_cents": 160, "pricing_id": "ppr_..."}}
+#  "pricing": {"user_price_cents": ..., "pricing_id": "ppr_..."}}
 
 # Check your balance
 curl -s https://api.varg.ai/v2/billing/balance \

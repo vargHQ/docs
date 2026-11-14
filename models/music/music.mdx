@@ -9,9 +9,9 @@ icon: "music"
 
 Generate music from text descriptions. Currently one model is available via ElevenLabs.
 
-| Model ID | Credits | ~Cost |
-|----------|---------|-------|
-| `music_v1` | 30 | $0.30 |
+| Model ID | Price |
+|----------|-------|
+| `music_v1` | $0.0025 a second of audio ($0.15 a minute) |
 
 ## Quick start
 
@@ -52,7 +52,7 @@ curl -X POST https://api.varg.ai/v2/music \
 </ResponseField>
 
 <Warning>
-**Always set `duration` explicitly.** Without it, the model generates ~60 seconds of music, which costs the same but may be more than you need.
+**Always set `duration` explicitly.** Without it, the model generates ~60 seconds of music, which may be more than you need. The price follows the length you request: $0.0025 a second, so a 30-second track is 30 × $0.0025 = $0.075.
 </Warning>
 
 ## Prompt examples
@@ -89,9 +89,11 @@ Add music as a background track in a video:
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `music_v1` | 30 | $0.30 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `music_v1` | $0.0025 a second of audio ($0.15 a minute) | [music_v1](https://varg.ai/models/music_v1) |
 
 ## Tips
 

@@ -12,10 +12,10 @@ varg offers two Seedream models from ByteDance:
 - **Seedream 5 Lite** (`seedream_5_lite`) — text-to-image generation with up to 10 reference images, at 2K or 3K resolution.
 - **Seedream V4.5 Edit** (`seedream-v4.5/edit`) — precise editing of existing images.
 
-| Model | Mode | ~Cost |
+| Model | Mode | Price |
 |-------|------|-------|
-| `seedream_5_lite` | Text-to-image + references | 4 credits (2K), 6 credits (3K) |
-| `seedream-v4.5/edit` | Image editing | 10 credits |
+| `seedream_5_lite` | Text-to-image + references | $0.028 an image (2K), $0.042 (3K); from $0.03 a request |
+| `seedream-v4.5/edit` | Image editing | $0.50 an image |
 
 ## Seedream 5 Lite
 
@@ -95,14 +95,16 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ### Less-restriction variant
 
-The route `piapi:seedream-5-lite-less-restriction` runs the same model with a more permissive content review at a small premium (~7 credits at 2K). It is explicit opt-in — its schema is identical to the strict route, so auto-routing never selects it; you must address it by exact `model_key`. Content involving minors, real-person identity or faces, graphic violence, and hate remains blocked. On rejection the job is not retried and your credits are refunded.
+The route `piapi:seedream-5-lite-less-restriction` runs the same model with a more permissive content review at a small premium ($0.035 an image at 2K, against $0.028 on the strict route). It is explicit opt-in — its schema is identical to the strict route, so auto-routing never selects it; you must address it by exact `model_key`. Content involving minors, real-person identity or faces, graphic violence, and hate remains blocked. On rejection the job is not retried and your credits are refunded.
 
 ### Pricing
 
 | Route | 2K | 3K |
 |-------|----|----|
-| `piapi:seedream-5-lite` | ~4 credits | ~6 credits |
-| `piapi:seedream-5-lite-less-restriction` | ~7 credits | — |
+| `piapi:seedream-5-lite` | $0.028 an image | $0.042 an image |
+| `piapi:seedream-5-lite-less-restriction` | $0.035 an image | $0.0525 an image |
+
+Prices from the live catalog on 14 November 2026, 1 credit = $0.01. A request costs at least $0.03 on the strict route and $0.04 on the less-restriction route. Today's price: [seedream_5_lite](https://varg.ai/models/seedream_5_lite).
 
 ## Seedream V4.5 Edit
 
@@ -146,9 +148,11 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ### Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `seedream-v4.5/edit` | 10 | $0.10 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `seedream-v4.5/edit` | $0.50 an image | [seedream_v4_5/edit](https://varg.ai/models/seedream_v4_5%2Fedit) |
 
 ## Tips
 
@@ -161,7 +165,7 @@ curl -X POST https://api.varg.ai/v2/image \
 
 <CardGroup cols={2}>
   <Card title="Nano Banana Edit" icon="image" href="/models/image/nano-banana">
-    More versatile editing at half the cost (5 credits).
+    More versatile editing, from $0.06 an image (`nano-banana-2/edit`), against $0.50 for Seedream V4.5 Edit.
   </Card>
   <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
     ByteDance's video model — animate your Seedream images.

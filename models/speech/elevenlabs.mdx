@@ -9,15 +9,15 @@ icon: "microphone"
 
 ElevenLabs provides the text-to-speech models in varg. Multiple model variants are available balancing quality, speed, and language support.
 
-| Model ID | Quality | Speed | Languages | Credits | ~Cost |
-|----------|---------|-------|-----------|---------|-------|
-| `eleven_v3` | Best | Standard | Multi | 25 | $0.25 |
-| `eleven_multilingual_v2` | Great | Standard | 29 languages | 25 | $0.25 |
-| `turbo` | Good | Fastest | English | 20 | $0.20 |
-| `eleven_turbo_v2` | Good | Fast | English | 20 | $0.20 |
-| `eleven_turbo_v2_5` | Good | Fast | Multi | 20 | $0.20 |
-| `eleven_flash_v2` | Good | Ultra-fast | English | 20 | $0.20 |
-| `eleven_flash_v2_5` | Good | Ultra-fast | Multi | 20 | $0.20 |
+| Model ID | Quality | Speed | Languages | Price per 1,000 characters |
+|----------|---------|-------|-----------|----------------------------|
+| `eleven_v3` | Best | Standard | Multi | $0.10 |
+| `eleven_multilingual_v2` | Great | Standard | 29 languages | $0.10 |
+| `turbo` | Good | Fastest | English | $0.05 |
+| `eleven_turbo_v2` | Good | Fast | English | $0.05 |
+| `eleven_turbo_v2_5` | Good | Fast | Multi | $0.05 |
+| `eleven_flash_v2` | Good | Ultra-fast | English | $0.05 |
+| `eleven_flash_v2_5` | Good | Ultra-fast | Multi | $0.05 |
 
 ## Quick start
 
@@ -92,7 +92,7 @@ Any valid ElevenLabs `voice_id` works. The names above are convenience aliases f
 | Multiple languages | `eleven_multilingual_v2` |
 | Fast English narration | `turbo` or `eleven_turbo_v2` |
 | Real-time / interactive | `eleven_flash_v2_5` |
-| Budget | `turbo` (20 credits) |
+| Budget | `turbo` ($0.05 per 1,000 characters) |
 
 ## Composition example
 
@@ -114,13 +114,15 @@ const narration = Speech({
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `eleven_v3` | 25 | $0.25 |
-| `eleven_multilingual_v2` | 25 | $0.25 |
-| `turbo` / `eleven_turbo_v2` | 20 | $0.20 |
-| `eleven_turbo_v2_5` | 20 | $0.20 |
-| `eleven_flash_v2` / `v2_5` | 20 | $0.20 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `eleven_v3` | $0.10 per 1,000 characters | [eleven_v3](https://varg.ai/models/eleven_v3) |
+| `eleven_multilingual_v2` | $0.10 per 1,000 characters | [eleven_multilingual_v2](https://varg.ai/models/eleven_multilingual_v2) |
+| `turbo` / `eleven_turbo_v2` | $0.05 per 1,000 characters | [turbo](https://varg.ai/models/turbo) |
+| `eleven_turbo_v2_5` | $0.05 per 1,000 characters | [eleven_turbo_v2_5](https://varg.ai/models/eleven_turbo_v2_5) |
+| `eleven_flash_v2` / `v2_5` | $0.05 per 1,000 characters | [eleven_flash_v2](https://varg.ai/models/eleven_flash_v2) |
 
 ## Related models
 

@@ -9,9 +9,9 @@ icon: "person"
 
 OmniHuman V1.5 (by ByteDance) generates full-body human animation videos from a single image and audio file. Unlike lipsync models that only animate the mouth, OmniHuman animates the entire body including gestures and posture.
 
-| Model ID | Input | Resolution | Credits | ~Cost |
-|----------|-------|-----------|---------|-------|
-| `omnihuman-v1.5` | Image + audio | 720p or 1080p | 100 | $1.00 |
+| Model ID | Input | Resolution | Price |
+|----------|-------|-----------|-------|
+| `omnihuman-v1.5` | Image + audio | 720p or 1080p | $0.16 a second of input, from $0.48 a run |
 
 ## Quick start
 
@@ -56,9 +56,11 @@ curl -X POST https://api.varg.ai/v2/video \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `omnihuman-v1.5` | 100 | $1.00 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `omnihuman-v1.5` | $0.16 a second of input; from $0.48 a run | [omnihuman_v1_5](https://varg.ai/models/omnihuman_v1_5) |
 
 ## Tips
 

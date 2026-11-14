@@ -120,7 +120,7 @@ Prefer webhooks over polling for long renders: set `options.webhook_url` in the 
 
 ## Billing
 
-A render bills a **flat stitching fee (~5 credits)**. Each AI sub-generation inside the render (images, video clips, speech, music) is billed separately as its own job at normal model rates.
+A render bills a **flat stitching fee of $0.05** (5 credits; [render](https://varg.ai/models/render) in the catalog on 14 November 2026). Each AI sub-generation inside the render (images, video clips, speech, music) is billed separately as its own job at normal model rates.
 
 Sub-generation assets are linked to the parent render job — if the render fails partway (e.g. one clip runs out of balance), the completed assets are still in your [files](/api#files-and-lineage) and you don't pay for them twice on retry (cache).
 
@@ -206,5 +206,5 @@ A render `failed` job's `error` field describes what went wrong (e.g. a sub-gene
 | **Purpose** | One asset (image, video clip, speech, music) | A complete, composed video from TSX |
 | **Input** | JSON with prompt/model | TSX source code |
 | **Output** | Single asset URL | Rendered video (+ sub-assets in your files) |
-| **Billing** | Per model | ~5¢ stitching + sub-generations |
+| **Billing** | Per model | $0.05 stitching + sub-generations |
 | **Use when** | You need one image or clip | You need transitions, audio, captions, multiple scenes |
