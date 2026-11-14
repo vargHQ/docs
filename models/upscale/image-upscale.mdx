@@ -9,14 +9,16 @@ icon: "expand"
 
 varg offers 6 image upscale models ranging from free-tier to premium. All take an image URL and return a higher-resolution version.
 
-| Model ID | Quality | Credits | ~Cost | Provider |
-|----------|---------|---------|-------|----------|
-| `topaz` | Best | 15 | $0.15 | fal (Topaz Labs) |
-| `seedvr` | Very good | 10 | $0.10 | fal (ByteDance SeedVR) |
-| `recraft-clarity` | Good | 8 | $0.08 | fal (Recraft) |
-| `clarity-upscaler` | Good | 8 | $0.08 | fal |
-| `ccsr` | Basic | 5 | $0.05 | fal (free tier) |
-| `aura-sr` | Basic | 5 | $0.05 | fal (free tier) |
+| Model ID | Quality | Price | Provider |
+|----------|---------|-------|----------|
+| `topaz` | Best | $0.16 an image | fal (Topaz Labs) |
+| `seedvr` | Very good | $0.10 an image | fal (ByteDance SeedVR) |
+| `recraft-clarity` | Good | $0.08 an image | fal (Recraft) |
+| `clarity-upscaler` | Good | $0.08 an image | fal |
+| `ccsr` | Basic | no charge in today's catalog | fal (free tier) |
+| `aura-sr` | Basic | no charge in today's catalog | fal (free tier) |
+
+Prices from the live catalog on 14 November 2026 (1 credit = $0.01). Today's prices: [topaz](https://varg.ai/models/topaz), [seedvr](https://varg.ai/models/seedvr), [recraft_clarity](https://varg.ai/models/recraft_clarity), [clarity_upscaler](https://varg.ai/models/clarity_upscaler), [ccsr](https://varg.ai/models/ccsr), [aura_sr](https://varg.ai/models/aura_sr).
 
 ## Quick start
 
@@ -59,18 +61,18 @@ Upscale models don't use prompt or aspect_ratio. They take a single input image 
 
 | Model | Best for | Pricing model |
 |-------|----------|---------------|
-| `topaz` | Professional / maximum quality | $0.08-$0.16 per image |
-| `seedvr` | Good quality at moderate cost | $0.001 per megapixel (~$0.10 for 4K) |
-| `recraft-clarity` | Design assets, illustrations | $0.04 per image |
-| `clarity-upscaler` | General purpose | $0.03 per megapixel |
-| `ccsr` | Free/cheap bulk upscaling | Free on fal |
-| `aura-sr` | Free/cheap bulk upscaling | Free on fal |
+| `topaz` | Professional / maximum quality | $0.16 an image |
+| `seedvr` | Good quality at moderate cost | $0.10 an image |
+| `recraft-clarity` | Design assets, illustrations | $0.08 an image |
+| `clarity-upscaler` | General purpose | $0.08 an image |
+| `ccsr` | Free/cheap bulk upscaling | no charge in today's catalog |
+| `aura-sr` | Free/cheap bulk upscaling | no charge in today's catalog |
 
 ## Tips
 
 - **Topaz** produces the best results but is the most expensive. Use for hero images and final deliverables.
-- **SeedVR** is the best value — excellent quality at a fraction of Topaz's cost.
-- **CCSR and Aura-SR** are effectively free on fal (varg charges 5 credits for the API overhead). Good for batch processing.
+- **SeedVR** gives excellent quality at $0.10 an image, against $0.16 for Topaz.
+- **CCSR and Aura-SR** carry no charge in today's catalog (they are free at the provider). Good for batch processing.
 - **Combine with Phota Enhance** if you need identity-preserving upscaling for faces.
 
 ## Related models

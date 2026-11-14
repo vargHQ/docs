@@ -9,9 +9,9 @@ icon: "minimize"
 
 Minimax is an alternative video generation model offering solid quality at a moderate price point. It supports both text-to-video and image-to-video generation.
 
-| Model ID | Credits | ~Cost |
-|----------|---------|-------|
-| `minimax` | 80 | $0.80 |
+| Model ID | Price |
+|----------|-------|
+| `minimax` | not in the catalog on 14 November 2026 |
 
 ## Quick start
 
@@ -63,22 +63,26 @@ curl -X POST https://api.varg.ai/v2/video \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `minimax` | 80 | $0.80 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `minimax` | not in the catalog on 14 November 2026 | [all models](https://varg.ai/models) |
+
+`minimax` is not in the catalog on 14 November 2026. The MiniMax models in it are [MiniMax H3](https://varg.ai/models/minimax_h3) (`minimax_h3`), [MiniMax H3 Max](https://varg.ai/models/minimax_h3_max) (`minimax_h3_max`) and other `minimax_h3_*` variants such as [`minimax_h3_max_turbo`](https://varg.ai/models/minimax_h3_max_turbo) and [`minimax_h3_lora`](https://varg.ai/models/minimax_h3_lora).
 
 ## Tips
 
-- **Good middle ground** between quality and cost — cheaper than Kling V3 but higher quality than LTX.
+- **Good middle ground** on quality — higher quality than LTX.
 - **Works well for nature and product shots** where smooth, gentle motion is needed.
 
 ## Related models
 
 <CardGroup cols={2}>
   <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
-    Similar price. Better for character animation.
+    From $0.25 a run. Better for character animation.
   </Card>
   <Card title="LTX" icon="bolt" href="/models/video/ltx">
-    Cheapest option at 50 credits. Fastest generation.
+    Flat $0.50 a run. Fastest generation.
   </Card>
 </CardGroup>

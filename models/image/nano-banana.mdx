@@ -1,20 +1,20 @@
 ---
 title: "Nano Banana (Gemini)"
 sidebarTitle: "Nano Banana"
-description: "Google Gemini-powered image generation and editing — best default image model with reference-based editing"
+description: "Google Gemini-powered image generation and editing, with reference-based editing"
 icon: "image"
 ---
 
 ## Overview
 
-Nano Banana is varg's recommended default image model, powered by Google Gemini. It excels at both text-to-image generation and reference-based image editing. Two generations are available:
+Nano Banana is an image model family powered by Google Gemini. It excels at both text-to-image generation and reference-based image editing. Two generations are available:
 
-| Model ID | Generation | Mode | Credits | ~Cost |
-|----------|-----------|------|---------|-------|
-| `nano-banana-pro` | Gen 1 | Text-to-image | 5 | $0.05 |
-| `nano-banana-pro/edit` | Gen 1 | Image editing (requires input) | 5 | $0.05 |
-| `nano-banana-2` | Gen 2 | Text-to-image + editing | 5 | $0.05 |
-| `nano-banana-2/edit` | Gen 2 | Image editing (explicit) | 5 | $0.05 |
+| Model ID | Generation | Mode | Price |
+|----------|-----------|------|-------|
+| `nano-banana-pro` | Gen 1 | Text-to-image | from $0.14 an image |
+| `nano-banana-pro/edit` | Gen 1 | Image editing (requires input) | from $0.15 an image |
+| `nano-banana-2` | Gen 2 | Text-to-image + editing | from $0.06 an image |
+| `nano-banana-2/edit` | Gen 2 | Image editing (explicit) | from $0.06 an image |
 
 ## Quick start
 
@@ -140,18 +140,18 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `nano-banana-pro` | 5 | $0.05 |
-| `nano-banana-pro/edit` | 5 | $0.05 |
-| `nano-banana-2` | 5 | $0.05 |
-| `nano-banana-2/edit` | 5 | $0.05 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
 
-The cheapest image generation with the best quality-to-cost ratio.
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `nano-banana-pro` | fal: $0.15 an image ($0.30 at 4K); Google: $0.134 an image ($0.24 at 4K); from $0.14 a run | [nano_banana_pro](https://varg.ai/models/nano_banana_pro) |
+| `nano-banana-pro/edit` | $0.15 an image ($0.30 at 4K) | [nano_banana_pro/edit](https://varg.ai/models/nano_banana_pro%2Fedit) |
+| `nano-banana-2` | fal: $0.08 an image ($0.06 at 0.5K, $0.12 at 2K, $0.16 at 4K); Google: $0.067 an image ($0.045 at 512, $0.101 at 2K, $0.151 at 4K) | [nano_banana_2](https://varg.ai/models/nano_banana_2) |
+| `nano-banana-2/edit` | $0.08 an image ($0.06 at 0.5K, $0.12 at 2K, $0.16 at 4K) | [nano_banana_2/edit](https://varg.ai/models/nano_banana_2%2Fedit) |
 
 ## Tips
 
-- **Use Nano Banana as your default image model.** At 5 credits, it's the best value for text-to-image.
+- **Nano Banana 2 costs less than Pro.** `nano-banana-2` starts from $0.06 an image, `nano-banana-pro` from $0.14.
 - **Image editing is the killer feature.** Generate a base image, then iteratively refine with `/edit`.
 - **Perfect for video reference frames.** Generate an image with Nano Banana, then animate with Kling V3 or Seedance 2.
 - **Multi-image prompts** let you combine characters, transfer styles, or composite scenes.
@@ -167,7 +167,7 @@ The cheapest image generation with the best quality-to-cost ratio.
     Identity-preserving generation with profile-based control.
   </Card>
   <Card title="Grok Imagine Image" icon="bolt" href="/models/image/grok-imagine-image">
-    Cheapest image model at 3 credits.
+    $0.03 an image.
   </Card>
   <Card title="Seedance 2" icon="seedling" href="/models/video/seedance-2">
     Animate your Nano Banana images with Seedance image-to-video.

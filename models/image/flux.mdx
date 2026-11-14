@@ -9,11 +9,11 @@ icon: "bolt"
 
 Flux (by Black Forest Labs) is a popular image generation model family with three tiers balancing speed and quality.
 
-| Model ID | Tier | Speed | Credits | ~Cost |
-|----------|------|-------|---------|-------|
-| `flux-schnell` | Fast | ~2s | 5 | $0.05 |
-| `flux-dev` | Development | ~5s | 8 | $0.08 |
-| `flux-pro` | Professional | ~8s | 10 | $0.10 |
+| Model ID | Tier | Speed | Price |
+|----------|------|-------|-------|
+| `flux-schnell` | Fast | ~2s | $0.003 a megapixel, from $0.01 an image |
+| `flux-dev` | Development | ~5s | $0.04 a megapixel, from $0.01 an image |
+| `flux-pro` | Professional | ~8s | $0.04 a megapixel, from $0.01 an image |
 
 ## Quick start
 
@@ -59,15 +59,17 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Pricing
 
-| Model | Credits | USD | Best for |
-|-------|---------|-----|----------|
-| `flux-schnell` | 5 | $0.05 | Quick iteration, prototyping |
-| `flux-dev` | 8 | $0.08 | Development and testing |
-| `flux-pro` | 10 | $0.10 | Final renders, high quality |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price | Best for |
+|-------|-------|---------------|------|
+| `flux-schnell` | fal: $0.003 a megapixel; Together: $0.0027 a megapixel | [flux_schnell](https://varg.ai/models/flux_schnell) | Quick iteration, prototyping |
+| `flux-dev` | $0.04 a megapixel | [flux_dev](https://varg.ai/models/flux_dev) | Development and testing |
+| `flux-pro` | $0.04 a megapixel | [flux_pro](https://varg.ai/models/flux_pro) | Final renders, high quality |
 
 ## Tips
 
-- **Flux Schnell** is as cheap as Nano Banana (5 credits) and faster. Good for quick drafts.
+- **Flux Schnell** costs less than Nano Banana (from $0.01 an image, against from $0.06 for `nano-banana-2`) and is faster. Good for quick drafts.
 - **Flux Pro** excels at **design and graphic content** — logos, icons, illustrations. Nano Banana is better for photos.
 - **Inference steps** can be tuned via provider options. Higher values = better quality, slower generation.
 
@@ -75,7 +77,7 @@ curl -X POST https://api.varg.ai/v2/image \
 
 <CardGroup cols={2}>
   <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
-    Better for photorealistic images and editing. Same price as Schnell.
+    Better for photorealistic images and editing. From $0.06 an image (`nano-banana-2`).
   </Card>
   <Card title="Recraft" icon="palette" href="/models/image/recraft">
     Purpose-built for graphic design and illustrations.

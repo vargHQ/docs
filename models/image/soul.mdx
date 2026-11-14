@@ -9,9 +9,9 @@ icon: "user"
 
 Soul (by Higgsfield) is a character-focused image generation model with 80+ style presets. It's designed for creating consistent, stylized character images that can be reused across video scenes.
 
-| Model ID | Credits | ~Cost |
-|----------|---------|-------|
-| `soul` | 15 | $0.15 |
+| Model ID | Price |
+|----------|-------|
+| `soul` | $0.05 an image |
 
 ## Quick start
 
@@ -79,9 +79,11 @@ The [Presets catalogue](/api/presets) (`GET /v2/presets?type=style&namespace=hig
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `soul` | 15 | $0.15 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `soul` | $0.05 an image | [soul](https://varg.ai/models/soul) |
 
 ## Tips
 
@@ -117,7 +119,7 @@ const video = Video({
     Profile-based identity control. Better for consistent faces across many images.
   </Card>
   <Card title="Nano Banana" icon="image" href="/models/image/nano-banana">
-    More versatile generation and editing at lower cost.
+    More versatile generation and editing, from $0.06 an image (`nano-banana-2`).
   </Card>
   <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
     Animate Soul characters with image-to-video.

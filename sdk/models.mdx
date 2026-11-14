@@ -19,26 +19,28 @@ For detailed documentation, parameters, and examples for each model, see the **[
 
 ## Quick Reference
 
-| Category | Recommended | Code | Credits | Docs |
+Prices from the live catalog on 14 November 2026 (1 credit = $0.01); today's price of every model is on [varg.ai/models](https://varg.ai/models).
+
+| Category | Recommended | Code | Price | Docs |
 |----------|-------------|------|---------|------|
-| Image (versatile) | Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | 5 | [Details](/models/image/nano-banana) |
-| Image (quality) | Flux Pro | `varg.imageModel("flux-pro")` | 10 | [Details](/models/image/flux) |
-| Image (editing) | Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | 5 | [Details](/models/image/nano-banana) |
-| Image (characters) | Soul | `varg.imageModel("soul")` | 15 | [Details](/models/image/soul) |
-| Image (cheapest) | Grok Imagine | `varg.imageModel("grok-imagine-image")` | 3 | [Details](/models/image/grok-imagine-image) |
-| Image (text, posters, logos) | Ideogram 4.5 | `varg.imageModel("ideogram_v4_5")` | 7 | [Details](/models/image/ideogram) |
-| Video (best) | Kling V3 | `varg.videoModel("kling-v3")` | 150 | [Details](/models/video/kling-v3) |
-| Video (premium) | Seedance 2 | `varg.videoModel("seedance_2")` | 160 (5s@720p) | [Details](/models/video/seedance-2) |
-| Video (budget) | Wan 2.5 | `varg.videoModel("wan-2.5")` | 80 | [Details](/models/video/wan-2) |
-| Video (cheapest) | LTX | `varg.videoModel("ltx-2-19b-distilled")` | 50 | [Details](/models/video/ltx) |
-| Lipsync (simple) | VEED Fabric | `varg.videoModel("veed-fabric-1.0")` | 100 | [Details](/models/lipsync/veed-fabric) |
-| Lipsync (best) | Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | 80 | [Details](/models/lipsync/sync) |
-| Speech (best) | Eleven V3 | `varg.speechModel("eleven_v3")` | 25 | [Details](/models/speech/elevenlabs) |
-| Speech (multi-lang) | Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | 25 | [Details](/models/speech/elevenlabs) |
-| Music | Music V1 | `varg.musicModel()` | 30 | [Details](/models/music/music) |
-| Transcription | Groq Whisper Turbo | `varg.transcriptionModel("groq-whisper-large-v3-turbo")` | 3 | [Details](/models/transcription/whisper) |
-| Image upscale | SeedVR | `varg.imageModel("seedvr")` | 10 | [Details](/models/upscale/image-upscale) |
-| Video upscale | Sima | `varg.videoModel("sima-video-upscaler")` | 15 | [Details](/models/upscale/video-upscale) |
+| Image (versatile) | Nano Banana 2.1 | `varg.imageModel("nano_banana_2_1")` | from $0.05 | [Details](https://varg.ai/models/nano_banana_2_1) |
+| Image (quality) | Flux Pro | `varg.imageModel("flux-pro")` | $0.04 a megapixel, from $0.01 | [Details](/models/image/flux) |
+| Image (editing) | Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | from $0.15 | [Details](/models/image/nano-banana) |
+| Image (characters) | Soul | `varg.imageModel("soul")` | $0.05 | [Details](/models/image/soul) |
+| Image (budget) | Grok Imagine | `varg.imageModel("grok-imagine-image")` | $0.03 | [Details](/models/image/grok-imagine-image) |
+| Image (text, posters, logos) | Ideogram 4.5 | `varg.imageModel("ideogram_v4_5")` | $0.06 (default quality) | [Details](/models/image/ideogram) |
+| Video (best) | Kling V3 | `varg.videoModel("kling-v3")` | from $0.56 | [Details](/models/video/kling-v3) |
+| Video (premium) | Seedance 2 | `varg.videoModel("seedance_2")` | $1.517 (5s at 720p) | [Details](/models/video/seedance-2) |
+| Video (budget) | Wan 2.5 | `varg.videoModel("wan-2.5")` | from $0.25 | [Details](/models/video/wan-2) |
+| Video (flat price) | LTX | `varg.videoModel("ltx-2-19b-distilled")` | $0.50 | [Details](/models/video/ltx) |
+| Lipsync (simple) | VEED Fabric | `varg.videoModel("veed-fabric-1.0")` | from $0.24 | [Details](/models/lipsync/veed-fabric) |
+| Lipsync (best) | Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | $0.80 | [Details](/models/lipsync/sync) |
+| Speech (best) | Eleven V3 | `varg.speechModel("eleven_v3")` | $0.10 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Speech (multi-lang) | Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | $0.10 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Music | Music V1 | `varg.musicModel()` | $0.15 a minute | [Details](/models/music/music) |
+| Transcription | Groq Whisper Turbo | `varg.transcriptionModel("groq-whisper-large-v3-turbo")` | $0.03 | [Details](/models/transcription/whisper) |
+| Image upscale | SeedVR | `varg.imageModel("seedvr")` | $0.10 | [Details](/models/upscale/image-upscale) |
+| Video upscale | Sima | `varg.videoModel("sima-video-upscaler")` | $0.15 | [Details](/models/upscale/video-upscale) |
 
 ---
 
@@ -46,106 +48,106 @@ For detailed documentation, parameters, and examples for each model, see the **[
 
 ### Video Models
 
-| Model | Code | Duration | Credits | Docs |
+| Model | Code | Duration | Price | Docs |
 |-------|------|----------|---------|------|
-| Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | per-second, 160 (5s@720p) | [Details](/models/video/seedance-2) |
-| Seedance 2 Mini | `varg.videoModel("seedance_2_mini")` | 4-15s (int) | per-second, 74 (5s@720p) | [Details](/models/video/seedance-2) |
-| Seedance 2 Less Restriction | `varg.videoModel("seedance_2_less_restriction")` | 4-15s (int) | per-second, 116 (5s@720p) — permissive review, explicit opt-in | [Details](/models/video/seedance-2) |
-| Kling V3 Pro | `varg.videoModel("kling-v3")` | 3-15s (int) | 150 | [Details](/models/video/kling-v3) |
-| Kling V3 Standard | `varg.videoModel("kling-v3-standard")` | 3-15s (int) | 100 | [Details](/models/video/kling-v3) |
-| Grok Imagine | `varg.videoModel("grok-imagine")` | 1-15s | 100 | [Details](/models/video/grok-imagine-video) |
-| Grok Imagine Edit | `varg.videoModel("grok-imagine-edit")` | varies | 100 | [Details](/models/video/grok-imagine-video) |
-| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | 80 | [Details](/models/video/wan-2) |
-| Minimax | `varg.videoModel("minimax")` | 5-10s | 80 | [Details](/models/video/minimax) |
-| Wan 2.5 Preview | `varg.videoModel("wan-2.5-preview")` | 3-10s | 60 | [Details](/models/video/wan-2) |
-| LTX | `varg.videoModel("ltx-2-19b-distilled")` | varies | 50 | [Details](/models/video/ltx) |
-| HeyGen Avatar | `varg.videoModel("heygen-avatar")` | varies | 300 | — |
-| HeyGen Avatar IV | `varg.videoModel("heygen-avatar-iv")` | varies | 300 | — |
+| Seedance 2 | `varg.videoModel("seedance_2")` | 4-15s or auto | per second, $1.517 (5s at 720p, fal text-to-video); from $0.23 | [Details](/models/video/seedance-2) |
+| Seedance 2 Mini | `varg.videoModel("seedance_2_mini")` | 4-15s (int) | per second, $0.70 (5s at 720p, PiAPI); from $0.15 | [Details](/models/video/seedance-2) |
+| Seedance 2 Less Restriction | `varg.videoModel("seedance_2_less_restriction")` | 4-15s (int) | per second, $1.10 (5s at 720p) — permissive review, explicit opt-in | [Details](/models/video/seedance-2) |
+| Kling V3 Pro | `varg.videoModel("kling-v3")` | 3-15s (int) | $0.112 a second, from $0.56 | [Details](/models/video/kling-v3) |
+| Kling V3 Standard | `varg.videoModel("kling-v3-standard")` | 3-15s (int) | $0.112 a second, from $0.56 | [Details](/models/video/kling-v3) |
+| Grok Imagine | `varg.videoModel("grok-imagine")` | 1-15s | $1.00 a run | [Details](/models/video/grok-imagine-video) |
+| Grok Imagine Edit | `varg.videoModel("grok-imagine-edit")` | varies | $1.00 a run | [Details](/models/video/grok-imagine-video) |
+| Wan 2.5 | `varg.videoModel("wan-2.5")` | 3-10s | $0.05-$0.15 a second, from $0.25 | [Details](/models/video/wan-2) |
+| Minimax | `varg.videoModel("minimax")` | 5-10s | not in the catalog on 14 November 2026 | [Details](/models/video/minimax) |
+| Wan 2.5 Preview | `varg.videoModel("wan-2.5-preview")` | 3-10s | $0.05-$0.15 a second, from $0.25 | [Details](/models/video/wan-2) |
+| LTX | `varg.videoModel("ltx-2-19b-distilled")` | varies | $0.50 a run | [Details](/models/video/ltx) |
+| HeyGen Avatar | `varg.videoModel("heygen-avatar")` | varies | $0.05 a second | — |
+| HeyGen Avatar IV | `varg.videoModel("heygen-avatar-iv")` | varies | $0.0667 a second | — |
 
 <Note>
-Seedance 2 bills per second; estimates are exact when you pass a numeric `duration` (`"auto"` reserves the worst case). The budget tier is `seedance_2_mini` (5s@480p = 37 credits, cheapest). Exact `model_key`s remain available for advanced route pinning — see [Seedance 2](/models/video/seedance-2) for the full route table.
+Seedance 2 bills per second; estimates are exact when you pass a numeric `duration` (`"auto"` reserves the worst case). The budget tier is `seedance_2_mini`, the cheapest Seedance tier (from $0.15 a run; 5s at 480p on PiAPI = 5 × $0.07 = $0.35). Exact `model_key`s remain available for advanced route pinning — see [Seedance 2](/models/video/seedance-2) for the full route table.
 </Note>
 
 ### Image Models
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | 5 | [Details](/models/image/nano-banana) |
-| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | 5 | [Details](/models/image/nano-banana) |
-| Nano Banana 2 | `varg.imageModel("nano-banana-2")` | 5 | [Details](/models/image/nano-banana) |
-| Nano Banana 2 Edit | `varg.imageModel("nano-banana-2/edit")` | 5 | [Details](/models/image/nano-banana) |
-| Ideogram 4.5 | `varg.imageModel("ideogram_v4_5")` | 7 | [Details](/models/image/ideogram) |
-| Flux Pro | `varg.imageModel("flux-pro")` | 10 | [Details](/models/image/flux) |
-| Flux Dev | `varg.imageModel("flux-dev")` | 8 | [Details](/models/image/flux) |
-| Flux Schnell | `varg.imageModel("flux-schnell")` | 5 | [Details](/models/image/flux) |
-| Phota | `varg.imageModel("phota")` | 9 | [Details](/models/image/phota) |
-| Phota Edit | `varg.imageModel("phota/edit")` | 9 | [Details](/models/image/phota) |
-| Phota Enhance | `varg.imageModel("phota/enhance")` | 13 | [Details](/models/image/phota) |
-| Grok Imagine Image | `varg.imageModel("grok-imagine-image")` | 3 | [Details](/models/image/grok-imagine-image) |
-| Grok Imagine Image Edit | `varg.imageModel("grok-imagine-image/edit")` | 3 | [Details](/models/image/grok-imagine-image) |
-| Recraft V3 | `varg.imageModel("recraft-v3")` | 10 | [Details](/models/image/recraft) |
-| Recraft V4 Pro | `varg.imageModel("recraft-v4-pro")` | 30 | [Details](/models/image/recraft) |
-| Qwen Angles | `varg.imageModel("qwen-angles")` | 8 | [Details](/models/image/qwen) |
-| Qwen Image 2 | `varg.imageModel("qwen-image-2")` | 8 | [Details](/models/image/qwen) |
-| Reve | `varg.imageModel("reve")` | 5 | — |
-| Seedream 5 Lite | `varg.imageModel("seedream_5_lite")` | 4 | [Details](/models/image/seedream) |
-| Seedream V4.5 Edit | `varg.imageModel("seedream-v4.5/edit")` | 10 | [Details](/models/image/seedream) |
-| Soul | `varg.imageModel("soul")` | 15 | [Details](/models/image/soul) |
+| Nano Banana Pro | `varg.imageModel("nano-banana-pro")` | from $0.14 | [Details](/models/image/nano-banana) |
+| Nano Banana Edit | `varg.imageModel("nano-banana-pro/edit")` | from $0.15 | [Details](/models/image/nano-banana) |
+| Nano Banana 2 | `varg.imageModel("nano-banana-2")` | from $0.06 | [Details](/models/image/nano-banana) |
+| Nano Banana 2 Edit | `varg.imageModel("nano-banana-2/edit")` | from $0.06 | [Details](/models/image/nano-banana) |
+| Ideogram 4.5 | `varg.imageModel("ideogram_v4_5")` | $0.06 (default quality), from $0.01 | [Details](/models/image/ideogram) |
+| Flux Pro | `varg.imageModel("flux-pro")` | $0.04 a megapixel, from $0.01 | [Details](/models/image/flux) |
+| Flux Dev | `varg.imageModel("flux-dev")` | $0.04 a megapixel, from $0.01 | [Details](/models/image/flux) |
+| Flux Schnell | `varg.imageModel("flux-schnell")` | $0.003 a megapixel, from $0.01 | [Details](/models/image/flux) |
+| Phota | `varg.imageModel("phota")` | $0.09 | [Details](/models/image/phota) |
+| Phota Edit | `varg.imageModel("phota/edit")` | $0.09 | [Details](/models/image/phota) |
+| Phota Enhance | `varg.imageModel("phota/enhance")` | $0.13 | [Details](/models/image/phota) |
+| Grok Imagine Image | `varg.imageModel("grok-imagine-image")` | $0.03 | [Details](/models/image/grok-imagine-image) |
+| Grok Imagine Image Edit | `varg.imageModel("grok-imagine-image/edit")` | $0.03 | [Details](/models/image/grok-imagine-image) |
+| Recraft V3 | `varg.imageModel("recraft-v3")` | $0.10 | [Details](/models/image/recraft) |
+| Recraft V4 Pro | `varg.imageModel("recraft-v4-pro")` | not in the catalog on 14 November 2026 | [Details](/models/image/recraft) |
+| Qwen Angles | `varg.imageModel("qwen-angles")` | $0.08 | [Details](/models/image/qwen) |
+| Qwen Image 2 | `varg.imageModel("qwen-image-2")` | not in the catalog on 14 November 2026 | [Details](/models/image/qwen) |
+| Reve | `varg.imageModel("reve")` | not in the catalog on 14 November 2026 | — |
+| Seedream 5 Lite | `varg.imageModel("seedream_5_lite")` | $0.028 an image at 2K, from $0.03 | [Details](/models/image/seedream) |
+| Seedream V4.5 Edit | `varg.imageModel("seedream-v4.5/edit")` | $0.50 | [Details](/models/image/seedream) |
+| Soul | `varg.imageModel("soul")` | $0.05 | [Details](/models/image/soul) |
 
 ### Lipsync Models
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| VEED Fabric 1.0 | `varg.videoModel("veed-fabric-1.0")` | 100 | [Details](/models/lipsync/veed-fabric) |
-| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | 80 | [Details](/models/lipsync/sync) |
-| Sync V2 | `varg.videoModel("sync-v2")` | 50 | [Details](/models/lipsync/sync) |
-| OmniHuman V1.5 | `varg.videoModel("omnihuman-v1.5")` | 100 | [Details](/models/lipsync/omnihuman) |
-| Sync V3 | `varg.videoModel("sync-v3")` | 100 | [Details](/models/lipsync/sync) |
-| Lipsync | `varg.videoModel("lipsync")` | 50 | [Details](/models/lipsync/sync) |
-| LTX-2 A2V | `varg.videoModel("ltx-2-a2v")` | 50 | — |
+| VEED Fabric 1.0 | `varg.videoModel("veed-fabric-1.0")` | $0.08-$0.15 a second of input, from $0.24 | [Details](/models/lipsync/veed-fabric) |
+| Sync V2 Pro | `varg.videoModel("sync-v2-pro")` | $0.80 | [Details](/models/lipsync/sync) |
+| Sync V2 | `varg.videoModel("sync-v2")` | $0.50 | [Details](/models/lipsync/sync) |
+| OmniHuman V1.5 | `varg.videoModel("omnihuman-v1.5")` | $0.16 a second of input, from $0.48 | [Details](/models/lipsync/omnihuman) |
+| Sync V3 | `varg.videoModel("sync-v3")` | $1.00 | [Details](/models/lipsync/sync) |
+| Lipsync | `varg.videoModel("lipsync")` | $0.50 | [Details](/models/lipsync/sync) |
+| LTX-2 A2V | `varg.videoModel("ltx-2-a2v")` | $0.0018 a megapixel of video frames, from $0.05 | — |
 
 ### Upscale Models
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| SeedVR (image) | `varg.imageModel("seedvr")` | 10 | [Details](/models/upscale/image-upscale) |
-| Topaz (image) | `varg.imageModel("topaz")` | 15 | [Details](/models/upscale/image-upscale) |
-| Recraft Clarity (image) | `varg.imageModel("recraft-clarity")` | 8 | [Details](/models/upscale/image-upscale) |
-| Clarity Upscaler (image) | `varg.imageModel("clarity-upscaler")` | 8 | [Details](/models/upscale/image-upscale) |
-| CCSR (image) | `varg.imageModel("ccsr")` | 5 | [Details](/models/upscale/image-upscale) |
-| Aura SR (image) | `varg.imageModel("aura-sr")` | 5 | [Details](/models/upscale/image-upscale) |
-| SeedVR (video) | `varg.videoModel("seedvr-video")` | 30 | [Details](/models/upscale/video-upscale) |
-| Topaz (video) | `varg.videoModel("topaz-video")` | 50 | [Details](/models/upscale/video-upscale) |
-| ByteDance (video) | `varg.videoModel("bytedance-upscaler")` | 25 | [Details](/models/upscale/video-upscale) |
-| Sima (video) | `varg.videoModel("sima-video-upscaler")` | 15 | [Details](/models/upscale/video-upscale) |
+| SeedVR (image) | `varg.imageModel("seedvr")` | $0.10 | [Details](/models/upscale/image-upscale) |
+| Topaz (image) | `varg.imageModel("topaz")` | $0.16 | [Details](/models/upscale/image-upscale) |
+| Recraft Clarity (image) | `varg.imageModel("recraft-clarity")` | $0.08 | [Details](/models/upscale/image-upscale) |
+| Clarity Upscaler (image) | `varg.imageModel("clarity-upscaler")` | $0.08 | [Details](/models/upscale/image-upscale) |
+| CCSR (image) | `varg.imageModel("ccsr")` | no charge today | [Details](/models/upscale/image-upscale) |
+| Aura SR (image) | `varg.imageModel("aura-sr")` | no charge today | [Details](/models/upscale/image-upscale) |
+| SeedVR (video) | `varg.videoModel("seedvr-video")` | $0.30 | [Details](/models/upscale/video-upscale) |
+| Topaz (video) | `varg.videoModel("topaz-video")` | $0.50 | [Details](/models/upscale/video-upscale) |
+| ByteDance (video) | `varg.videoModel("bytedance-upscaler")` | $0.25 | [Details](/models/upscale/video-upscale) |
+| Sima (video) | `varg.videoModel("sima-video-upscaler")` | $0.15 | [Details](/models/upscale/video-upscale) |
 
 ### Speech Models
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| Eleven V3 | `varg.speechModel("eleven_v3")` | 25 | [Details](/models/speech/elevenlabs) |
-| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | 25 | [Details](/models/speech/elevenlabs) |
-| Turbo | `varg.speechModel("turbo")` | 20 | [Details](/models/speech/elevenlabs) |
-| Eleven Turbo V2 | `varg.speechModel("eleven_turbo_v2")` | 20 | [Details](/models/speech/elevenlabs) |
-| Eleven Turbo V2.5 | `varg.speechModel("eleven_turbo_v2_5")` | 20 | [Details](/models/speech/elevenlabs) |
-| Eleven Flash V2 | `varg.speechModel("eleven_flash_v2")` | 20 | [Details](/models/speech/elevenlabs) |
-| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | 20 | [Details](/models/speech/elevenlabs) |
+| Eleven V3 | `varg.speechModel("eleven_v3")` | $0.10 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Eleven Multilingual V2 | `varg.speechModel("eleven_multilingual_v2")` | $0.10 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Turbo | `varg.speechModel("turbo")` | $0.05 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Eleven Turbo V2 | `varg.speechModel("eleven_turbo_v2")` | $0.05 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Eleven Turbo V2.5 | `varg.speechModel("eleven_turbo_v2_5")` | $0.05 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Eleven Flash V2 | `varg.speechModel("eleven_flash_v2")` | $0.05 per 1,000 characters | [Details](/models/speech/elevenlabs) |
+| Eleven Flash V2.5 | `varg.speechModel("eleven_flash_v2_5")` | $0.05 per 1,000 characters | [Details](/models/speech/elevenlabs) |
 
 ### Music
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| Music V1 | `varg.musicModel()` | 30 | [Details](/models/music/music) |
+| Music V1 | `varg.musicModel()` | $0.15 a minute | [Details](/models/music/music) |
 
 ### Transcription
 
-| Model | Code | Credits | Docs |
+| Model | Code | Price | Docs |
 |-------|------|---------|------|
-| Whisper | `varg.transcriptionModel("whisper")` | 10 | [Details](/models/transcription/whisper) |
-| Whisper Large V3 | `varg.transcriptionModel("whisper-large-v3")` | 10 | [Details](/models/transcription/whisper) |
-| Groq Whisper | `varg.transcriptionModel("groq-whisper")` | 5 | [Details](/models/transcription/whisper) |
-| Groq Whisper Large V3 | `varg.transcriptionModel("groq-whisper-large-v3")` | 5 | [Details](/models/transcription/whisper) |
-| Groq Whisper Turbo | `varg.transcriptionModel("groq-whisper-large-v3-turbo")` | 3 | [Details](/models/transcription/whisper) |
+| Whisper | `varg.transcriptionModel("whisper")` | $0.05 | [Details](/models/transcription/whisper) |
+| Whisper Large V3 | `varg.transcriptionModel("whisper-large-v3")` | $0.05 | [Details](/models/transcription/whisper) |
+| Groq Whisper | `varg.transcriptionModel("groq-whisper")` | $0.03-$0.06, by route | [Details](/models/transcription/whisper) |
+| Groq Whisper Large V3 | `varg.transcriptionModel("groq-whisper-large-v3")` | $0.06 | [Details](/models/transcription/whisper) |
+| Groq Whisper Turbo | `varg.transcriptionModel("groq-whisper-large-v3-turbo")` | $0.03 | [Details](/models/transcription/whisper) |
 
 ---
 

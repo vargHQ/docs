@@ -1,17 +1,17 @@
 ---
 title: "LTX"
 sidebarTitle: "LTX"
-description: "Fastest and cheapest video generation model — supports native audio and keyframe control"
+description: "Fastest video generation model, at a flat $0.50 a run — supports native audio and keyframe control"
 icon: "bolt"
 ---
 
 ## Overview
 
-LTX (Lightricks) is the most affordable video model available, and also one of the fastest. It supports unique features like native audio generation and first+last frame keyframe control.
+LTX (Lightricks) bills a flat $0.50 a run, and is one of the fastest video models. It supports unique features like native audio generation and first+last frame keyframe control.
 
-| Model ID | Credits | ~Cost |
-|----------|---------|-------|
-| `ltx-2-19b-distilled` | 50 | $0.50 |
+| Model ID | Price |
+|----------|-------|
+| `ltx-2-19b-distilled` | $0.50 a run |
 
 <Note>
 The gateway model ID is `ltx-2-19b-distilled`. This is the distilled 19B parameter variant optimized for speed.
@@ -112,15 +112,17 @@ LTX internally uses `num_frames` instead of `duration` and `video_size` instead 
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `ltx-2-19b-distilled` | 50 | $0.50 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
 
-The cheapest video model available. Ideal for prototyping and high-volume generation.
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `ltx-2-19b-distilled` | $0.50 a run | [ltx_2_19b_distilled](https://varg.ai/models/ltx_2_19b_distilled) |
+
+The price is flat: every run costs $0.50, whatever its length. Ideal for prototyping and high-volume generation.
 
 ## Tips
 
-- **Best for rapid iteration** — fast and cheap, great for testing prompts before upgrading to Kling or Seedance.
+- **Best for rapid iteration** — fast, with a flat $0.50 price, great for testing prompts before upgrading to Kling or Seedance.
 - **Native audio** is unique to LTX (and Grok Imagine / Kling V2.6). Useful for ambient sound effects.
 - **Keyframe control** lets you define start and end frames for precise transitions.
 - **Quality is lower** than Kling V3 or Seedance 2, but acceptable for social media and prototypes.
@@ -129,9 +131,9 @@ The cheapest video model available. Ideal for prototyping and high-volume genera
 
 <CardGroup cols={2}>
   <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
-    Slightly more expensive but better quality. Good upgrade path.
+    Billed per second, from $0.25 a run. Better quality. Good upgrade path.
   </Card>
   <Card title="Kling V3" icon="film" href="/models/video/kling-v3">
-    Premium quality. 3x the cost but significantly better output.
+    Premium quality, from $0.56 a run. Significantly better output.
   </Card>
 </CardGroup>

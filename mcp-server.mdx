@@ -175,7 +175,7 @@ Start here. One tool per thing you want, with defaults chosen for you — descri
 | `generate_video` | A video from a prompt, from an image (`from_image`), or from footage (`from_video`). Set `with_audio` for native sound |
 | `generate_speech` | Text to speech, in any language |
 | `generate_music` | A song with vocals, or an instrumental track with `instrumental: true`. 3 seconds to 10 minutes |
-| `analyze_video` | Watch a video by URL and get a structured report: summary, timeline with timestamps, transcript, on-screen text. 6¢, repeats are cached and free |
+| `analyze_video` | Watch a video by URL and get a structured report: summary, timeline with timestamps, transcript, on-screen text. $0.05 a run, repeats are cached and free |
 | `search_voices` | Find a voice by name, by metadata, or by describing one (`intent: "warm female narrator"`) |
 
 ```
@@ -322,34 +322,34 @@ These work in Claude Desktop, claude.ai, and VS Code (via MCP Apps). In clients 
 
 ## Pricing
 
-varg uses a credit system. 1 credit = $0.01 USD.
+varg uses a credit system. 1 credit = $0.01 USD. Prices from the live catalog on 14 November 2026; today's price of every model is on [varg.ai/models](https://varg.ai/models).
 
-| Generation | Credits | Cost |
-|-----------|---------|------|
-| Image (Flux Schnell) | 5 | $0.05 |
-| Image (Flux Pro) | 10 | $0.10 |
-| Image (Nano Banana Pro) | 5 | $0.05 |
-| Image (Recraft v3) | 10 | $0.10 |
-| Image (Recraft v4 Pro) | 30 | $0.30 |
-| Image (Grok Imagine) | 3 | $0.03 |
-| Video (Kling v3, 5s) | 150 | $1.50 |
-| Video (Kling v3 Standard, 5s) | 100 | $1.00 |
-| Video (Wan 2.5, 5s) | 80 | $0.80 |
-| Video (Minimax, 5s) | 80 | $0.80 |
-| Video (Seedance 2, 5s) | 250 | $2.50 |
-| Video (LTX-2, 5s) | 50 | $0.50 |
-| Speech (ElevenLabs v3) | 25 | $0.25 |
-| Speech (ElevenLabs Turbo) | 20 | $0.20 |
-| Music | 30 | $0.30 |
-| Lipsync (Sync v2 Pro) | 80 | $0.80 |
-| Lipsync (OmniHuman) | 100 | $1.00 |
-| Transcription (Whisper) | 10 | $0.10 |
-| Transcription (Groq Whisper Turbo) | 3 | $0.03 |
-| FFmpeg Trim | 5 | $0.05 |
-| FFmpeg Resize | 5 | $0.05 |
-| FFmpeg Slice | 5 | $0.05 |
-| FFmpeg (custom command) | 5 | $0.05 |
-| Probe Media | 5 | $0.05 |
+| Generation | Price |
+|-----------|-------|
+| Image (Flux Schnell) | $0.003 a megapixel, from $0.01 an image |
+| Image (Flux Pro) | $0.04 a megapixel, from $0.01 an image |
+| Image (Nano Banana Pro) | from $0.14 an image |
+| Image (Recraft v3) | $0.10 an image |
+| Image (Recraft v4 Pro) | not in the catalog on 14 November 2026 |
+| Image (Grok Imagine) | $0.03 an image |
+| Video (Kling v3, 5s) | $0.56 ($0.84 with audio) |
+| Video (Kling v3 Standard, 5s) | $0.56 ($0.70 with audio) |
+| Video (Wan 2.5, 5s) | $0.25 at 480p, $0.50 at 720p, $0.75 at 1080p |
+| Video (Minimax, 5s) | not in the catalog on 14 November 2026 |
+| Video (Seedance 2, 5s) | $1.517 at 720p on fal text-to-video; from $0.23 a run |
+| Video (LTX-2, 5s) | $0.50 |
+| Speech (ElevenLabs v3) | $0.10 per 1,000 characters |
+| Speech (ElevenLabs Turbo) | $0.05 per 1,000 characters |
+| Music | $0.15 a minute |
+| Lipsync (Sync v2 Pro) | $0.80 |
+| Lipsync (OmniHuman v1.5) | $0.16 a second of input, from $0.48 |
+| Transcription (Whisper) | $0.05 |
+| Transcription (Groq Whisper Turbo) | $0.03 |
+| FFmpeg Trim | $0.05 |
+| FFmpeg Resize | $0.05 |
+| FFmpeg Slice | $0.05 |
+| FFmpeg (custom command) | $0.05 |
+| Probe Media | not in the catalog on 14 November 2026 |
 
 Cached results are free. Use `check_balance` to see the remaining credits of the account the connection works in.
 

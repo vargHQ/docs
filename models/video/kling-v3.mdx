@@ -7,12 +7,12 @@ icon: "film"
 
 ## Overview
 
-Kling V3 is the recommended default video model. Made by Kuaishou, it offers the best balance of quality, flexibility, and cost. It supports continuous duration from 3-15 seconds (integer only) and both text-to-video and image-to-video generation.
+Kling V3 is the recommended default video model. Made by Kuaishou, it offers the best balance of quality and flexibility. It supports continuous duration from 3-15 seconds (integer only) and both text-to-video and image-to-video generation.
 
-| Model ID | Tier | Credits | Duration |
-|----------|------|---------|----------|
-| `kling-v3` | Pro | 150 | 3-15s |
-| `kling-v3-standard` | Standard | 100 | 3-15s |
+| Model ID | Tier | Price | Duration |
+|----------|------|-------|----------|
+| `kling-v3` | Pro | from $0.56 a run | 3-15s |
+| `kling-v3-standard` | Standard | from $0.56 a run | 3-15s |
 
 Both variants support first-frame and last-frame keyframe control via `end_image_url`.
 
@@ -128,12 +128,14 @@ The first file becomes `image_url` (start frame) and the second becomes `end_ima
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `kling-v3` | 150 | $1.50 |
-| `kling-v3-standard` | 100 | $1.00 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
 
-Standard tier is 33% cheaper with slightly lower quality. Good for drafts and iteration.
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `kling-v3` | the 4K routes: $0.42 a second; the other routes: $0.112 a second ($0.168 with audio); from $0.56 a run | [kling_v3](https://varg.ai/models/kling_v3) |
+| `kling-v3-standard` | $0.112 a second ($0.14 with audio); from $0.56 a run | [kling_v3_standard](https://varg.ai/models/kling_v3_standard) |
+
+Standard costs the same as Pro without audio ($0.112 a second) and less with audio ($0.14 against $0.168 a second), with slightly lower quality. Good for drafts and iteration.
 
 ## Tips
 
@@ -150,7 +152,7 @@ Standard tier is 33% cheaper with slightly lower quality. Good for drafts and it
     ByteDance's premium model. Excellent quality, supports video editing.
   </Card>
   <Card title="Wan 2.5" icon="wand-magic-sparkles" href="/models/video/wan-2">
-    Budget alternative at 80 credits. Good motion quality.
+    Budget alternative, from $0.25 a run. Good motion quality.
   </Card>
   <Card title="Kling Legacy" icon="clock-rotate-left" href="/models/video/kling-legacy">
     Previous Kling versions (V2.6, V2.5, V2.1, V2).

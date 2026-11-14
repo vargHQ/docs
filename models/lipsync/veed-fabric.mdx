@@ -9,9 +9,9 @@ icon: "comment"
 
 VEED Fabric 1.0 generates talking head videos from a single portrait image and an audio file. It's the simplest lipsync pipeline — no video input needed, just image + audio.
 
-| Model ID | Input | Speed | Credits | ~Cost |
-|----------|-------|-------|---------|-------|
-| `veed-fabric-1.0` | Image + audio | ~30-50s | 100 | $1.00 |
+| Model ID | Input | Speed | Price |
+|----------|-------|-------|-------|
+| `veed-fabric-1.0` | Image + audio | ~30-50s | $0.08-$0.15 a second of input, from $0.24 a run |
 
 ## Quick start
 
@@ -60,9 +60,11 @@ VEED Fabric doesn't use a prompt or duration parameter. The video length matches
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `veed-fabric-1.0` | 100 | $1.00 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `veed-fabric-1.0` | $0.08 a second of input at 480p, $0.15 a second of input at 720p; from $0.24 a run | [veed_fabric_1_0](https://varg.ai/models/veed_fabric_1_0) |
 
 ## Tips
 

@@ -9,13 +9,13 @@ icon: "ear-listen"
 
 Transcribe audio to text using OpenAI's Whisper model, available through two providers with different speed/cost profiles.
 
-| Model ID | Provider | Speed | Credits | ~Cost |
-|----------|---------|-------|---------|-------|
-| `whisper` | fal | Standard | 10 | $0.10 |
-| `whisper-large-v3` | fal | Standard | 10 | $0.10 |
-| `groq-whisper` | Groq | Fast | 5 | $0.05 |
-| `groq-whisper-large-v3` | Groq | Fast | 5 | $0.05 |
-| `groq-whisper-large-v3-turbo` | Groq | Fastest | 3 | $0.03 |
+| Model ID | Provider | Speed | Price |
+|----------|---------|-------|-------|
+| `whisper` | fal | Standard | $0.05 a run |
+| `whisper-large-v3` | fal | Standard | $0.05 a run |
+| `groq-whisper` | Groq | Fast | $0.03-$0.06 a run, by route |
+| `groq-whisper-large-v3` | Groq | Fast | $0.06 a run |
+| `groq-whisper-large-v3-turbo` | Groq | Fastest | $0.03 a run |
 
 ## Quick start
 
@@ -65,10 +65,10 @@ curl -X POST https://api.varg.ai/v2/transcription \
 
 | Scenario | Recommended | Why |
 |----------|-------------|-----|
-| Cheapest | `groq-whisper-large-v3-turbo` (3 credits) | 70% cheaper than fal Whisper |
-| Best quality | `whisper-large-v3` (10 credits) | Full Large V3 model on fal |
-| Fast + cheap | `groq-whisper` (5 credits) | Good balance |
-| Default | `whisper` (10 credits) | Reliable, well-tested |
+| Cheapest | `groq-whisper-large-v3-turbo` ($0.03) | 40% cheaper than fal Whisper ($0.05) |
+| Best quality | `whisper-large-v3` ($0.05) | Full Large V3 model on fal |
+| Fast | `groq-whisper` ($0.03-$0.06, by route) | Good balance |
+| Default | `whisper` ($0.05) | Reliable, well-tested |
 
 ## Use with captions
 
@@ -89,11 +89,14 @@ const narration = Speech({
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `whisper` / `whisper-large-v3` | 10 | $0.10 |
-| `groq-whisper` / `groq-whisper-large-v3` | 5 | $0.05 |
-| `groq-whisper-large-v3-turbo` | 3 | $0.03 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `whisper` / `whisper-large-v3` | $0.05 a run | [whisper](https://varg.ai/models/whisper) |
+| `groq-whisper` | `groq:whisper_large_v3`: $0.06 a run; turbo: $0.03 a run | [groq_whisper](https://varg.ai/models/groq_whisper) |
+| `groq-whisper-large-v3` | $0.06 a run | [groq_whisper_large_v3](https://varg.ai/models/groq_whisper_large_v3) |
+| `groq-whisper-large-v3-turbo` | $0.03 a run | [groq_whisper_large_v3_turbo](https://varg.ai/models/groq_whisper_large_v3_turbo) |
 
 ## Related models
 

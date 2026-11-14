@@ -9,10 +9,10 @@ icon: "palette"
 
 Recraft is a design-focused image generation model built specifically for graphic design, icons, and brand assets. It offers precise color control and professional output quality.
 
-| Model ID | Tier | Credits | ~Cost |
-|----------|------|---------|-------|
-| `recraft-v3` | Standard | 10 | $0.10 |
-| `recraft-v4-pro` | Professional | 30 | $0.30 |
+| Model ID | Tier | Price |
+|----------|------|-------|
+| `recraft-v3` | Standard | $0.10 an image |
+| `recraft-v4-pro` | Professional | not in the catalog on 14 November 2026 |
 
 Recraft V4 Pro adds support for brand color palettes and background color control.
 
@@ -78,10 +78,14 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `recraft-v3` | 10 | $0.10 |
-| `recraft-v4-pro` | 30 | $0.30 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `recraft-v3` | $0.10 an image | [recraft_v3](https://varg.ai/models/recraft_v3) |
+| `recraft-v4-pro` | not in the catalog on 14 November 2026 | [all models](https://varg.ai/models) |
+
+`recraft-v4-pro` is not in the catalog on 14 November 2026. The Recraft models in it are [Recraft V4.1 Flash](https://varg.ai/models/recraft_v4_1_flash) (`recraft_v4_1_flash`), [Recraft v3](https://varg.ai/models/recraft_v3) (`recraft_v3`) and the [Recraft Clarity](https://varg.ai/models/recraft_clarity) upscaler (`recraft_clarity`).
 
 ## Tips
 

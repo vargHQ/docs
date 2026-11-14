@@ -9,11 +9,11 @@ icon: "camera"
 
 Phota specializes in personalized photo generation with profile-based identity control. Create consistent character images by referencing profiles, and enhance/upscale existing images while preserving identity.
 
-| Model ID | Mode | Credits | ~Cost |
-|----------|------|---------|-------|
-| `phota` | Text-to-image with profiles | 9 | $0.09 |
-| `phota/edit` | Image editing with profiles | 9 | $0.09 |
-| `phota/enhance` | Image enhancement/upscale | 13 | $0.13 |
+| Model ID | Mode | Price |
+|----------|------|-------|
+| `phota` | Text-to-image with profiles | $0.09 an image |
+| `phota/edit` | Image editing with profiles | $0.09 an image |
+| `phota/enhance` | Image enhancement/upscale | $0.13 an image |
 
 ## Quick start
 
@@ -107,11 +107,13 @@ curl -X POST https://api.varg.ai/v2/image \
 
 ## Pricing
 
-| Model | Credits | USD |
-|-------|---------|-----|
-| `phota` | 9 | $0.09 |
-| `phota/edit` | 9 | $0.09 |
-| `phota/enhance` | 13 | $0.13 |
+Prices from the live catalog on 14 November 2026: provider prices with no markup, 1 credit = $0.01. The model page always shows today's price, and `POST /v2/estimate` returns the exact price of a request before you run it.
+
+| Model | Price | Today's price |
+|-------|-------|---------------|
+| `phota` | $0.09 an image | [phota](https://varg.ai/models/phota) |
+| `phota/edit` | $0.09 an image | [phota/edit](https://varg.ai/models/phota%2Fedit) |
+| `phota/enhance` | $0.13 an image | [phota/enhance](https://varg.ai/models/phota%2Fenhance) |
 
 ## Tips
 
